@@ -170,3 +170,14 @@
   .site-foot { padding: 8px 14px calc(var(--tab-h) + env(safe-area-inset-bottom) + 8px); }
   .foot-links a { width: 40px; height: 40px; }
 }
+
+/* ---------- analyzing loader ---------- */
+.loading-wrap { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: var(--scrim); backdrop-filter: blur(3px); }
+.loading-card { width: min(320px, 100%); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 26px 24px 22px; text-align: center; background: var(--glass-solid); border: 1px solid var(--line-2); border-radius: var(--r-l); box-shadow: var(--shadow-pop); }
+.loading-card strong { font-size: 16px; letter-spacing: -0.01em; color: var(--t1); }
+.loading-file { max-width: 100%; font-size: 12px; color: var(--t3); }
+.spinner { width: 34px; height: 34px; margin-bottom: 6px; border-radius: 50%; border: 3px solid var(--track); border-top-color: var(--lime); animation: spin 0.8s linear infinite; }
+:root[data-theme='light'] .spinner { border-top-color: var(--blue); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: pulse 1.2s ease-in-out infinite !important; animation-duration: 1.2s !important; animation-iteration-count: infinite !important; } }
+@keyframes pulse { 50% { opacity: 0.35; } }

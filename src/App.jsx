@@ -7,6 +7,7 @@ import {
   faTriangleExclamation, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import { DEFAULT_FILTERS, InspectCtx, ListCtx, SelectedCtx } from './context'
+import { analyzeCached } from './analyzer'
 import { filterHar, parseHar } from './harParser'
 import { NAV, SHORTCUTS, TAB_PRIMARY } from './nav'
 import useMediaQuery from './hooks/useMediaQuery'
@@ -74,6 +75,7 @@ export default function App() {
   const [dock, setDock] = useState(null) // { type: 'inspect' | 'list', ... }
   const [toastMsg, setToastMsg] = useState('')
   const [help, setHelp] = useState(false)
+  const [loading, setLoading] = useState('') // name of the file being analyzed, or ''
   const [more, setMore] = useState(false)
   const [themePref, setThemePref] = useState(() => readPref('harlens-theme', 'system'))
   const [collapsed, setCollapsed] = useState(() => readPref('harlens-side', '0') === '1')
@@ -111,15 +113,24 @@ export default function App() {
 
   const onFiles = useCallback(async (files) => {
     setError('')
+    const started = performance.now()
     const parsed = []
     for (const f of files) {
+      setLoading(f.name)
+      // let the browser paint the loader before the (synchronous) parse blocks the main thread
+      await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)))
       try {
-        parsed.push(parseHar(await f.text(), f.name))
+        const har = parseHar(await f.text(), f.name)
+        analyzeCached(har) // warm the findings so the first page opens instantly
+        parsed.push(har)
       } catch (e) {
         setError(`${f.name}: ${e instanceof SyntaxError ? 'this file is not valid JSON' : e.message}`)
       }
     }
+    const left = 450 - (performance.now() - started) // avoid a one-frame flash on small files
+    if (left > 0) await new Promise((r) => setTimeout(r, left))
     addParsed(parsed)
+    setLoading('')
   }, [addParsed])
 
   // Dropping a file anywhere on the page opens it, so the start screen is never the only way in
@@ -302,6 +313,15 @@ export default function App() {
             </div>
 
             <AnimatePresence>
+              {loading && (
+                <motion.div key="loading" className="loading-wrap" role="status" aria-live="polite" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                  <div className="loading-card">
+                    <span className="spinner" aria-hidden="true" />
+                    <strong>Analyzing HAR…</strong>
+                    <span className="loading-file ellipsis">{loading}</span>
+                  </div>
+                </motion.div>
+              )}
               {help && (
                 <motion.div className="modal-wrap" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} onClick={() => setHelp(false)}>
                   <motion.div className="modal" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" onClick={(e) => e.stopPropagation()}
