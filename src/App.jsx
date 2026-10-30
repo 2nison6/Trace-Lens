@@ -113,12 +113,11 @@ export default function App() {
 
   const onFiles = useCallback(async (files) => {
     setError('')
-    const started = performance.now()
     const parsed = []
     for (const f of files) {
       setLoading(f.name)
-      // let the browser paint the loader before the (synchronous) parse blocks the main thread
-      await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)))
+      // one frame so the loader paints before the (synchronous) parse blocks the main thread
+      await new Promise((r) => requestAnimationFrame(() => r()))
       try {
         const har = parseHar(await f.text(), f.name)
         analyzeCached(har) // warm the findings so the first page opens instantly
@@ -127,8 +126,6 @@ export default function App() {
         setError(`${f.name}: ${e instanceof SyntaxError ? 'this file is not valid JSON' : e.message}`)
       }
     }
-    const left = 450 - (performance.now() - started) // avoid a one-frame flash on small files
-    if (left > 0) await new Promise((r) => setTimeout(r, left))
     addParsed(parsed)
     setLoading('')
   }, [addParsed])
