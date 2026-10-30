@@ -1,0 +1,61 @@
+:root, :root[data-theme='dark'] {
+  --bg: #030407;
+  --bg2: #080b14;
+  --panel: rgba(13, 18, 32, 0.74);
+  --panel2: rgba(30, 40, 66, 0.55);
+  --border: rgba(110, 140, 220, 0.16);
+  --text: #a9b4cf;
+  --text-h: #f5f7ff;
+  --dim: #6c7794;
+  --blue: #1558c9;
+  --blue-l: #4f8cff;
+  --lime: #d4ff24;
+  --on-lime: #0a1200;
+  --accent: var(--lime);
+  --link: #6ea2ff;
+  --good: #3ddc97;
+  --warn: #ffc53d;
+  --bad: #ff6b81;
+  --glow: rgba(21, 88, 201, 0.55);
+  --track: rgba(255, 255, 255, 0.06);
+  --sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Consolas, monospace;
+  font: 14px/1.5 var(--sans);
+  color: var(--text);
+  background: var(--bg);
+  color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+}
+:root[data-theme='light'] {
+  --bg: #f3f6fc;
+  --bg2: #e8eef9;
+  --panel: rgba(255, 255, 255, 0.82);
+  --panel2: rgba(21, 88, 201, 0.07);
+  --border: rgba(21, 60, 140, 0.16);
+  --text: #46506b;
+  --text-h: #060a18;
+  --dim: #7a84a0;
+  --accent: var(--blue);
+  --on-lime: #ffffff;
+  --link: #1558c9;
+  --good: #168a5c;
+  --warn: #b57a00;
+  --bad: #d12f4a;
+  --glow: rgba(212, 255, 36, 0.8);
+  --track: rgba(21, 60, 140, 0.09);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { overflow-x: hidden; }
+body { margin: 0; background: var(--bg); min-height: 100vh; }
+h3 { margin: 0 0 12px; font-size: 12px; color: var(--text-h); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+button, input, select { font: inherit; }
+button { color: inherit; }
+a { color: var(--link); }
+::selection { background: var(--lime); color: #0a1200; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+:root[data-theme='light'] :focus-visible { outline-color: var(--blue); }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Primary SEO -->
+    <title>HAR.lens – HAR File Analyzer &amp; Request Flow Viewer</title>
+    <meta name="description" content="Analyze HAR files in your browser. Replay request flow, find errors and slow requests, inspect headers and compare captures. Nothing is uploaded." />
+    <meta name="keywords" content="HAR analyzer, HAR viewer, HAR file, network waterfall, HTTP archive, web performance, request inspector, compare HAR, packet flow" />
+    <meta name="author" content="HAR.lens" />
+    <meta name="application-name" content="HAR.lens" />
+    <meta name="generator" content="Vite + React" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <!-- Theme -->
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#030407" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3f6fc" media="(prefers-color-scheme: light)" />
+    <meta name="msapplication-TileColor" content="#1558c9" />
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <!-- Icons -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/mask-icon.svg" color="#1558c9" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Open Graph (Facebook, LinkedIn, Slack, WhatsApp, Discord) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="HAR.lens" />
+    <meta property="og:title" content="HAR.lens – See exactly what your network did" />
+    <meta property="og:description" content="Replay request flow, find errors and slow requests, inspect headers and compare HAR captures. 100% in your browser." />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="HAR.lens: see exactly what your network did" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="HAR.lens – See exactly what your network did" />
+    <meta name="twitter:description" content="Replay request flow, find errors and slow requests, inspect headers and compare HAR captures. 100% in your browser." />
+    <meta name="twitter:image" content="/og-image.png" />
+    <meta name="twitter:image:alt" content="HAR.lens: see exactly what your network did" />
+
+    <!-- iOS web app -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="HAR.lens" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "HAR.lens",
+        "description": "Browser-based HAR file analyzer: request flow replay, issue detection, request inspector and capture comparison.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+
+    <!-- Avoid a white flash before the stylesheet loads, and apply the saved theme early -->
+    <style>
+      html { background: #030407; color-scheme: dark light; }
+      html[data-theme='light'] { background: #f3f6fc; }
+    </style>
+    <script>
+      try {
+        var t = localStorage.getItem('harlens-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <div style="font:16px/1.5 system-ui,sans-serif;color:#f5f7ff;background:#030407;padding:48px 24px;text-align:center">
+        <h1 style="margin:0 0 8px">HAR.lens</h1>
+        <p>This app analyzes HAR files entirely in your browser, so it needs JavaScript enabled.</p>
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
