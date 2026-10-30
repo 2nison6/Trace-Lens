@@ -56,6 +56,7 @@
 .file-b { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; height: var(--hit); padding: 0 8px; background: none; border: 0; border-radius: var(--r-s); color: var(--t2); text-align: left; transition: background var(--t-fast) ease, transform var(--t-press) var(--ease-out); }
 .file-b small { color: var(--t3); }
 .file.on .file-b { background: var(--hover); color: var(--t1); box-shadow: inset 2px 0 0 var(--blue-text); }
+.files .add-files { margin-top: 10px; align-self: flex-start; }
 .file-x { flex: none; width: 24px; height: 24px; display: grid; place-items: center; background: none; border: 0; border-radius: 50%; color: var(--t3); opacity: 0; transition: opacity var(--t-fast) ease, background var(--t-fast) ease; }
 .file:hover .file-x, .file-x:focus-visible { opacity: 1; }
 .file-x:hover { background: var(--hover); color: var(--crit); }
