@@ -35,7 +35,7 @@ export default function Tools({ har, toast }) {
       </Card>
 
       <Card title="Export a report" aside={<FontAwesomeIcon icon={faFileLines} className="dim" />}>
-        <p className="lede">Health score, timing estimates, every finding with its fix, and the third-party breakdown.</p>
+        <p className="lede">Health score, timing estimates, every finding with its fix and affected URLs, third parties, critical path, endpoints, cache and protocol breakdowns, and the full request list.</p>
         <div className="actions">
           <button type="button" className="btn primary" onClick={() => { download(`${base}.report.html`, reportHtml(har), 'text/html'); toast('HTML report downloaded') }}><FontAwesomeIcon icon={faFileCode} /> HTML report</button>
           <button type="button" className="btn" onClick={() => { download(`${base}.report.json`, reportJson(har)); toast('JSON report downloaded') }}><FontAwesomeIcon icon={faDownload} /> JSON</button>

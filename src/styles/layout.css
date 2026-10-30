@@ -132,3 +132,40 @@
 .modal h2 { font-size: 16px; letter-spacing: -0.01em; }
 .toast { position: fixed; z-index: 95; left: 50%; bottom: 26px; transform: translateX(-50%); padding: 9px 16px; border-radius: 999px; background: var(--t1); color: var(--bg); font-weight: 600; font-size: 12.5px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
 @media (max-width: 760px) { .toast { bottom: calc(var(--tab-h) + 24px); } }
+
+/* ---------- site footer (author credit, pinned to the bottom of the main column) ---------- */
+.site-foot {
+  flex: none; position: relative; z-index: 4; overflow: hidden; padding: 10px 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px 20px;
+  background: var(--glass); backdrop-filter: saturate(160%) blur(22px); -webkit-backdrop-filter: saturate(160%) blur(22px);
+  border-top: 1px solid var(--line);
+}
+.site-foot::before { /* same blue wash as the app shell */
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(50% 220% at 0% 100%, rgba(21, 88, 201, 0.2), transparent 70%);
+}
+:root[data-theme='light'] .site-foot::before { background: radial-gradient(50% 220% at 0% 100%, rgba(21, 88, 201, 0.08), transparent 70%); }
+.site-foot > * { position: relative; }
+.foot-who { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.foot-avatar { flex: none; width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: var(--s3); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--blue-line), 0 4px 16px rgba(21, 88, 201, 0.45); }
+.foot-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.foot-kicker { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--t3); }
+.foot-name { font-size: 15px; letter-spacing: -0.02em; color: var(--t1); font-weight: 650; }
+.foot-name b, .foot-note b { color: var(--lime); }
+:root[data-theme='light'] .foot-name b, :root[data-theme='light'] .foot-note b { color: var(--blue); }
+.foot-note { margin: 0; font-size: 12px; color: var(--t3); text-align: center; white-space: nowrap; }
+.foot-links { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; }
+.foot-links a {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; font-size: 15px;
+  color: var(--t2); background: var(--s2); border: 1px solid var(--line); text-decoration: none;
+  transition: background var(--t-fast) ease, color var(--t-fast) ease, border-color var(--t-fast) ease, transform var(--t-press) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .foot-links a:hover { background: var(--blue-tint); color: var(--t1); border-color: var(--blue-line); transform: translateY(-2px); }
+}
+.foot-links a:active { transform: scale(0.94); }
+@media (max-width: 900px) { .foot-note { display: none; } }
+@media (max-width: 760px) {
+  .site-foot { padding: 8px 14px calc(var(--tab-h) + env(safe-area-inset-bottom) + 8px); }
+  .foot-links a { width: 40px; height: 40px; }
+}

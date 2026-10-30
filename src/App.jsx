@@ -21,6 +21,7 @@ import Compare from './components/Compare'
 import Issues from './components/Issues'
 import Insights from './components/Insights'
 import Tools from './components/Tools'
+import Footer from './components/Footer'
 import { EmptyState, Kbd, Notice, Segmented } from './components/ui'
 import './styles/index.css'
 
@@ -252,6 +253,7 @@ export default function App() {
                     </Routes>
                   </AnimatePresence>
                 </main>
+                <Footer />
               </div>
 
               <AnimatePresence initial={false}>
