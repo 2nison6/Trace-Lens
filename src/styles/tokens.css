@@ -1,0 +1,182 @@
+/* ==========================================================================
+   Design tokens. Dark is the default; [data-theme='light'] overrides it.
+   JS resolves "system" to light/dark and sets data-theme, so each value lives in one place.
+
+   Palette: #030407 (base), #1558c9 (structure, links, selection), #d4ff24 (lime: spent only on the
+   primary action and the "now" playhead). Chart colours follow the dataviz method and were run through
+   its validator: phases are a blue ordinal ramp (setup steps) + orange (server wait) + green (download).
+   ========================================================================== */
+:root {
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, 'Segoe UI', sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  /* motion (Emil Kowalski): strong curves, UI stays under 300ms */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --t-press: 120ms;
+  --t-fast: 160ms;
+  --t-base: 220ms;
+
+  --r-xs: 4px;
+  --r-s: 7px;
+  --r-m: 11px;
+  --r-l: 16px;
+
+  --side-w: 244px;
+  --dock-w: 400px;
+  --bar-h: 52px;
+  --tab-h: 58px;
+  --hit: 28px; /* desktop control height (HIG default 28pt, min 20pt) */
+
+  /* dark */
+  --bg: #030407;
+  --s1: #0b0e15;
+  --s2: #121722;
+  --s3: #1a2030;
+  --glass: rgba(11, 14, 21, 0.72);
+  --glass-solid: #0b0e15;
+  --line: rgba(148, 163, 200, 0.13);
+  --line-2: rgba(148, 163, 200, 0.24);
+  --hover: rgba(148, 163, 200, 0.08);
+  --press: rgba(148, 163, 200, 0.14);
+  --track: rgba(148, 163, 200, 0.1);
+  --scrim: rgba(0, 0, 0, 0.55);
+  --shadow-pop: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(148, 163, 200, 0.14);
+
+  --t1: #f2f4f8;
+  --t2: #a9b2c3;
+  --t3: #7f899d;
+
+  --blue: #1558c9;
+  --on-blue: #ffffff;
+  --blue-text: #6ea2ff;
+  --blue-tint: rgba(21, 88, 201, 0.24);
+  --blue-line: rgba(79, 140, 255, 0.45);
+  --lime: #d4ff24;
+  --on-lime: #0a1200;
+
+  --good: #2fc46b;
+  --warn: #fab219;
+  --serious: #ec835a;
+  --crit: #ff7373;
+  --good-mark: #0ca30c;
+  --crit-mark: #d03b3b;
+
+  /* chart: phases (validated; see tokens header) */
+  --c-blocked: #566079;
+  --c-dns: #9ec5f4;
+  --c-connect: #5598e7;
+  --c-ssl: #2a78d6;
+  --c-send: #1c5cab;
+  --c-wait: #d95926;
+  --c-receive: #199e70;
+  --c-series-1: #3987e5;
+  --c-series-2: #d95926;
+  --c-series-3: #199e70;
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --bg: #f4f6fa;
+  --s1: #ffffff;
+  --s2: #eef1f7;
+  --s3: #e3e8f1;
+  --glass: rgba(255, 255, 255, 0.74);
+  --glass-solid: #ffffff;
+  --line: rgba(20, 40, 90, 0.12);
+  --line-2: rgba(20, 40, 90, 0.22);
+  --hover: rgba(20, 40, 90, 0.06);
+  --press: rgba(20, 40, 90, 0.11);
+  --track: rgba(20, 40, 90, 0.08);
+  --scrim: rgba(10, 20, 40, 0.38);
+  --shadow-pop: 0 18px 50px rgba(20, 40, 90, 0.2), 0 0 0 1px rgba(20, 40, 90, 0.1);
+
+  --t1: #070a12;
+  --t2: #444d60;
+  --t3: #636d85;
+
+  --blue-text: #1558c9;
+  --blue-tint: rgba(21, 88, 201, 0.1);
+  --blue-line: rgba(21, 88, 201, 0.4);
+
+  --good: #006300;
+  --warn: #8a5600;
+  --serious: #a8420f;
+  --crit: #c42d2d;
+
+  --c-blocked: #a9b1c3;
+  --c-dns: #86b6ef;
+  --c-connect: #5598e7;
+  --c-ssl: #256abf;
+  --c-send: #104281;
+  --c-wait: #eb6834;
+  --c-receive: #1baf7a;
+  --c-series-1: #2a78d6;
+  --c-series-2: #eb6834;
+  --c-series-3: #1baf7a;
+
+  color-scheme: light;
+}
+
+/* ---- accessibility preferences ------------------------------------------------------------- */
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass: var(--glass-solid); }
+  .glass { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+}
+@media (prefers-contrast: more) {
+  :root { --line: rgba(148, 163, 200, 0.4); --line-2: rgba(148, 163, 200, 0.6); --t3: #a9b2c3; }
+  :root[data-theme='light'] { --line: rgba(20, 40, 90, 0.42); --line-2: rgba(20, 40, 90, 0.6); --t3: #444d60; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+  .no-motion-t { transition: opacity var(--t-fast) ease !important; }
+}
+
+/* ---- base ---------------------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--t2);
+  font: 400 13px/1.5 var(--font);
+  letter-spacing: 0.005em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+#root { height: 100%; }
+h1, h2, h3, h4, p { margin: 0; }
+h1, h2, h3, h4 { color: var(--t1); font-weight: 600; }
+button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
+button { cursor: pointer; }
+a { color: var(--blue-text); }
+img, svg { display: block; }
+::selection { background: var(--lime); color: var(--on-lime); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 10px; border: 3px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--t3); background-clip: content-box; border: 3px solid transparent; }
+::-webkit-scrollbar-track { background: transparent; }
+
+:focus-visible { outline: 2px solid var(--blue-text); outline-offset: 2px; border-radius: var(--r-xs); }
+.skip { position: absolute; left: -999px; top: 8px; z-index: 200; padding: 8px 14px; background: var(--s3); color: var(--t1); border-radius: var(--r-s); }
+.skip:focus { left: 8px; }
+
+/* type scale: tracking is size-specific (tight when large, a touch open when small) */
+.t-display { font-size: clamp(30px, 4.4vw, 46px); line-height: 1.05; letter-spacing: -0.03em; font-weight: 650; color: var(--t1); }
+.t-title { font-size: 19px; line-height: 1.2; letter-spacing: -0.02em; font-weight: 650; color: var(--t1); }
+.t-body { font-size: 13px; }
+.t-small { font-size: 12px; letter-spacing: 0.005em; }
+.t-cap { font-size: 11px; letter-spacing: 0.02em; color: var(--t3); }
+.mono { font-family: var(--mono); font-size: 12px; letter-spacing: 0; }
+.num { font-variant-numeric: tabular-nums; text-align: right; }
+.dim { color: var(--t3); }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* semantic text (always paired with an icon or label, never colour alone) */
+.tone-good { color: var(--good); } .tone-warn { color: var(--warn); } .tone-serious { color: var(--serious); } .tone-crit { color: var(--crit); } .tone-info { color: var(--blue-text); }
+.s-2xx { color: var(--good); } .s-3xx { color: var(--blue-text); } .s-4xx { color: var(--warn); } .s-5xx, .s-fail { color: var(--crit); }

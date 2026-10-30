@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCopy, faTerminal, faXmark } from '@fortawesome/free-solid-svg-icons'
-import { PHASES, PHASE_COLORS } from '../harParser'
-import { copyText, fmtBytes, fmtMs, statusClass, toCurl } from '../utils'
+import { PHASES } from '../harParser'
+import { PHASE_LABEL, PHASE_VAR } from '../theme'
+import { copyText, fmtBytes, fmtMs, toCurl } from '../utils'
+import { Segmented, StatusCode } from './ui'
 
 const TABS = ['Headers', 'Cookies', 'Params', 'Response', 'Timing']
+
 function Rows({ items, empty }) {
-  if (!items.length) return <div className="dim pad">{empty}</div>
+  if (!items.length) return <p className="dim pad-s">{empty}</p>
   return (
     <dl className="kvlist">
       {items.map((h, i) => (
@@ -20,10 +22,19 @@ function Rows({ items, empty }) {
   )
 }
 
+function Section({ title, count, children }) {
+  return (
+    <section className="insp-sec">
+      <h4>{title}{count != null && <small>{count}</small>}</h4>
+      {children}
+    </section>
+  )
+}
+
 function Preview({ e }) {
   const b = e.body
   const text = b && typeof b.text === 'string' ? b.text : null
-  if (!b || text == null) return <div className="dim pad">No response body was saved in this HAR (many tools strip bodies). Size: {fmtBytes(e.contentSize)}.</div>
+  if (!b || text == null) return <p className="dim pad-s">No response body was saved in this HAR (many tools strip bodies). Size: {fmtBytes(e.contentSize)}.</p>
   if (b.encoding === 'base64' && /^image\//.test(b.mimeType || '')) {
     return <img className="prev-img" alt={e.name} src={`data:${b.mimeType};base64,${text}`} />
   }
@@ -34,8 +45,8 @@ function Preview({ e }) {
   const cut = out.length > 8000
   return (
     <>
-      <pre className="code">{cut ? out.slice(0, 8000) : out}</pre>
-      {cut && <div className="hint">Showing first 8,000 of {out.length.toLocaleString()} characters.</div>}
+      <pre className="codeblock">{cut ? out.slice(0, 8000) : out}</pre>
+      {cut && <p className="hint">Showing first 8,000 of {out.length.toLocaleString()} characters.</p>}
     </>
   )
 }
@@ -44,39 +55,34 @@ function Body({ e, tab }) {
   if (tab === 'Headers') {
     return (
       <>
-        <h4>General</h4>
-        <Rows items={[
-          { name: 'URL', value: e.url }, { name: 'Method', value: e.method },
-          { name: 'Status', value: `${e.status || 'no response'} ${e.statusText}`.trim() },
-          { name: 'Protocol', value: e.httpVersion || '—' }, { name: 'Server IP', value: e.ip || '—' },
-          ...(e.redirectUrl ? [{ name: 'Redirects to', value: e.redirectUrl }] : []),
-          ...(e.initiator ? [{ name: 'Initiator', value: e.initiator }] : []),
-          ...(e.errorText ? [{ name: 'Error', value: e.errorText }] : []),
-        ]} empty="" />
-        <h4>Response headers ({e.resHeaderList.length})</h4>
-        <Rows items={e.resHeaderList} empty="No response headers recorded." />
-        <h4>Request headers ({e.reqHeaderList.length})</h4>
-        <Rows items={e.reqHeaderList} empty="No request headers recorded." />
+        <Section title="General">
+          <Rows empty="" items={[
+            { name: 'URL', value: e.url }, { name: 'Method', value: e.method },
+            { name: 'Status', value: `${e.status || 'no response'} ${e.statusText}`.trim() },
+            { name: 'Protocol', value: e.httpVersion || '—' }, { name: 'Server IP', value: e.ip || '—' },
+            ...(e.redirectUrl ? [{ name: 'Redirects to', value: e.redirectUrl }] : []),
+            ...(e.initiator ? [{ name: 'Started by', value: e.initiator }] : []),
+            ...(e.errorText ? [{ name: 'Error', value: e.errorText }] : []),
+          ]} />
+        </Section>
+        <Section title="Response headers" count={e.resHeaderList.length}><Rows items={e.resHeaderList} empty="No response headers recorded." /></Section>
+        <Section title="Request headers" count={e.reqHeaderList.length}><Rows items={e.reqHeaderList} empty="No request headers recorded." /></Section>
       </>
     )
   }
   if (tab === 'Cookies') {
     return (
       <>
-        <h4>Sent ({e.reqCookies.length})</h4>
-        <Rows items={e.reqCookies} empty="No cookies sent." />
-        <h4>Set by server ({e.setCookies.length})</h4>
-        <Rows items={e.setCookies.map((c, i) => ({ name: `Set-Cookie #${i + 1}`, value: c }))} empty="No cookies set." />
+        <Section title="Sent" count={e.reqCookies.length}><Rows items={e.reqCookies} empty="No cookies sent." /></Section>
+        <Section title="Set by the server" count={e.setCookies.length}><Rows items={e.setCookies.map((c, i) => ({ name: `Set-Cookie ${i + 1}`, value: c }))} empty="No cookies set." /></Section>
       </>
     )
   }
   if (tab === 'Params') {
     return (
       <>
-        <h4>Query string ({e.query.length})</h4>
-        <Rows items={e.query} empty="No query parameters." />
-        <h4>Request body</h4>
-        {e.postData && e.postData.text ? <pre className="code">{e.postData.text}</pre> : <div className="dim pad">No request body.</div>}
+        <Section title="Query string" count={e.query.length}><Rows items={e.query} empty="No query parameters." /></Section>
+        <Section title="Request body">{e.postData && e.postData.text ? <pre className="codeblock">{e.postData.text}</pre> : <p className="dim pad-s">No request body.</p>}</Section>
       </>
     )
   }
@@ -84,50 +90,48 @@ function Body({ e, tab }) {
   const total = Math.max(1, e.time)
   return (
     <>
-      <div className="tbar">
-        {PHASES.map((p) => e.phases[p] > 0 && <i key={p} title={`${p}: ${fmtMs(e.phases[p])}`} style={{ width: `${(e.phases[p] / total) * 100}%`, background: PHASE_COLORS[p] }} />)}
+      <div className="tbar" role="img" aria-label="Phase timeline">
+        {PHASES.map((p) => e.phases[p] > 0 && <i key={p} title={`${PHASE_LABEL[p]}: ${fmtMs(e.phases[p])}`} style={{ width: `${(e.phases[p] / total) * 100}%`, background: PHASE_VAR[p] }} />)}
       </div>
-      <Rows items={[{ name: 'Started at', value: fmtMs(e.startMs) }, ...PHASES.map((p) => ({ name: p, value: `${fmtMs(e.phases[p])}  (${((e.phases[p] / total) * 100).toFixed(0)}%)` })), { name: 'Total', value: fmtMs(e.time) }, { name: 'Transferred', value: fmtBytes(e.transfer) }, { name: 'Content size', value: fmtBytes(e.contentSize) }]} empty="" />
+      <dl className="kvlist">
+        <div><dt>Started at</dt><dd>{fmtMs(e.startMs)}</dd></div>
+        {PHASES.filter((p) => e.phases[p] > 0).map((p) => (
+          <div key={p}><dt><i className="key-dot" style={{ background: PHASE_VAR[p] }} />{PHASE_LABEL[p]}</dt><dd>{fmtMs(e.phases[p])} <small className="dim">{((e.phases[p] / total) * 100).toFixed(0)}%</small></dd></div>
+        ))}
+        <div><dt>Total</dt><dd>{fmtMs(e.time)}</dd></div>
+        <div><dt>Transferred</dt><dd>{fmtBytes(e.transfer)}</dd></div>
+        <div><dt>Content size</dt><dd>{fmtBytes(e.contentSize)}</dd></div>
+      </dl>
     </>
   )
 }
 
+/** Request inspector. Rendered inside the dock (a side panel on wide screens, a sheet on small ones). */
 export default function Inspector({ entry, source, onClose, toast }) {
   const [tab, setTab] = useState('Headers')
   const curl = useMemo(() => (entry ? toCurl(entry) : ''), [entry])
   const copy = async (text, label) => toast((await copyText(text)) ? `${label} copied` : 'Copy failed')
+  if (!entry) return null
 
   return (
-    <AnimatePresence>
-      {entry && (
-        <>
-          <motion.div className="scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
-          <motion.aside
-            className="drawer" role="dialog" aria-label="Request inspector"
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 320, damping: 34 }}
-          >
-            <header>
-              <div className="dr-title">
-                <b className={`st ${statusClass(entry.status)}`}>{entry.status || 'ERR'}</b>
-                <span className="mono dim">{entry.method}</span>
-                <span className="ellipsis" title={entry.url}>{entry.name}</span>
-                <button className="icon-btn" onClick={onClose} aria-label="Close"><FontAwesomeIcon icon={faXmark} /></button>
-              </div>
-              {source && <div className="dr-src">From capture: <b>{source}</b></div>}
-              <div className="dr-url" title={entry.url}>{entry.url}</div>
-              <div className="dr-actions">
-                <button className="btn sm" onClick={() => copy(entry.url, 'URL')}><FontAwesomeIcon icon={faCopy} /> URL</button>
-                <button className="btn sm" onClick={() => copy(curl, 'cURL')}><FontAwesomeIcon icon={faTerminal} /> cURL</button>
-                <span className="dim">{fmtMs(entry.time)} · {fmtBytes(entry.transfer)}</span>
-              </div>
-              <div className="tabs" role="tablist">
-                {TABS.map((t) => <button key={t} role="tab" aria-selected={tab === t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>{t}</button>)}
-              </div>
-            </header>
-            <div className="dr-body"><Body e={entry} tab={tab} key={entry.id} /></div>
-          </motion.aside>
-        </>
-      )}
-    </AnimatePresence>
+    <div className="dock-in">
+      <header className="dock-h">
+        <div className="dock-title">
+          <StatusCode status={entry.status} icon />
+          <span className="mono dim">{entry.method}</span>
+          <h2 className="ellipsis" title={entry.url}>{entry.name}</h2>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close inspector"><FontAwesomeIcon icon={faXmark} /></button>
+        </div>
+        {source && <p className="dock-src">From <b>{source}</b></p>}
+        <p className="dock-url" title={entry.url}>{entry.url}</p>
+        <div className="dock-actions">
+          <button type="button" className="btn sm" onClick={() => copy(entry.url, 'URL')}><FontAwesomeIcon icon={faCopy} /> Copy URL</button>
+          <button type="button" className="btn sm" onClick={() => copy(curl, 'cURL')}><FontAwesomeIcon icon={faTerminal} /> Copy as cURL</button>
+          <span className="dim num">{fmtMs(entry.time)} · {fmtBytes(entry.transfer)}</span>
+        </div>
+        <Segmented size="s" label="Inspector section" value={tab} onChange={setTab} options={TABS.map((t) => ({ value: t, label: t }))} />
+      </header>
+      <div className="dock-body" key={`${entry.id}-${tab}`}><Body e={entry} tab={tab} /></div>
+    </div>
   )
 }

@@ -52,3 +52,27 @@ export function toCurl(e) {
   if (e.postData && e.postData.text) parts.push(`--data-raw ${shq(e.postData.text)}`)
   return parts.join(' \\\n  ')
 }
+
+export const fmtPct = (n) => `${Math.round(n)}%`
+
+// Short label for time axes: 250 ms, 1.5 s, 3 s
+export function fmtAxis(ms) {
+  if (ms < 1000) return `${Math.round(ms)} ms`
+  const s = ms / 1000
+  return `${Number.isInteger(s) ? s : s.toFixed(1)} s`
+}
+
+// Round tick step so a [0, max] axis gets roughly `target` evenly spaced labels
+export function niceTicks(max, target = 7) {
+  if (!(max > 0)) return { step: 1, ticks: [0] }
+  const raw = max / target
+  const mag = 10 ** Math.floor(Math.log10(raw))
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((v) => v >= raw) || 10 * mag
+  const ticks = []
+  for (let v = 0; v <= max + 1e-6; v += step) ticks.push(v)
+  return { step, ticks }
+}
+
+export function ratingOf(score) {
+  return score >= 85 ? { label: 'Good', tone: 'good' } : score >= 60 ? { label: 'Needs work', tone: 'warn' } : { label: 'Poor', tone: 'crit' }
+}

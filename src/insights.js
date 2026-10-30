@@ -108,11 +108,11 @@ const TEXT = new Set(['html', 'js', 'css', 'data'])
 const sum = (list, f) => list.reduce((s, e) => s + f(e), 0)
 
 const BUCKETS = [
-  ['< 100 ms', 0, 100, 'var(--good)'],
-  ['100 – 300 ms', 100, 300, 'var(--blue-l)'],
+  ['Under 100 ms', 0, 100, 'var(--good-mark)'],
+  ['100 – 300 ms', 100, 300, 'var(--c-ssl)'],
   ['300 ms – 1 s', 300, 1000, 'var(--warn)'],
-  ['1 – 3 s', 1000, 3000, '#fb923c'],
-  ['> 3 s', 3000, Infinity, 'var(--bad)'],
+  ['1 – 3 s', 1000, 3000, 'var(--c-wait)'],
+  ['Over 3 s', 3000, Infinity, 'var(--crit-mark)'],
 ]
 export function latencyBuckets(har) {
   return BUCKETS.map(([label, min, max, color]) => ({ label, color, entries: har.entries.filter((e) => e.time >= min && e.time < max) }))

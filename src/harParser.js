@@ -1,25 +1,6 @@
 export const PHASES = ['blocked', 'dns', 'connect', 'ssl', 'send', 'wait', 'receive']
 
-export const PHASE_COLORS = {
-  blocked: '#5b6785',
-  dns: '#38bdf8',
-  connect: '#818cf8',
-  ssl: '#c084fc',
-  send: '#f472b6',
-  wait: '#1558c9',
-  receive: '#d4ff24',
-}
-
-export const TYPE_COLORS = {
-  html: '#4f8cff',
-  js: '#d4ff24',
-  css: '#c084fc',
-  img: '#34d399',
-  font: '#f472b6',
-  data: '#38bdf8',
-  media: '#fb923c',
-  other: '#8892ad',
-}
+export const TYPE_ORDER = ['html', 'js', 'css', 'img', 'font', 'data', 'media', 'other']
 
 const num = (v) => (typeof v === 'number' && v > 0 ? v : 0)
 
@@ -162,10 +143,10 @@ export function parseHar(input, fileName = 'capture.har') {
   if (page && page.pageTimings) {
     const base = (Date.parse(page.startedDateTime) || t0) - t0
     if (num(page.pageTimings.onContentLoad)) {
-      markers.push({ label: 'DOMContentLoaded', ms: base + page.pageTimings.onContentLoad, color: '#4f8cff' })
+      markers.push({ label: 'DOMContentLoaded', short: 'DCL', ms: base + page.pageTimings.onContentLoad, tone: 'dcl' })
     }
     if (num(page.pageTimings.onLoad)) {
-      markers.push({ label: 'Load', ms: base + page.pageTimings.onLoad, color: '#d4ff24' })
+      markers.push({ label: 'Load', short: 'Load', ms: base + page.pageTimings.onLoad, tone: 'load' })
     }
   }
 

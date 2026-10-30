@@ -6,10 +6,12 @@ import ReqTip from './ReqTip'
 
 const byTime = (e) => e.time
 const DELAY = 220 // ms of deliberate hovering before the card appears
+const SKIP_WINDOW = 350 // after one card closes, the next opens instantly (and without animation)
+let lastClosed = 0
 
 // Shows the requests behind an element on hover (after a short delay) or keyboard focus.
 // The card hides as soon as the element is clicked and stays hidden until the pointer leaves and re-enters.
-export function HoverTip({ title, entries, rank = byTime, fmtRank = fmtMs, footer, onClick, className, tip = true, children }) {
+export function HoverTip({ title, entries, rank = byTime, fmtRank = fmtMs, footer, onClick, className, style, tip = true, children, label }) {
   const [pos, setPos] = useState(null)
   const timer = useRef(0)
   const last = useRef({ x: 0, y: 0 })
@@ -19,17 +21,23 @@ export function HoverTip({ title, entries, rank = byTime, fmtRank = fmtMs, foote
 
   const hide = () => {
     clearTimeout(timer.current)
-    setPos(null)
+    setPos((p) => {
+      if (p) lastClosed = Date.now()
+      return null
+    })
   }
   const enter = (e) => {
     quiet.current = false
     last.current = { x: e.clientX, y: e.clientY }
     clearTimeout(timer.current)
-    timer.current = setTimeout(() => setPos({ ...last.current }), DELAY)
+    const instant = Date.now() - lastClosed < SKIP_WINDOW
+    const show = () => setPos({ ...last.current, instant })
+    if (instant) show()
+    else timer.current = setTimeout(show, DELAY)
   }
   const move = (e) => {
     last.current = { x: e.clientX, y: e.clientY }
-    if (pos && !quiet.current) setPos({ ...last.current })
+    if (pos && !quiet.current) setPos((p) => ({ ...last.current, instant: p.instant }))
   }
   const click = () => {
     quiet.current = true
@@ -40,12 +48,13 @@ export function HoverTip({ title, entries, rank = byTime, fmtRank = fmtMs, foote
     // keyboard focus only; a mouse click also focuses the element and must not pop the card back up
     if (quiet.current || !e.currentTarget.matches(':focus-visible')) return
     const r = e.currentTarget.getBoundingClientRect()
-    setPos({ x: r.left + r.width / 2, y: r.bottom - 6 })
+    setPos({ x: r.left + r.width / 2, y: r.bottom - 6, instant: false })
   }
 
   return (
     <div
       className={className}
+      style={style}
       onMouseEnter={tip ? enter : undefined}
       onMouseMove={tip ? move : undefined}
       onMouseLeave={hide}
@@ -54,17 +63,19 @@ export function HoverTip({ title, entries, rank = byTime, fmtRank = fmtMs, foote
       onClick={onClick ? click : undefined}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
+      aria-label={label}
       onKeyDown={onClick ? (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), click()) : undefined}
     >
       {children}
-      {tip && pos && entries.length > 0 && createPortal(<ReqTip x={pos.x} y={pos.y} title={title} entries={entries} rank={rank} fmtRank={fmtRank} footer={footer} />, document.body)}
+      {tip && pos && entries.length > 0 && createPortal(<ReqTip x={pos.x} y={pos.y} instant={pos.instant} title={title} entries={entries} rank={rank} fmtRank={fmtRank} footer={footer} />, document.body)}
     </div>
   )
 }
 
-// rows: { label, value, color?, entries?, rank?, fmtRank?, title?, filter?, harIndex?, tip?, onPick?, pickHint? }
+// rows: { label, value, color?, entries?, rank?, fmtRank?, title?, filter?, harIndex?, tip?, onPick?, pickHint?, sub? }
 // Clicking any row with requests opens the request list (onPick overrides that).
-export default function Bars({ rows, color, fmt }) {
+// Single-series bars share one hue: colour must not repeat what bar length already says.
+export default function Bars({ rows, color = 'var(--c-series-1)', fmt }) {
   const showList = useContext(ListCtx)
   const max = Math.max(1, ...rows.map((r) => r.value))
   return (
@@ -76,7 +87,7 @@ export default function Bars({ rows, color, fmt }) {
         return (
           <HoverTip
             key={r.label}
-            className={`bar-row${open ? ' pick' : ''}`}
+            className={`bar${open ? ' pick' : ''}`}
             title={r.title || r.label}
             entries={r.entries || []}
             rank={r.rank}
@@ -84,16 +95,17 @@ export default function Bars({ rows, color, fmt }) {
             footer={hint}
             tip={r.tip !== false}
             onClick={open}
+            label={`${r.label}: ${fmt(r.value)}`}
           >
-            <div className="bar-label">{r.label}</div>
-            <div className="bar-track">
-              <div className="bar-fill" style={{ width: `${(r.value / max) * 100}%`, background: r.color || color }} />
-            </div>
-            <div className="bar-val">{fmt(r.value)}</div>
+            <span className="bar-label ellipsis" title={r.label}>{r.label}</span>
+            <span className="bar-track">
+              <i className="bar-fill" style={{ width: `${Math.max(r.value > 0 ? 1.5 : 0, (r.value / max) * 100)}%`, background: r.color || color }} />
+            </span>
+            <span className="bar-val num">{fmt(r.value)}</span>
           </HoverTip>
         )
       })}
-      {!rows.length && <div className="dim">No data.</div>}
+      {!rows.length && <p className="dim">No data.</p>}
     </div>
   )
 }

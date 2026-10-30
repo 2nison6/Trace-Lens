@@ -1,17 +1,20 @@
 import { useContext, useMemo, useState } from 'react'
+import { faCodeCompare, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons'
 import { compareMulti } from '../harParser'
 import { InspectCtx } from '../context'
 import Bars from './Bars'
+import { SERIES_VAR } from '../theme'
 import { fmtBytes, fmtDelta, fmtMs } from '../utils'
+import { Card, EmptyState, Notice, Segmented, StatusCode } from './ui'
 
 const SLOT = ['A', 'B', 'C']
-const COLORS = ['var(--blue-l)', 'var(--lime)', '#f472b6']
 
 function Delta({ a, b, fmt }) {
   if (a == null || b == null) return <span className="dim">—</span>
   const d = b - a
   const pct = a ? ` ${d >= 0 ? '+' : '-'}${Math.abs((d / a) * 100).toFixed(0)}%` : ''
-  return <span className={d < 0 ? 'good' : d > 0 ? 'bad' : 'dim'}>{fmtDelta(d, fmt)}{pct}</span>
+  // smaller is better for time, size and error counts: an arrow keeps direction readable without colour
+  return <span className={d < 0 ? 'tone-good' : d > 0 ? 'tone-crit' : 'dim'}>{d < 0 ? '↓ ' : d > 0 ? '↑ ' : ''}{fmtDelta(d, fmt)}{pct}</span>
 }
 
 export default function Compare({ hars }) {
@@ -27,7 +30,7 @@ export default function Compare({ hars }) {
     return list.length >= 2 ? compareMulti(list) : []
   }, [sel, hars])
 
-  if (hars.length < 2) return <div className="empty">Load at least two HAR files to compare them. Drop another one in the bar above.</div>
+  if (hars.length < 2) return <EmptyState title="Add a second capture to compare" icon={faCodeCompare}>Use “Add file” in the toolbar, or drop another HAR file anywhere on the page.</EmptyState>
 
   const open = (slot, row) => {
     const it = row.items[slot]
@@ -56,23 +59,22 @@ export default function Compare({ hars }) {
   ]
 
   return (
-    <div>
-      <div className="toolbar">
+    <div className="stack">
+      <div className="slots">
         {SLOT.map((s, slot) => (
-          <label className="check" key={s}>
-            <span className="slot" style={{ background: COLORS[slot] }}>{s}</span>
-            <select className="input" value={sel[slot]} onChange={setSlot(slot)}>
-              {slot === 2 && <option value={-1}>— none (2-way) —</option>}
+          <label className="slot-pick" key={s}>
+            <span className="slot" style={{ background: SERIES_VAR[slot] }}>{s}</span>
+            <select value={sel[slot]} onChange={setSlot(slot)} aria-label={`Capture ${s}`}>
+              {slot === 2 && <option value={-1}>None (compare two)</option>}
               {hars.map((h, i) => <option key={i} value={i}>{h.fileName}</option>)}
             </select>
           </label>
         ))}
       </div>
-      {active.length < 2 || new Set(sel.filter((v) => v >= 0)).size < active.length ? <div className="notice">Pick different files for each slot.</div> : null}
+      {active.length < 2 || new Set(sel.filter((v) => v >= 0)).size < active.length ? <Notice tone="warn" icon={faTriangleExclamation}>Pick a different file for each slot.</Notice> : null}
 
-      <div className="panel-grid">
-        <section className="card">
-          <h3>Summary</h3>
+      <div className="page-grid two">
+        <Card title="Summary" flush>
           <table className="tbl">
             <thead>
               <tr><th></th>{active.map((h, i) => <th key={i} className="num">{SLOT[i]}</th>)}<th className="num">Δ {SLOT[0]}→{SLOT[active.length - 1]}</th></tr>
@@ -87,27 +89,19 @@ export default function Compare({ hars }) {
               ))}
             </tbody>
           </table>
-        </section>
+        </Card>
 
-        <section className="card">
-          <h3>Timeline length</h3>
-          <Bars fmt={fmtMs} rows={active.map((h, i) => ({ label: SLOT[i], title: `${SLOT[i]} · ${h.fileName}`, value: h.summary.totalTime, color: COLORS[i], entries: h.entries, harIndex: activeIdx[i], tip: false }))} />
+        <Card title="Load time">
+          <Bars fmt={fmtMs} rows={active.map((h, i) => ({ label: SLOT[i], title: `${SLOT[i]} · ${h.fileName}`, value: h.summary.totalTime, color: SERIES_VAR[i], entries: h.entries, harIndex: activeIdx[i], tip: false }))} />
           <div className="match-stats">
-            <span><b>{diffs.filter((d) => !d.only).length}</b> matched A↔{SLOT[active.length - 1]}</span>
-            <span className="good"><b>{diffs.filter((d) => d.only === 'last').length}</b> only in {SLOT[active.length - 1]}</span>
-            <span className="bad"><b>{diffs.filter((d) => d.only === 'first').length}</b> only in A</span>
+            <span><b className="num">{diffs.filter((d) => !d.only).length}</b> in both</span>
+            <span><b className="num">{diffs.filter((d) => d.only === 'last').length}</b> only in {SLOT[active.length - 1]}</span>
+            <span><b className="num">{diffs.filter((d) => d.only === 'first').length}</b> only in A</span>
           </div>
-        </section>
+        </Card>
       </div>
 
-      <section className="card">
-        <div className="toolbar tight">
-          <h3>Requests (method + URL path)</h3>
-          <select className="input" value={show} onChange={(e) => setShow(e.target.value)}>
-            <option value="changed">Notable changes</option>
-            <option value="all">All requests</option>
-          </select>
-        </div>
+      <Card title="Requests" flush aside={<Segmented size="s" label="Which requests to show" value={show} onChange={setShow} options={[{ value: 'changed', label: 'Changes' }, { value: 'all', label: 'All' }]} />}>
         <table className="tbl cmp">
           <thead>
             <tr>
@@ -127,15 +121,15 @@ export default function Compare({ hars }) {
                 ))}
                 <td className="num"><Delta a={d.a && d.a.time} b={d.b && d.b.time} fmt={fmtMs} /></td>
                 <td className="num"><Delta a={d.a && d.a.transfer} b={d.b && d.b.transfer} fmt={fmtBytes} /></td>
-                <td className={d.sc ? 'bad' : ''}>{d.only === 'last' ? 'new' : d.only === 'first' ? 'removed' : d.sc ? `${d.a.status} → ${d.b.status}` : d.a.status}</td>
+                <td className={d.sc ? 'tone-crit' : ''}>{d.only === 'last' ? 'New' : d.only === 'first' ? 'Removed' : d.sc ? `${d.a.status} → ${d.b.status}` : <StatusCode status={d.a.status} />}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {!view.length && <div className="empty">No notable differences.</div>}
-        {view.length > 200 && <div className="hint">Showing first 200 of {view.length}.</div>}
-        <div className="hint">Click a row to inspect the newest capture's version of that request, or click a time cell to inspect that specific capture's version.</div>
-      </section>
+        {!view.length && <p className="pad dim">No notable differences.</p>}
+        {view.length > 200 && <p className="hint pad-h">Showing first 200 of {view.length}.</p>}
+      </Card>
+      <p className="hint">Click a row to inspect the newest capture's version of that request, or click a time cell to inspect that capture's version.</p>
     </div>
   )
 }
