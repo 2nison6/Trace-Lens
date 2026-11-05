@@ -1,0 +1,10 @@
+# Netlify build settings. These are the values Netlify auto-detects for a Vite app, kept here so the repo documents itself.
+#
+# - Node is pinned by .nvmrc (Vite 8 needs Node 20.19+ or 22.12+).
+# - No environment variables are required: the canonical site URL defaults to the production domain in vite.config.js.
+#   To override it (for example on a staging site) set VITE_SITE_URL in the Netlify UI. Do NOT mark it as a secret:
+#   the value is public and necessarily appears in the built HTML.
+# - Response headers live in public/_headers and redirects in public/_redirects; Vite copies both into dist/.
+[build]
+  command = "npm run build"
+  publish = "dist"
