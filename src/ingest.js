@@ -10,26 +10,20 @@ import { afterPaint, sleep } from './paint'
 // animating while the main thread is blocked. That is why every stage is committed with flushSync and the first one waits
 // for a painted frame, and why the overlay is animated by CSS (compositor) rather than by JavaScript.
 //
-// The overlay stays hidden for SHOW_DELAY, so the common fast load never flashes it, then fades in, and stays for at least
-// MIN_VISIBLE so it never flickers. SHOW_DELAY must match the animation-delay on .loading-wrap and .loading-card in layout.css.
-const SHOW_DELAY = 100
-const MIN_VISIBLE = 250
+// The overlay appears at once and stays for at least MIN_VISIBLE, so every upload gets visible feedback and it never flickers
+// (a fast load would otherwise finish before the overlay could be seen).
+const MIN_VISIBLE = 600
 
 let tail = Promise.resolve() // runs go strictly one after another: a second drop while busy queues behind the first
 let pending = 0 // runs queued or in flight; the overlay belongs to the batch and is cleared only when the last one is done
 let startedAt = 0
-let painted = false
 let failures = []
 let handlers = null // { commit(parsed) -> Promise, report(messages) } from the most recent caller
 
 async function stage(patch) {
   flushSync(() => loadStore.update(patch))
-  // The first stage always waits one frame, so the overlay is committed before any blocking work. Later stages only wait
-  // once the overlay is visible, so a fast load does not pay a frame per stage.
-  if (!painted || performance.now() - startedAt > SHOW_DELAY) {
-    painted = true
-    await afterPaint()
-  }
+  // Wait for a painted frame after every stage, so the overlay (and its new text) is on screen before the next blocking call
+  await afterPaint()
 }
 
 async function run(files) {
@@ -57,8 +51,7 @@ async function run(files) {
 }
 
 async function settle() {
-  const elapsed = performance.now() - startedAt
-  if (elapsed > SHOW_DELAY) await sleep(Math.max(0, SHOW_DELAY + MIN_VISIBLE - elapsed))
+  await sleep(Math.max(0, MIN_VISIBLE - (performance.now() - startedAt)))
   if (pending > 0) return // another batch arrived meanwhile and now owns the overlay
   loadStore.clear()
   if (failures.length) {
@@ -74,7 +67,6 @@ export function ingest(files, next) {
   handlers = next
   if (pending++ === 0) {
     startedAt = performance.now()
-    painted = false
   }
   tail = tail
     .then(() => run(files))

@@ -197,11 +197,10 @@
 
 /* ---------- analyzing loader ---------- */
 /* Shown by CSS alone. The browser keeps running these animations on the compositor while JavaScript is busy parsing a big
-   file, which a JavaScript-driven fade cannot do. The 100 ms delay is SHOW_DELAY in ingest.js: a fast load never flashes the
-   overlay. `backwards` holds the first keyframe (invisible) during the delay. Under reduced motion tokens.css shortens the
-   durations, so the overlay simply appears after the delay. */
-.loading-wrap { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: var(--scrim); animation: loader-in 160ms var(--ease-out) 100ms backwards; }
-.loading-card { width: min(320px, 100%); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 26px 24px 22px; text-align: center; background: var(--glass-solid); border: 1px solid var(--line-2); border-radius: var(--r-l); box-shadow: var(--shadow-pop); animation: card-in 200ms var(--ease-out) 100ms backwards; }
+   file, which a JavaScript-driven fade cannot do. The overlay is visible from the first frame (a short fade, no delay).
+   Under reduced motion tokens.css shortens the durations, so it simply appears. */
+.loading-wrap { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: var(--scrim); animation: loader-in 160ms var(--ease-out) 0ms backwards; }
+.loading-card { width: min(320px, 100%); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 26px 24px 22px; text-align: center; background: var(--glass-solid); border: 1px solid var(--line-2); border-radius: var(--r-l); box-shadow: var(--shadow-pop); animation: card-in 200ms var(--ease-out) 0ms backwards; }
 .loading-card strong { font-size: 16px; letter-spacing: -0.01em; color: var(--t1); }
 .loading-stage { font-size: 13px; color: var(--t2); }
 .loading-file { max-width: 100%; font-size: 12px; color: var(--t3); }
