@@ -6,18 +6,37 @@ import { defineConfig, loadEnv } from 'vite'
 // variable. Set VITE_SITE_URL (shell or Netlify UI) to override it, for example for a staging site.
 const PRODUCTION_SITE_URL = 'https://har-analyzer.2nison6.com'
 
-// Social crawlers (Open Graph / Twitter) ignore relative URLs, and a canonical link must be absolute. Given the deployed
-// origin this adds canonical + og:url and makes og:image / twitter:image absolute. With no origin (the dev server) the
-// page still works; previews just may not show the image.
+// Search and social crawlers need absolute URLs: a canonical link must be absolute, and Open Graph / Twitter ignore
+// relative images. Given the deployed origin this
+//   - replaces __SITE_URL__ in index.html (structured data),
+//   - adds canonical + og:url and makes og:image / twitter:image absolute,
+//   - emits sitemap.xml and robots.txt for that origin, so the domain lives in exactly one place.
+// With no origin (the dev server) the page still works; link previews just may not show the image.
 function siteUrls(siteUrl) {
   const base = (siteUrl || '').trim().replace(/\/+$/, '')
   return {
     name: 'site-urls',
     transformIndexHtml(html) {
-      if (!base) return html
-      return html
+      const out = html.replaceAll('__SITE_URL__', base)
+      if (!base) return out
+      return out
         .replace(/(<meta (?:property="og:image"|name="twitter:image") content=")\/([^"]*")/g, `$1${base}/$2`)
         .replace('</head>', `    <link rel="canonical" href="${base}/" />\n    <meta property="og:url" content="${base}/" />\n  </head>`)
+    },
+    generateBundle() {
+      if (!base) return
+      // Only the home page belongs here. The other routes need a file loaded, so on their own they are empty pages, and
+      // they are marked noindex. No <lastmod>: a made-up date is worse than none.
+      this.emitFile({
+        type: 'asset',
+        fileName: 'sitemap.xml',
+        source: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>${base}/</loc>\n  </url>\n</urlset>\n`,
+      })
+      this.emitFile({
+        type: 'asset',
+        fileName: 'robots.txt',
+        source: `User-agent: *\nAllow: /\n\nSitemap: ${base}/sitemap.xml\n`,
+      })
     },
   }
 }
