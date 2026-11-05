@@ -1,1 +1,11 @@
-/*    /index.html   200
+# Single-page app: serve index.html for the routes the client router knows (see NAV in src/nav.js). "/" is index.html itself.
+# There is deliberately NO catch-all "/* /index.html 200": with it every unknown URL answers 200, which search engines treat
+# as a soft 404. Without it, an unknown path gets a real 404 status and public/404.html.
+# Adding a page means adding its path here too, or reloading that page will 404.
+/overview   /index.html   200
+/issues     /index.html   200
+/waterfall  /index.html   200
+/flow       /index.html   200
+/insights   /index.html   200
+/compare    /index.html   200
+/tools      /index.html   200
