@@ -9,8 +9,9 @@ import {
 import { DEFAULT_FILTERS, InspectCtx, ListCtx, SelectedCtx } from './context'
 import { analyzeCached } from './analyzer'
 import { filterHar, parseHar } from './harParser'
-import { NAV, SHORTCUTS, TAB_PRIMARY } from './nav'
+import { NAV, SHORTCUTS, TAB_PRIMARY, isLocked, lockReason } from './nav'
 import useMediaQuery from './hooks/useMediaQuery'
+import usePicker from './hooks/usePicker'
 import DropZone, { AddFiles } from './components/DropZone'
 import FilterBar from './components/FilterBar'
 import Inspector from './components/Inspector'
@@ -48,7 +49,40 @@ const pageMotion = {
 }
 const Page = ({ children }) => <motion.div {...pageMotion}>{children}</motion.div>
 
-function Home({ onFiles, hasFiles, error, onDismiss }) {
+// Every link to a page goes through here. A locked page stays a real <a href> (focusable, keeps its URL) but never
+// navigates: it carries aria-disabled and explains itself in an error toast instead.
+function PageLink({ item, fileCount, hint, toast, title, onClick, children, ...rest }) {
+  const reason = lockReason(item, fileCount)
+  return (
+    // A locked page never looks current, even when its own URL is open: a className function drops NavLink's automatic
+    // "active" class, and aria-current={null} drops the attribute (undefined would fall back to NavLink's default "page").
+    // aria-disabled must be omitted, not "false", when unlocked.
+    <NavLink
+      {...rest}
+      to={item.to}
+      className={reason ? () => 'locked' : undefined}
+      aria-current={reason ? null : undefined}
+      aria-disabled={reason ? 'true' : undefined}
+      title={reason || title}
+      onClick={(e) => {
+        if (reason) { e.preventDefault(); toast(reason, 'error') }
+        onClick?.(e)
+      }}
+    >
+      {children}
+      {reason ? <FontAwesomeIcon icon={faLock} className="nav-lock" /> : hint}
+    </NavLink>
+  )
+}
+
+// Home step 3, by how many files are loaded (0, 1, 2+)
+const EXPLORE = [
+  'Load a file to unlock the pages; load two to unlock Compare.',
+  'Your file is loaded: pick a page from the sidebar. Add one more to unlock Compare.',
+  'Your files are loaded: pick a page from the sidebar.',
+]
+
+function Home({ onFiles, fileCount, error, onDismiss }) {
   return (
     <Page>
       <section className="start">
@@ -60,7 +94,7 @@ function Home({ onFiles, hasFiles, error, onDismiss }) {
         <ol className="how">
           <li><b>Export</b><span>In DevTools, open Network, then choose “Save all as HAR with content”.</span></li>
           <li><b>Drop it here</b><span>Nothing is uploaded. Files stay in this tab and disappear when you close it.</span></li>
-          <li><b>Explore</b><span>{hasFiles ? 'Your files are loaded: pick a page from the sidebar.' : 'Load two or more to unlock Compare.'}</span></li>
+          <li><b>Explore</b><span>{EXPLORE[Math.min(fileCount, 2)]}</span></li>
         </ol>
       </section>
     </Page>
@@ -73,7 +107,7 @@ export default function App() {
   const [error, setError] = useState('')
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [dock, setDock] = useState(null) // { type: 'inspect' | 'list', ... }
-  const [toastMsg, setToastMsg] = useState('')
+  const [toastMsg, setToastMsg] = useState(null) // { id, text, tone } or null
   const [help, setHelp] = useState(false)
   const [loading, setLoading] = useState('') // name of the file being analyzed, or ''
   const [more, setMore] = useState(false)
@@ -83,6 +117,7 @@ export default function App() {
   const location = useLocation()
   const searchRef = useRef(null)
   const toastTimer = useRef(0)
+  const toastSeq = useRef(0)
   const dockRef = useRef(dock)
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)')
   const narrow = useMediaQuery('(max-width: 760px)')
@@ -96,10 +131,11 @@ export default function App() {
   const changeTheme = (v) => { setThemePref(v); writePref('harlens-theme', v) }
   const toggleSide = useCallback(() => setCollapsed((c) => { writePref('harlens-side', c ? '0' : '1'); return !c }), [])
 
-  const toast = useCallback((m) => {
-    setToastMsg(m)
+  // tone: 'info' (default) or 'error'. A fresh id on every call re-mounts the pill, so repeating a message replays it.
+  const toast = useCallback((text, tone = 'info') => {
+    setToastMsg({ id: ++toastSeq.current, text, tone })
     clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToastMsg(''), 2200)
+    toastTimer.current = setTimeout(() => setToastMsg(null), tone === 'error' ? 3200 : 2200)
   }, [])
 
   const addParsed = useCallback((parsed) => {
@@ -159,7 +195,11 @@ export default function App() {
   const source = hars.length > 1 && dockHar ? dockHar.fileName : ''
   const docked = !!dock && !narrow // wide: the dock sits beside the page; narrow: it becomes a sheet
 
+  const fileCount = hars.length
+  // One picker that is always mounted: the toolbar's Add file only exists once a file is loaded, but the O key and the
+  // More sheet's "Open HAR file" must work from an empty start too.
   const pickerRef = useRef(null)
+  const picker = usePicker(onFiles, pickerRef)
   useEffect(() => {
     const onKey = (e) => {
       const tag = (e.target.tagName || '').toLowerCase()
@@ -178,15 +218,25 @@ export default function App() {
       else if (k === 'b') toggleSide()
       else if (k === 'o') pickerRef.current?.click()
       else if (k === '/') { e.preventDefault(); searchRef.current?.focus() }
-      else if (/^[1-7]$/.test(k)) navigate(NAV[Number(k) - 1].to)
+      else if (/^[1-7]$/.test(k)) {
+        const page = NAV[Number(k) - 1]
+        const reason = lockReason(page, fileCount)
+        if (!reason) navigate(page.to)
+        else if (!e.repeat) toast(reason, 'error') // a held key would otherwise strobe the toast
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [navigate, help, more, theme, toggleSide])
+  }, [navigate, help, more, theme, toggleSide, toast, fileCount])
 
   const need = (el) => (har ? <Page>{el}</Page> : <Page><EmptyState icon={faFolderOpen} title="No file loaded" action={<NavLink className="btn primary" to="/">Open a HAR file</NavLink>}>Files are kept in memory, so a reload clears them.</EmptyState></Page>)
   const showFilters = har && FILTERED.has(location.pathname)
   const current = NAV.find((n) => n.to === location.pathname)
+  // Home keeps the title index.html ships with; every other page is named after itself
+  const [homeTitle] = useState(() => document.title)
+  useEffect(() => { document.title = current ? `${current.label} · HAR.lens` : homeTitle }, [current, homeTitle])
+  const Title = location.pathname === '/' ? 'p' : 'h1' // Home has its own <h1>, and one page should have only one
+  const toastError = toastMsg?.tone === 'error'
   const tabItems = NAV.filter((n) => TAB_PRIMARY.includes(n.to))
   const moreItems = NAV.filter((n) => !TAB_PRIMARY.includes(n.to))
 
@@ -196,6 +246,7 @@ export default function App() {
         <ListCtx.Provider value={showList}>
           <SelectedCtx.Provider value={selected}>
             <a className="skip" href="#main">Skip to content</a>
+            {picker.input}
             <div className={`app${collapsed && !narrow ? ' side-collapsed' : ''}${docked ? ' has-dock' : ''}`}>
               <aside className="side glass" aria-label="Sidebar">
                 <NavLink to="/" className="brand" aria-label="HAR.lens home">
@@ -204,11 +255,10 @@ export default function App() {
                 </NavLink>
                 <nav aria-label="Pages">
                   {NAV.map((n, i) => (
-                    <NavLink key={n.to} to={n.to} title={collapsed ? `${n.label} (${i + 1})` : undefined}>
+                    <PageLink key={n.to} item={n} fileCount={fileCount} toast={toast} hint={<Kbd>{i + 1}</Kbd>} title={collapsed ? `${n.label} (${i + 1})` : undefined}>
                       <FontAwesomeIcon icon={n.icon} fixedWidth />
                       <span>{n.label}</span>
-                      <Kbd>{i + 1}</Kbd>
-                    </NavLink>
+                    </PageLink>
                   ))}
                 </nav>
 
@@ -238,10 +288,10 @@ export default function App() {
                 <header className="topbar glass">
                   <div className="crumbs">
                     <button type="button" className="icon-btn side-toggle" onClick={toggleSide} aria-label={collapsed ? 'Show sidebar' : 'Hide sidebar'} title="Toggle sidebar (B)"><FontAwesomeIcon icon={faCircleHalfStroke} /></button>
-                    <h1 className="page-title">{current ? current.label : 'Open a file'}</h1>
+                    <Title className="page-title">{current ? current.label : 'Open a file'}</Title>
                     {har && current && <span className="page-sub ellipsis" title={har.fileName}>{har.fileName}</span>}
                   </div>
-                  {hars.length > 0 && <div className="top-actions"><AddFiles onFiles={onFiles} pickerRef={pickerRef} /></div>}
+                  {hars.length > 0 && <div className="top-actions"><AddFiles onFiles={onFiles} /></div>}
                 </header>
 
                 <main id="main" className="content">
@@ -249,7 +299,7 @@ export default function App() {
                   {showFilters && <FilterBar filters={filters} setFilters={setFilters} har={har} shown={filtered.entries.length} searchRef={searchRef} />}
                   <AnimatePresence mode="wait" initial={false}>
                     <Routes location={location} key={location.pathname}>
-                      <Route path="/" element={<Home onFiles={onFiles} hasFiles={hars.length > 0} error={error} onDismiss={() => setError('')} />} />
+                      <Route path="/" element={<Home onFiles={onFiles} fileCount={fileCount} error={error} onDismiss={() => setError('')} />} />
                       <Route path="/overview" element={need(<Overview har={filtered} filters={filters} setFilters={setFilters} />)} />
                       <Route path="/issues" element={need(<Issues har={har} key={active} />)} />
                       <Route path="/waterfall" element={need(<Waterfall har={filtered} key={active} />)} />
@@ -288,9 +338,9 @@ export default function App() {
               {narrow && (
                 <nav className="tabbar glass" aria-label="Pages">
                   {tabItems.map((n) => (
-                    <NavLink key={n.to} to={n.to}><FontAwesomeIcon icon={n.icon} /><span>{n.label}</span></NavLink>
+                    <PageLink key={n.to} item={n} fileCount={fileCount} toast={toast}><FontAwesomeIcon icon={n.icon} /><span>{n.label}</span></PageLink>
                   ))}
-                  <button type="button" className={`tab-more${more || moreItems.some((n) => n.to === location.pathname) ? ' active' : ''}`} aria-expanded={more} onClick={() => setMore((m) => !m)}>
+                  <button type="button" className={`tab-more${more || moreItems.some((n) => n.to === location.pathname && !isLocked(n, fileCount)) ? ' active' : ''}`} aria-expanded={more} onClick={() => setMore((m) => !m)}>
                     <FontAwesomeIcon icon={faEllipsis} /><span>More</span>
                   </button>
                 </nav>
@@ -300,7 +350,7 @@ export default function App() {
                   <>
                     <motion.div className="scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMore(false)} />
                     <motion.div className="more-sheet glass" role="menu" initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 24, opacity: 0 }} transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}>
-                      {moreItems.map((n) => <NavLink key={n.to} to={n.to} role="menuitem" onClick={() => setMore(false)}><FontAwesomeIcon icon={n.icon} fixedWidth /> {n.label}</NavLink>)}
+                      {moreItems.map((n) => <PageLink key={n.to} item={n} fileCount={fileCount} toast={toast} role="menuitem" onClick={() => setMore(false)}><FontAwesomeIcon icon={n.icon} fixedWidth /> {n.label}</PageLink>)}
                       <button type="button" role="menuitem" onClick={() => { setMore(false); pickerRef.current?.click() }}><FontAwesomeIcon icon={faFolderOpen} fixedWidth /> Open HAR file</button>
                       <div className="more-theme"><Segmented size="s" label="Appearance" value={themePref} onChange={changeTheme} options={THEMES.map((t) => ({ value: t.value, label: t.label, icon: t.icon }))} /></div>
                     </motion.div>
@@ -329,7 +379,10 @@ export default function App() {
                 </motion.div>
               )}
               {toastMsg && (
-                <motion.div key="toast" className="toast" role="status" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}>{toastMsg}</motion.div>
+                <motion.div key={toastMsg.id} className={`toast${toastError ? ' toast-error' : ''}`} role={toastError ? 'alert' : 'status'} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}>
+                  {toastError && <FontAwesomeIcon icon={faTriangleExclamation} />}
+                  {toastMsg.text}
+                </motion.div>
               )}
             </AnimatePresence>
           </SelectedCtx.Provider>

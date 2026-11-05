@@ -37,18 +37,26 @@
   position: relative; display: flex; align-items: center; gap: 11px; height: var(--hit); min-height: 34px; padding: 0 10px; border-radius: var(--r-s);
   color: var(--t2); text-decoration: none; white-space: nowrap; transition: background var(--t-fast) ease, color var(--t-fast) ease, transform var(--t-press) var(--ease-out);
 }
-.side nav a svg { flex: none; width: 16px; color: var(--t3); transition: color var(--t-fast) ease; }
+.side nav a svg { flex: none; width: 16px; color: var(--t3); transition: color var(--t-fast) ease, opacity var(--t-fast) ease; }
 .side nav a span { flex: 1; }
 .side nav a .kbd { opacity: 0; transition: opacity var(--t-fast) ease; }
 @media (hover: hover) and (pointer: fine) {
-  .side nav a:hover { background: var(--hover); color: var(--t1); }
+  .side nav a:not(.locked):hover { background: var(--hover); color: var(--t1); }
   .side nav a:hover .kbd { opacity: 1; }
 }
-.side nav a:active { transform: scale(0.98); background: var(--press); }
+.side nav a:not(.locked):active { transform: scale(0.98); background: var(--press); }
 .side nav a.active { background: var(--blue-tint); color: var(--t1); box-shadow: inset 0 0 0 1px var(--blue-line); }
 .side nav a.active svg { color: var(--blue-text); }
 .side nav a.active::before { content: ''; position: absolute; left: -10px; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--lime); }
 :root[data-theme='light'] .side nav a.active::before { background: var(--blue); }
+
+/* Locked page (needs a HAR file): still a real link, but dimmed, with no hover or press feedback. The lock sits in the
+   slot the key hint uses, so nothing shifts when it unlocks. Never styled as the current page. The cursor rule is
+   shared with the tab bar and the More sheet. */
+.side nav a.locked { color: var(--t3); }
+.side nav a.locked > svg:first-child { opacity: 0.6; }
+.side nav a .nav-lock { width: 20px; font-size: 11px; }
+@media (hover: hover) and (pointer: fine) { .side nav a.locked, .tabbar a.locked, .more-sheet a.locked { cursor: not-allowed; } }
 
 .side-h { margin: 6px 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--t3); }
 .files { display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow-y: auto; padding-top: 10px; border-top: 1px solid var(--line); }
@@ -66,11 +74,13 @@
 /* collapsed: icons only */
 .side-collapsed .brand-t, .side-collapsed .side nav a span, .side-collapsed .side nav a .kbd, .side-collapsed .files, .side-collapsed .side-foot .seg { display: none; }
 .side-collapsed .side nav a { justify-content: center; padding: 0; }
+.side-collapsed .side nav a .nav-lock { position: absolute; left: calc(50% + 4px); bottom: 5px; width: auto; font-size: 8px; } /* no room for a slot: a badge on the icon */
 .side-collapsed .side nav a.active::before { left: -10px; }
 .side-collapsed .side-foot { justify-content: center; flex-direction: column; }
 @media (max-width: 1100px) {
   .brand-t, .side nav a span, .side nav a .kbd, .files, .side-foot .seg { display: none; }
   .side nav a { justify-content: center; padding: 0; }
+  .side nav a .nav-lock { position: absolute; left: calc(50% + 4px); bottom: 5px; width: auto; font-size: 8px; }
   .side-foot { justify-content: center; flex-direction: column; }
 }
 
@@ -78,7 +88,7 @@
 .main-col { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .topbar { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: var(--bar-h); padding: 0 20px; border-bottom: 1px solid var(--line); position: relative; z-index: 5; }
 .crumbs { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.page-title { font-size: 15px; letter-spacing: -0.01em; white-space: nowrap; }
+.page-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; color: var(--t1); } /* an <h1> except on Home, where it is a <p>: look the same either way */
 .page-sub { color: var(--t3); font-size: 12px; max-width: 38ch; }
 .page-sub::before { content: '/'; margin-right: 10px; color: var(--line-2); }
 .top-actions { display: flex; align-items: center; gap: 8px; }
@@ -112,15 +122,20 @@
   .scrim { position: fixed; inset: 0; z-index: 60; background: var(--scrim); }
 
   .tabbar { position: fixed; z-index: 50; left: 0; right: 0; bottom: 0; height: calc(var(--tab-h) + env(safe-area-inset-bottom)); padding: 4px 6px env(safe-area-inset-bottom); display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line); }
-  .tabbar a, .tab-more { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: 0; border-radius: var(--r-m); color: var(--t3); text-decoration: none; font-size: 10.5px; font-weight: 500; min-height: 44px; transition: color var(--t-fast) ease, transform var(--t-press) var(--ease-out); }
+  .tabbar a, .tab-more { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: 0; border-radius: var(--r-m); color: var(--t3); text-decoration: none; font-size: 10.5px; font-weight: 500; min-height: 44px; transition: color var(--t-fast) ease, transform var(--t-press) var(--ease-out); }
   .tabbar a svg, .tab-more svg { font-size: 17px; }
-  .tabbar a:active, .tab-more:active { transform: scale(0.94); }
+  .tabbar a:not(.locked):active, .tab-more:active { transform: scale(0.94); }
   .tabbar a.active, .tab-more.active { color: var(--blue-text); }
+  .tabbar a.locked > :not(.nav-lock) { opacity: 0.7; }
+  .tabbar a .nav-lock { position: absolute; top: 6px; left: calc(50% + 7px); font-size: 9px; }
   .tabbar a.active svg { color: var(--lime); }
   :root[data-theme='light'] .tabbar a.active svg { color: var(--blue); }
-  .more-sheet { position: fixed; z-index: 55; left: 10px; right: 10px; bottom: calc(var(--tab-h) + env(safe-area-inset-bottom) + 8px); padding: 8px; display: flex; flex-direction: column; border: 1px solid var(--line-2); border-radius: var(--r-l); box-shadow: var(--shadow-pop); background: var(--glass-solid); }
+  /* the sheet sits above the scrim (60), or the scrim swallows every tap on it */
+  .more-sheet { position: fixed; z-index: 65; left: 10px; right: 10px; bottom: calc(var(--tab-h) + env(safe-area-inset-bottom) + 8px); padding: 8px; display: flex; flex-direction: column; border: 1px solid var(--line-2); border-radius: var(--r-l); box-shadow: var(--shadow-pop); background: var(--glass-solid); }
   .more-sheet a, .more-sheet button.item, .more-sheet > button { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; background: none; border: 0; border-radius: var(--r-m); color: var(--t1); text-decoration: none; text-align: left; }
   .more-sheet a.active { background: var(--blue-tint); }
+  .more-sheet a.locked { color: var(--t3); }
+  .more-sheet a .nav-lock { margin-left: auto; font-size: 12px; }
   .more-theme { padding: 8px 8px 4px; border-top: 1px solid var(--line); margin-top: 4px; }
 }
 @media (min-width: 761px) { .tabbar, .more-sheet { display: none; } }
@@ -131,8 +146,11 @@
 .modal { width: min(440px, 100%); padding: 18px 20px 20px; background: var(--glass-solid); border: 1px solid var(--line-2); border-radius: var(--r-l); box-shadow: var(--shadow-pop); }
 .modal header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .modal h2 { font-size: 16px; letter-spacing: -0.01em; }
-.toast { position: fixed; z-index: 95; left: 50%; bottom: 26px; transform: translateX(-50%); padding: 9px 16px; border-radius: 999px; background: var(--t1); color: var(--bg); font-weight: 600; font-size: 12.5px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
-@media (max-width: 760px) { .toast { bottom: calc(var(--tab-h) + 24px); } }
+/* Centred with auto margins, not a transform: Framer Motion writes its own transform onto the toast and would cancel it */
+.toast { position: fixed; z-index: 95; left: 12px; right: 12px; bottom: 26px; width: fit-content; margin: 0 auto; display: flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; background: var(--t1); color: var(--bg); font-weight: 600; font-size: 12.5px; text-align: center; text-wrap: balance; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
+.toast > svg { flex: none; }
+.toast-error { background: var(--crit); } /* text stays var(--bg): 7.8:1 on dark's #ff7373, 5.2:1 on light's #c42d2d */
+@media (max-width: 760px) { .toast { bottom: calc(var(--tab-h) + env(safe-area-inset-bottom) + 24px); } }
 
 /* ---------- site footer (author credit, pinned to the bottom of the main column) ---------- */
 .site-foot {
