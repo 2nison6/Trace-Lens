@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { startTransition, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -7,8 +7,10 @@ import {
   faTriangleExclamation, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import { DEFAULT_FILTERS, InspectCtx, ListCtx, SelectedCtx } from './context'
-import { analyzeCached } from './analyzer'
-import { filterHar, parseHar } from './harParser'
+import { filterHar } from './harParser'
+import { ingest } from './ingest'
+import { loadStore } from './loadStore'
+import { isReady, signalReady } from './boot'
 import { NAV, SHORTCUTS, TAB_PRIMARY, isLocked, lockReason } from './nav'
 import useMediaQuery from './hooks/useMediaQuery'
 import usePicker from './hooks/usePicker'
@@ -24,6 +26,7 @@ import Issues from './components/Issues'
 import Insights from './components/Insights'
 import Tools from './components/Tools'
 import Footer from './components/Footer'
+import LoadOverlay from './components/LoadOverlay'
 import { EmptyState, Kbd, Notice, Segmented } from './components/ui'
 import './styles/index.css'
 
@@ -41,13 +44,28 @@ function writePref(key, value) {
   try { localStorage.setItem(key, value) } catch { /* storage unavailable: the preference just won't persist */ }
 }
 
-// Page change: a short fade + 8px rise. Skipped for keyboard navigation (used all day) and under reduced motion.
-const pageMotion = {
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] } },
-  exit: { opacity: 0, transition: { duration: 0.1 } },
+// A page fades and rises in with a CSS animation (.page in layout.css; reduced motion is handled globally in tokens.css).
+// There is deliberately no exit animation: AnimatePresence mode="wait" would hold the next page back for ~100 ms, and the
+// upload overlay (which stays until the new page has painted) could not tell when the page had really arrived.
+function Page({ children }) {
+  // The first page is part of the boot: it appears as the splash goes away instead of fading in behind it
+  const [enter] = useState(() => isReady())
+  return <div className={enter ? 'page' : undefined}>{children}</div>
 }
-const Page = ({ children }) => <motion.div {...pageMotion}>{children}</motion.div>
+
+// Loaded captures and which one is selected, kept together so adding or removing files updates both atomically.
+function library(state, action) {
+  switch (action.type) {
+    case 'add': return { hars: [...state.hars, ...action.parsed], active: state.hars.length }
+    case 'select': return { ...state, active: action.index }
+    case 'remove': {
+      const hars = state.hars.filter((_, j) => j !== action.index)
+      const a = state.active
+      return { hars, active: a > action.index ? a - 1 : Math.max(0, Math.min(a, state.hars.length - 2)) }
+    }
+    default: return state
+  }
+}
 
 // Every link to a page goes through here. A locked page stays a real <a href> (focusable, keeps its URL) but never
 // navigates: it carries aria-disabled and explains itself in an error toast instead.
@@ -102,14 +120,12 @@ function Home({ onFiles, fileCount, error, onDismiss }) {
 }
 
 export default function App() {
-  const [hars, setHars] = useState([])
-  const [active, setActive] = useState(0)
+  const [{ hars, active }, dispatch] = useReducer(library, { hars: [], active: 0 })
   const [error, setError] = useState('')
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [dock, setDock] = useState(null) // { type: 'inspect' | 'list', ... }
   const [toastMsg, setToastMsg] = useState(null) // { id, text, tone } or null
   const [help, setHelp] = useState(false)
-  const [loading, setLoading] = useState('') // name of the file being analyzed, or ''
   const [more, setMore] = useState(false)
   const [themePref, setThemePref] = useState(() => readPref('harlens-theme', 'system'))
   const [collapsed, setCollapsed] = useState(() => readPref('harlens-side', '0') === '1')
@@ -138,46 +154,47 @@ export default function App() {
     toastTimer.current = setTimeout(() => setToastMsg(null), tone === 'error' ? 3200 : 2200)
   }, [])
 
-  const addParsed = useCallback((parsed) => {
-    if (!parsed.length) return
-    setActive(hars.length)
-    setHars([...hars, ...parsed])
-    setFilters(DEFAULT_FILTERS)
-    setDock(null)
-    if (location.pathname === '/') navigate('/overview')
-  }, [hars, navigate, location.pathname])
+  // The page the user is on right now, readable from async code without a stale closure
+  const pathRef = useRef(location.pathname)
+  const readyRef = useRef(null)
+  useEffect(() => { pathRef.current = location.pathname }, [location.pathname])
 
-  const onFiles = useCallback(async (files) => {
+  // Adds freshly parsed captures and opens Overview in ONE transition, so data and route commit together. Resolves once
+  // that commit has happened; the upload overlay waits for it (and for the next paint) before it goes away.
+  const commit = useCallback((parsed) => new Promise((resolve) => {
+    readyRef.current = resolve
+    startTransition(() => {
+      dispatch({ type: 'add', parsed })
+      setFilters(DEFAULT_FILTERS)
+      setDock(null)
+      if (pathRef.current === '/') navigate('/overview')
+    })
+  }), [navigate])
+  useEffect(() => {
+    readyRef.current?.()
+    readyRef.current = null
+  }, [hars, location.pathname])
+
+  // Reading, parsing and the overlay live in ingest.js
+  const onFiles = useCallback((files) => {
     setError('')
-    const parsed = []
-    for (const f of files) {
-      setLoading(f.name)
-      // one frame so the loader paints before the (synchronous) parse blocks the main thread
-      await new Promise((r) => requestAnimationFrame(() => r()))
-      try {
-        const har = parseHar(await f.text(), f.name)
-        analyzeCached(har) // warm the findings so the first page opens instantly
-        parsed.push(har)
-      } catch (e) {
-        setError(`${f.name}: ${e instanceof SyntaxError ? 'this file is not valid JSON' : e.message}`)
-      }
-    }
-    addParsed(parsed)
-    setLoading('')
-  }, [addParsed])
+    ingest(files, { commit, report: (failed) => setError(failed.join(' · ')) })
+  }, [commit])
 
   // Dropping a file anywhere on the page opens it, so the start screen is never the only way in
   useEffect(() => {
     const over = (e) => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault() }
-    const drop = (e) => { if (e.dataTransfer?.files?.length) { e.preventDefault(); onFiles([...e.dataTransfer.files]) } }
+    // A drop on the start screen's drop zone or the Add file button is already handled by React (which calls preventDefault): don't open it twice
+    const drop = (e) => { if (!e.defaultPrevented && e.dataTransfer?.files?.length) { e.preventDefault(); onFiles([...e.dataTransfer.files]) } }
     window.addEventListener('dragover', over)
     window.addEventListener('drop', drop)
     return () => { window.removeEventListener('dragover', over); window.removeEventListener('drop', drop) }
   }, [onFiles])
 
+  // A page that just became locked (the last file went, or Compare lost its second one) stays open and shows its own
+  // empty state, which says what to do next and offers the button for it.
   const remove = (i) => {
-    setHars(hars.filter((_, j) => j !== i))
-    setActive((a) => (a > i ? a - 1 : Math.max(0, Math.min(a, hars.length - 2))))
+    dispatch({ type: 'remove', index: i })
     setDock(null)
   }
 
@@ -202,6 +219,7 @@ export default function App() {
   const picker = usePicker(onFiles, pickerRef)
   useEffect(() => {
     const onKey = (e) => {
+      if (loadStore.get()) return // a file is being opened: shortcuts would act on a half-loaded app
       const tag = (e.target.tagName || '').toLowerCase()
       const typing = tag === 'input' || tag === 'textarea' || tag === 'select'
       if (e.key === 'Escape') {
@@ -232,9 +250,15 @@ export default function App() {
   const need = (el) => (har ? <Page>{el}</Page> : <Page><EmptyState icon={faFolderOpen} title="No file loaded" action={<NavLink className="btn primary" to="/">Open a HAR file</NavLink>}>Files are kept in memory, so a reload clears them.</EmptyState></Page>)
   const showFilters = har && FILTERED.has(location.pathname)
   const current = NAV.find((n) => n.to === location.pathname)
-  // Home keeps the title index.html ships with; every other page is named after itself
+  // Home keeps the title and robots rule index.html ships with. Every other page is named after itself and asks search
+  // engines not to index it: they are tools that need a file, so on their own they are empty pages.
   const [homeTitle] = useState(() => document.title)
-  useEffect(() => { document.title = current ? `${current.label} · HAR.lens` : homeTitle }, [current, homeTitle])
+  const [homeRobots] = useState(() => document.querySelector('meta[name="robots"]')?.getAttribute('content') || 'index, follow')
+  useEffect(() => {
+    document.title = current ? `${current.label} · HAR.lens` : homeTitle
+    document.querySelector('meta[name="robots"]')?.setAttribute('content', current ? 'noindex, follow' : homeRobots)
+  }, [current, homeTitle, homeRobots])
+  useEffect(() => { signalReady() }, []) // the first frame is on screen: the static splash in index.html can go
   const Title = location.pathname === '/' ? 'p' : 'h1' // Home has its own <h1>, and one page should have only one
   const toastError = toastMsg?.tone === 'error'
   const tabItems = NAV.filter((n) => TAB_PRIMARY.includes(n.to))
@@ -267,7 +291,7 @@ export default function App() {
                     <h2 className="side-h">Files</h2>
                     {hars.map((h, i) => (
                       <div key={`${h.fileName}-${i}`} className={`file${i === active ? ' on' : ''}`}>
-                        <button type="button" className="file-b" aria-pressed={i === active} onClick={() => { setActive(i); setFilters(DEFAULT_FILTERS); setDock(null) }} title={h.fileName}>
+                        <button type="button" className="file-b" aria-pressed={i === active} onClick={() => { dispatch({ type: 'select', index: i }); setFilters(DEFAULT_FILTERS); setDock(null) }} title={h.fileName}>
                           <span className="ellipsis">{h.fileName}</span>
                           <small className="num">{h.summary.count}</small>
                         </button>
@@ -297,19 +321,17 @@ export default function App() {
                 <main id="main" className="content">
                   {error && location.pathname !== '/' && <Notice tone="crit" icon={faTriangleExclamation} onDismiss={() => setError('')}>{error}</Notice>}
                   {showFilters && <FilterBar filters={filters} setFilters={setFilters} har={har} shown={filtered.entries.length} searchRef={searchRef} />}
-                  <AnimatePresence mode="wait" initial={false}>
-                    <Routes location={location} key={location.pathname}>
-                      <Route path="/" element={<Home onFiles={onFiles} fileCount={fileCount} error={error} onDismiss={() => setError('')} />} />
-                      <Route path="/overview" element={need(<Overview har={filtered} filters={filters} setFilters={setFilters} />)} />
-                      <Route path="/issues" element={need(<Issues har={har} key={active} />)} />
-                      <Route path="/waterfall" element={need(<Waterfall har={filtered} key={active} />)} />
-                      <Route path="/flow" element={need(<FlowView har={filtered} key={`${active}-${filtered ? filtered.entries.length : 0}`} />)} />
-                      <Route path="/insights" element={need(<Insights har={har} key={active} />)} />
-                      <Route path="/compare" element={hars.length ? <Page><Compare hars={hars} key={hars.length} /></Page> : need(null)} />
-                      <Route path="/tools" element={need(<Tools har={har} toast={toast} key={active} />)} />
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                  </AnimatePresence>
+                  <Routes location={location} key={location.pathname}>
+                    <Route path="/" element={<Home onFiles={onFiles} fileCount={fileCount} error={error} onDismiss={() => setError('')} />} />
+                    <Route path="/overview" element={need(<Overview har={filtered} filters={filters} setFilters={setFilters} />)} />
+                    <Route path="/issues" element={need(<Issues har={har} key={active} />)} />
+                    <Route path="/waterfall" element={need(<Waterfall har={filtered} key={active} />)} />
+                    <Route path="/flow" element={need(<FlowView har={filtered} key={`${active}-${filtered ? filtered.entries.length : 0}`} />)} />
+                    <Route path="/insights" element={need(<Insights har={har} key={active} />)} />
+                    <Route path="/compare" element={hars.length ? <Page><Compare hars={hars} key={hars.length} /></Page> : need(null)} />
+                    <Route path="/tools" element={need(<Tools har={har} toast={toast} key={active} />)} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
                 </main>
                 <Footer />
               </div>
@@ -359,16 +381,8 @@ export default function App() {
               </AnimatePresence>
             </div>
 
+            <LoadOverlay />
             <AnimatePresence>
-              {loading && (
-                <motion.div key="loading" className="loading-wrap" role="status" aria-live="polite" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                  <div className="loading-card">
-                    <span className="spinner" aria-hidden="true" />
-                    <strong>Analyzing HAR…</strong>
-                    <span className="loading-file ellipsis">{loading}</span>
-                  </div>
-                </motion.div>
-              )}
               {help && (
                 <motion.div className="modal-wrap" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} onClick={() => setHelp(false)}>
                   <motion.div className="modal" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" onClick={(e) => e.stopPropagation()}
@@ -379,7 +393,7 @@ export default function App() {
                 </motion.div>
               )}
               {toastMsg && (
-                <motion.div key={toastMsg.id} className={`toast${toastError ? ' toast-error' : ''}`} role={toastError ? 'alert' : 'status'} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}>
+                <motion.div key={toastMsg.id} className={`toast${toastError ? ' toast-error' : ''}`} role={toastError ? 'alert' : 'status'} initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}>
                   {toastError && <FontAwesomeIcon icon={faTriangleExclamation} />}
                   {toastMsg.text}
                 </motion.div>
