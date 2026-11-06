@@ -1,0 +1,286 @@
+{
+ "requests": [
+  {
+   "method": "GET",
+   "url": "https://portal.example.test/reports",
+   "requestId": "request-1-GET-demo1",
+   "requestHeaders": [
+    {
+     "name": "Host",
+     "value": "portal.example.test"
+    },
+    {
+     "name": "User-Agent",
+     "value": "Mozilla/5.0 (Macintosh) Firefox/140.0"
+    },
+    {
+     "name": "Accept",
+     "value": "text/html"
+    }
+   ],
+   "get": [],
+   "post": [],
+   "responseStatus": 302,
+   "responseStatusText": "HTTP/1.1 302 Found",
+   "responseHeaders": [
+    {
+     "name": "Content-Type",
+     "value": "text/html; charset=utf-8"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "url": "https://portal.example.test/saml/login?return=%2Freports",
+   "requestId": "request-2-GET-demo2",
+   "requestHeaders": [
+    {
+     "name": "Host",
+     "value": "portal.example.test"
+    },
+    {
+     "name": "User-Agent",
+     "value": "Mozilla/5.0 (Macintosh) Firefox/140.0"
+    },
+    {
+     "name": "Accept",
+     "value": "text/html"
+    }
+   ],
+   "get": [
+    [
+     "return",
+     "/reports"
+    ]
+   ],
+   "post": [],
+   "responseStatus": 302,
+   "responseStatusText": "HTTP/1.1 302 Found",
+   "responseHeaders": [
+    {
+     "name": "Content-Type",
+     "value": "text/html; charset=utf-8"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "url": "https://login.example.test/sso?SAMLRequest=hZLbTsJAEIZfZbP3tNuKCBtKUiFGEg9E0AtvzNAOsMke6s7Uw9sbi0Y0UW9n%2Fm%2Fmn8OYwNlGly3v%2FA0%2BtkgsXpz1pLtEIdvodQAypD04JM2VXpaXFzpPlG5i4FAFKw%2BQvwkgwsgmeCnms0I%2BHFX5OgO1GeGwPqkG62Pob44wr7NKrUcw3Ehxh5FM8IXMEyXFnKjFuScGz4XMVT7oZVlPDVZqpPvHWql7KWZIbDxwR%2B2YG9JpasPW%2BARfwDUWE0bilChIUX4amgZPrcO4xPhkKry9ufiCmxAZ7A8anE2hIikWH1s4Nb42fvv3AtZ7Eenz1WrRW1wvV3Iyfq%2Blu9Hi5N%2BeDhlqYBinh9h4f8crcDifLYI11as4C9EB%2F%2B4nS7IuYureppNqdGBsWdcRiaQorQ3P04jAWEiOLcp0su%2F6%2FWEmbw%3D%3D&RelayState=%2Freports",
+   "requestId": "request-3-GET-demo3",
+   "requestHeaders": [
+    {
+     "name": "Host",
+     "value": "login.example.test"
+    },
+    {
+     "name": "User-Agent",
+     "value": "Mozilla/5.0 (Macintosh) Firefox/140.0"
+    },
+    {
+     "name": "Accept",
+     "value": "text/html"
+    }
+   ],
+   "get": [
+    [
+     "SAMLRequest",
+     "hZLbTsJAEIZfZbP3tNuKCBtKUiFGEg9E0AtvzNAOsMke6s7Uw9sbi0Y0UW9n/m/mn8OYwNlGly3v/A0+tkgsXpz1pLtEIdvodQAypD04JM2VXpaXFzpPlG5i4FAFKw+QvwkgwsgmeCnms0I+HFX5OgO1GeGwPqkG62Pob44wr7NKrUcw3Ehxh5FM8IXMEyXFnKjFuScGz4XMVT7oZVlPDVZqpPvHWql7KWZIbDxwR+2YG9JpasPW+ARfwDUWE0bilChIUX4amgZPrcO4xPhkKry9ufiCmxAZ7A8anE2hIikWH1s4Nb42fvv3AtZ7Eenz1WrRW1wvV3Iyfq+lu9Hi5N+eDhlqYBinh9h4f8crcDifLYI11as4C9EB/+4nS7IuYureppNqdGBsWdcRiaQorQ3P04jAWEiOLcp0su/6/WEmbw=="
+    ],
+    [
+     "RelayState",
+     "/reports"
+    ]
+   ],
+   "post": [],
+   "responseStatus": 200,
+   "responseStatusText": "HTTP/1.1 200 OK",
+   "responseHeaders": [
+    {
+     "name": "Content-Type",
+     "value": "text/html; charset=utf-8"
+    }
+   ],
+   "protocol": "SAML-P",
+   "saml": "<samlp:AuthnRequest xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\" ID=\"_3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f\" Version=\"2.0\" IssueInstant=\"2026-11-06T09:45:00Z\" Destination=\"https://login.example.test/sso\" AssertionConsumerServiceURL=\"https://portal.example.test/saml/acs\" ProtocolBinding=\"urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST\"><saml:Issuer>https://portal.example.test/saml/metadata</saml:Issuer><samlp:NameIDPolicy Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\" AllowCreate=\"true\"/></samlp:AuthnRequest>"
+  },
+  {
+   "method": "GET",
+   "url": "https://login.example.test/login",
+   "requestId": "request-4-GET-demo4",
+   "requestHeaders": [
+    {
+     "name": "Host",
+     "value": "login.example.test"
+    },
+    {
+     "name": "User-Agent",
+     "value": "Mozilla/5.0 (Macintosh) Firefox/140.0"
+    },
+    {
+     "name": "Accept",
+     "value": "text/html"
+    }
+   ],
+   "get": [],
+   "post": [],
+   "responseStatus": 200,
+   "responseStatusText": "HTTP/1.1 200 OK",
+   "responseHeaders": [
+    {
+     "name": "Content-Type",
+     "value": "text/html; charset=utf-8"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "url": "https://login.example.test/authenticate",
+   "requestId": "request-5-POST-demo5",
+   "requestHeaders": [
+    {
+     "name": "Host",
+     "value": "login.example.test"
+    },
+    {
+     "name": "User-Agent",
+     "value": "Mozilla/5.0 (Macintosh) Firefox/140.0"
+    },
+    {
+     "name": "Accept",
+     "value": "text/html"
+    },
+    {
+     "name": "Content-Type",
+     "value": "application/x-www-form-urlencoded"
+    }
+   ],
+   "get": [],
+   "post": [
+    [
+     "username",
+     "alex@example.test"
+    ],
+    [
+     "password",
+     "demo-password-not-real"
+    ]
+   ],
+   "responseStatus": 302,
+   "responseStatusText": "HTTP/1.1 302 Found",
+   "responseHeaders": [
+    {
+     "name": "Location",
+     "value": "https://login.example.test/sso/continue"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "url": "https://login.example.test/sso/continue",
+   "requestId": "request-6-GET-demo6",
+   "requestHeaders": [
+    {
+     "name": "Host",
+     "value": "login.example.test"
+    },
+    {
+     "name": "User-Agent",
+     "value": "Mozilla/5.0 (Macintosh) Firefox/140.0"
+    },
+    {
+     "name": "Accept",
+     "value": "text/html"
+    }
+   ],
+   "get": [],
+   "post": [],
+   "responseStatus": 200,
+   "responseStatusText": "HTTP/1.1 200 OK",
+   "responseHeaders": [
+    {
+     "name": "Content-Type",
+     "value": "text/html; charset=utf-8"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "url": "https://portal.example.test/saml/acs",
+   "requestId": "request-7-POST-demo7",
+   "requestHeaders": [
+    {
+     "name": "Host",
+     "value": "portal.example.test"
+    },
+    {
+     "name": "User-Agent",
+     "value": "Mozilla/5.0 (Macintosh) Firefox/140.0"
+    },
+    {
+     "name": "Accept",
+     "value": "text/html"
+    },
+    {
+     "name": "Content-Type",
+     "value": "application/x-www-form-urlencoded"
+    }
+   ],
+   "get": [],
+   "post": [
+    [
+     "SAMLResponse",
+     "PHNhbWxwOlJlc3BvbnNlIHhtbG5zOnNhbWxwPSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6cHJvdG9jb2wiIHhtbG5zOnNhbWw9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphc3NlcnRpb24iIElEPSJfZjFlMmQzYzRiNWE2OTc4ODc3NjY1NTQ0MzMyMjExYWEiIEluUmVzcG9uc2VUbz0iXzNjMmIxYTBmOWU4ZDdjNmI1YTRmM2UyZDFjMGI5YThmIiBWZXJzaW9uPSIyLjAiIElzc3VlSW5zdGFudD0iMjAyNi0xMS0wNlQwOTo0NTowNloiIERlc3RpbmF0aW9uPSJodHRwczovL3BvcnRhbC5leGFtcGxlLnRlc3Qvc2FtbC9hY3MiPjxzYW1sOklzc3Vlcj5odHRwczovL2xvZ2luLmV4YW1wbGUudGVzdC88L3NhbWw6SXNzdWVyPjxkczpTaWduYXR1cmUgeG1sbnM6ZHM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvMDkveG1sZHNpZyMiPjxkczpTaWduZWRJbmZvPjxkczpDYW5vbmljYWxpemF0aW9uTWV0aG9kIEFsZ29yaXRobT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS8xMC94bWwtZXhjLWMxNG4jIi8+PGRzOlNpZ25hdHVyZU1ldGhvZCBBbGdvcml0aG09Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvMDkveG1sZHNpZyNyc2Etc2hhMSIvPjxkczpSZWZlcmVuY2UgVVJJPSIjX2YxZTJkM2M0YjVhNjk3ODg3NzY2NTU0NDMzMjIxMWFhIj48ZHM6VHJhbnNmb3Jtcz48ZHM6VHJhbnNmb3JtIEFsZ29yaXRobT0iaHR0cDovL3d3dy53My5vcmcvMjAwMC8wOS94bWxkc2lnI2VudmVsb3BlZC1zaWduYXR1cmUiLz48ZHM6VHJhbnNmb3JtIEFsZ29yaXRobT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS8xMC94bWwtZXhjLWMxNG4jIi8+PC9kczpUcmFuc2Zvcm1zPjxkczpEaWdlc3RNZXRob2QgQWxnb3JpdGhtPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3htbGRzaWcjc2hhMSIvPjxkczpEaWdlc3RWYWx1ZT5SRVZOVDBSRlRVOUVSVTFQUkVWTlQwUkZUVTg9PC9kczpEaWdlc3RWYWx1ZT48L2RzOlJlZmVyZW5jZT48L2RzOlNpZ25lZEluZm8+PGRzOlNpZ25hdHVyZVZhbHVlPlJFVk5UMFJGVFU5RVJVMVBSRVZOVDBSRlRVOUVSVTFQUkVWTlQwUkZUVTlFUlUxUFJFVk5UMFJGVFU5RVJVMVBSRVZOVDBSRlRVOUVSVTFQUkVWTlQwUkZUVTlFUlUxUFJFVk5UMFJGVFU5RVJVMVBSRVZOVDBSRlRVOUVSVTFQUkVWTlQwUkZUVTlFUlUxUFJFVk5UMFJGVFU5RVJVMVBSRVZOVDBSRlRVOUVSVTFQUkVWTlQwUkZUVTlFUlUxUFJFVk5UMFJGVFU5RVJVMVBSRVZOVDBSRlRVOUVSVTFQUkVWTlQwUkZUVTlFUlUxUFJFVk5UMFJGVFU5RVJVMVBSRVZOVDBSRlRVOUVSVTFQUkVWTlQwUkZUVTlFUlUxUFJFVk5UMFJGVFU5RVJVMVBSRVZOVDBSRlRVOUVSVTFQUkVWTlQwUkZUVTlFUlUxUFJFVk5Udz09PC9kczpTaWduYXR1cmVWYWx1ZT48ZHM6S2V5SW5mbz48ZHM6WDUwOURhdGE+PGRzOlg1MDlDZXJ0aWZpY2F0ZT5NSUlDN2pDQ0FkWUNBUUl3RFFZSktvWklodmNOQVFFTEJRQXdQVEViTUJrR0ExVUVBd3dTYkc5bmFXNHVaWGhoYlhCc1pTNTBaWE4wTVI0d0hBWURWUVFLREJWRmVHRnRjR3hsSUV4dloybHVJRk5sY25acFkyVXdIaGNOTWpZd01UQXhNREF3TURBd1doY05Nall4TVRJMU1EQXdNREF3V2pBOU1Sc3dHUVlEVlFRRERCSnNiMmRwYmk1bGVHRnRjR3hsTG5SbGMzUXhIakFjQmdOVkJBb01GVVY0WVcxd2JHVWdURzluYVc0Z1UyVnlkbWxqWlRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTEFUWnI5ZDV5Z2dBWVQ1QjNnMWhiTTFkK25jZ0JUak9sVlVtdlQ0MWxKQm9Ud1h5R2NJN08wdGRWdThKRElaVHpEVi9aV1d3SUpDUVR5RTdqVUdqSkJzVlNDcUtEOGwyT2pkWmNOUnA4M29panhsYlc1SWRlZktSdkNxZisvRnU3bEdmdW9vWk8wU2hsUzFxU2RSTDlpa1k1QzFlZEIwZFcrRm5tUmZaOXJ2c3A2YnVJVldNRDdtN1RGZytUTURBekxQTlpJUnkvMmp0WnNvV1V2c283UzlTOUpZUC9ZSDVMSFloZUc0THplSjdjempWb05hNEZaOER6Y2laSUtOekJaVWNJdE9yZ2NKSVVlYnF2YTNEcVRvaFVCNzRHeGkzcGQ2UHQ1Z0wzaUU3d3ZidTgrNnJEcmZVd0F5MHVoMElOMDU1M21tUndjcTIwUTN3eDZFVDQ4Q0F3RUFBVEFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBcGl6MzQ5cVk5OTVjWTFXQ0x3djRPdlVvS2pqeEVhNXBiMnZmYldYeWxJSDdzYnpqdmJwRWUySUxqcDhHUk1WekVCMFlPbThSSUtuU0JQbU1sMzFUOXdqUFJpaW9kOEVRVlBZNUw4V0JZck1TS3QrT1llQ2VVT2pjQzUyVnkzMGZHdFNZajZwVCt5UVlwK3ArQnhUSExBT3prVGlzTjBuUG1QMDYvdlBLN2JUWFg2SFJwbXVQMEM0a1VGdlFZc1J3aGdybWMvNXlHaXA0dHN2cVFTbTBETDN5VE5vbGVkak9maDhRT3F6MXc1c1VYQ0xGNE5ISDJuVW94L1lMTkRmOGRIR0pNaGFDMDJIUjJTTSswdzFsQmZrRmFkc3pQWW9HdkNyMENOajQ0ZjNKNGxYOVFjM2JXNWdCQzllUUNGVmtxenB4c3VTbHAvSXVsTGtmNC9ONVJRPT08L2RzOlg1MDlDZXJ0aWZpY2F0ZT48L2RzOlg1MDlEYXRhPjwvZHM6S2V5SW5mbz48L2RzOlNpZ25hdHVyZT48c2FtbHA6U3RhdHVzPjxzYW1scDpTdGF0dXNDb2RlIFZhbHVlPSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6c3RhdHVzOlN1Y2Nlc3MiLz48L3NhbWxwOlN0YXR1cz48c2FtbDpBc3NlcnRpb24gSUQ9Il9mMWUyZDNjNGI1YTY5Nzg4Nzc2NjU1NDQzMzIyMTFhYV9hIiBJc3N1ZUluc3RhbnQ9IjIwMjYtMTEtMDZUMDk6NDU6MDZaIiBWZXJzaW9uPSIyLjAiPjxzYW1sOklzc3Vlcj5odHRwczovL2xvZ2luLmV4YW1wbGUudGVzdC88L3NhbWw6SXNzdWVyPjxzYW1sOlN1YmplY3Q+PHNhbWw6TmFtZUlEIEZvcm1hdD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6MS4xOm5hbWVpZC1mb3JtYXQ6ZW1haWxBZGRyZXNzIj5hbGV4QGV4YW1wbGUudGVzdDwvc2FtbDpOYW1lSUQ+PHNhbWw6U3ViamVjdENvbmZpcm1hdGlvbiBNZXRob2Q9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDpjbTpiZWFyZXIiPjxzYW1sOlN1YmplY3RDb25maXJtYXRpb25EYXRhIEluUmVzcG9uc2VUbz0iXzNjMmIxYTBmOWU4ZDdjNmI1YTRmM2UyZDFjMGI5YThmIiBOb3RPbk9yQWZ0ZXI9IjIwMjYtMTEtMDZUMDk6NTA6MDZaIiBSZWNpcGllbnQ9Imh0dHBzOi8vcG9ydGFsLmV4YW1wbGUudGVzdC9zYW1sL2NvbnN1bWUiLz48L3NhbWw6U3ViamVjdENvbmZpcm1hdGlvbj48L3NhbWw6U3ViamVjdD48c2FtbDpDb25kaXRpb25zIE5vdEJlZm9yZT0iMjAyNi0xMS0wNlQwOTo0NDozNloiIE5vdE9uT3JBZnRlcj0iMjAyNi0xMS0wNlQwOTo1MDowNloiPjxzYW1sOkF1ZGllbmNlUmVzdHJpY3Rpb24+PHNhbWw6QXVkaWVuY2U+aHR0cHM6Ly9wb3J0YWwuZXhhbXBsZS50ZXN0Lzwvc2FtbDpBdWRpZW5jZT48L3NhbWw6QXVkaWVuY2VSZXN0cmljdGlvbj48L3NhbWw6Q29uZGl0aW9ucz48c2FtbDpBdXRoblN0YXRlbWVudCBBdXRobkluc3RhbnQ9IjIwMjYtMTEtMDZUMDk6NDU6MDJaIiBTZXNzaW9uSW5kZXg9Il9zZXNzLTJiOGQ0ZiI+PHNhbWw6QXV0aG5Db250ZXh0PjxzYW1sOkF1dGhuQ29udGV4dENsYXNzUmVmPnVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphYzpjbGFzc2VzOlBhc3N3b3JkUHJvdGVjdGVkVHJhbnNwb3J0PC9zYW1sOkF1dGhuQ29udGV4dENsYXNzUmVmPjwvc2FtbDpBdXRobkNvbnRleHQ+PC9zYW1sOkF1dGhuU3RhdGVtZW50PjxzYW1sOkF0dHJpYnV0ZVN0YXRlbWVudD48c2FtbDpBdHRyaWJ1dGUgTmFtZT0iaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZW1haWxhZGRyZXNzIiBGcmllbmRseU5hbWU9Im1haWwiPjxzYW1sOkF0dHJpYnV0ZVZhbHVlPmFsZXhAZXhhbXBsZS50ZXN0PC9zYW1sOkF0dHJpYnV0ZVZhbHVlPjwvc2FtbDpBdHRyaWJ1dGU+PHNhbWw6QXR0cmlidXRlIE5hbWU9ImRpc3BsYXlOYW1lIj48c2FtbDpBdHRyaWJ1dGVWYWx1ZT5BbGV4IERlbW88L3NhbWw6QXR0cmlidXRlVmFsdWU+PC9zYW1sOkF0dHJpYnV0ZT48c2FtbDpBdHRyaWJ1dGUgTmFtZT0iZ3JvdXBzIj48c2FtbDpBdHRyaWJ1dGVWYWx1ZT5maW5hbmNlPC9zYW1sOkF0dHJpYnV0ZVZhbHVlPjwvc2FtbDpBdHRyaWJ1dGU+PC9zYW1sOkF0dHJpYnV0ZVN0YXRlbWVudD48L3NhbWw6QXNzZXJ0aW9uPjwvc2FtbHA6UmVzcG9uc2U+"
+    ],
+    [
+     "RelayState",
+     "/reports"
+    ]
+   ],
+   "protocol": "SAML-P",
+   "saml": "<samlp:Response xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\" ID=\"_f1e2d3c4b5a6978877665544332211aa\" InResponseTo=\"_3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f\" Version=\"2.0\" IssueInstant=\"2026-11-06T09:45:06Z\" Destination=\"https://portal.example.test/saml/acs\"><saml:Issuer>https://login.example.test/</saml:Issuer><ds:Signature xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm=\"http://www.w3.org/2001/10/xml-exc-c14n#\"/><ds:SignatureMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#rsa-sha1\"/><ds:Reference URI=\"#_f1e2d3c4b5a6978877665544332211aa\"><ds:Transforms><ds:Transform Algorithm=\"http://www.w3.org/2000/09/xmldsig#enveloped-signature\"/><ds:Transform Algorithm=\"http://www.w3.org/2001/10/xml-exc-c14n#\"/></ds:Transforms><ds:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#sha1\"/><ds:DigestValue>REVNT0RFTU9ERU1PREVNT0RFTU8=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>REVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNT0RFTU9ERU1PREVNTw==</ds:SignatureValue><ds:KeyInfo><ds:X509Data><ds:X509Certificate>MIIC7jCCAdYCAQIwDQYJKoZIhvcNAQELBQAwPTEbMBkGA1UEAwwSbG9naW4uZXhhbXBsZS50ZXN0MR4wHAYDVQQKDBVFeGFtcGxlIExvZ2luIFNlcnZpY2UwHhcNMjYwMTAxMDAwMDAwWhcNMjYxMTI1MDAwMDAwWjA9MRswGQYDVQQDDBJsb2dpbi5leGFtcGxlLnRlc3QxHjAcBgNVBAoMFUV4YW1wbGUgTG9naW4gU2VydmljZTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALATZr9d5yggAYT5B3g1hbM1d+ncgBTjOlVUmvT41lJBoTwXyGcI7O0tdVu8JDIZTzDV/ZWWwIJCQTyE7jUGjJBsVSCqKD8l2OjdZcNRp83oijxlbW5IdefKRvCqf+/Fu7lGfuooZO0ShlS1qSdRL9ikY5C1edB0dW+FnmRfZ9rvsp6buIVWMD7m7TFg+TMDAzLPNZIRy/2jtZsoWUvso7S9S9JYP/YH5LHYheG4LzeJ7czjVoNa4FZ8DzciZIKNzBZUcItOrgcJIUebqva3DqTohUB74Gxi3pd6Pt5gL3iE7wvbu8+6rDrfUwAy0uh0IN0553mmRwcq20Q3wx6ET48CAwEAATANBgkqhkiG9w0BAQsFAAOCAQEApiz349qY995cY1WCLwv4OvUoKjjxEa5pb2vfbWXylIH7sbzjvbpEe2ILjp8GRMVzEB0YOm8RIKnSBPmMl31T9wjPRiiod8EQVPY5L8WBYrMSKt+OYeCeUOjcC52Vy30fGtSYj6pT+yQYp+p+BxTHLAOzkTisN0nPmP06/vPK7bTXX6HRpmuP0C4kUFvQYsRwhgrmc/5yGip4tsvqQSm0DL3yTNoledjOfh8QOqz1w5sUXCLF4NHH2nUox/YLNDf8dHGJMhaC02HR2SM+0w1lBfkFadszPYoGvCr0CNj44f3J4lX9Qc3bW5gBC9eQCFVkqzpxsuSlp/IulLkf4/N5RQ==</ds:X509Certificate></ds:X509Data></ds:KeyInfo></ds:Signature><samlp:Status><samlp:StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/></samlp:Status><saml:Assertion ID=\"_f1e2d3c4b5a6978877665544332211aa_a\" IssueInstant=\"2026-11-06T09:45:06Z\" Version=\"2.0\"><saml:Issuer>https://login.example.test/</saml:Issuer><saml:Subject><saml:NameID Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\">alex@example.test</saml:NameID><saml:SubjectConfirmation Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\"><saml:SubjectConfirmationData InResponseTo=\"_3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f\" NotOnOrAfter=\"2026-11-06T09:50:06Z\" Recipient=\"https://portal.example.test/saml/consume\"/></saml:SubjectConfirmation></saml:Subject><saml:Conditions NotBefore=\"2026-11-06T09:44:36Z\" NotOnOrAfter=\"2026-11-06T09:50:06Z\"><saml:AudienceRestriction><saml:Audience>https://portal.example.test/</saml:Audience></saml:AudienceRestriction></saml:Conditions><saml:AuthnStatement AuthnInstant=\"2026-11-06T09:45:02Z\" SessionIndex=\"_sess-2b8d4f\"><saml:AuthnContext><saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml:AuthnContextClassRef></saml:AuthnContext></saml:AuthnStatement><saml:AttributeStatement><saml:Attribute Name=\"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress\" FriendlyName=\"mail\"><saml:AttributeValue>alex@example.test</saml:AttributeValue></saml:Attribute><saml:Attribute Name=\"displayName\"><saml:AttributeValue>Alex Demo</saml:AttributeValue></saml:Attribute><saml:Attribute Name=\"groups\"><saml:AttributeValue>finance</saml:AttributeValue></saml:Attribute></saml:AttributeStatement></saml:Assertion></samlp:Response>",
+   "responseStatus": 403,
+   "responseStatusText": "HTTP/1.1 403 Forbidden",
+   "responseHeaders": [
+    {
+     "name": "Content-Type",
+     "value": "text/html; charset=utf-8"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "url": "https://portal.example.test/error?code=saml_recipient_mismatch",
+   "requestId": "request-8-GET-demo8",
+   "requestHeaders": [
+    {
+     "name": "Host",
+     "value": "portal.example.test"
+    },
+    {
+     "name": "User-Agent",
+     "value": "Mozilla/5.0 (Macintosh) Firefox/140.0"
+    },
+    {
+     "name": "Accept",
+     "value": "text/html"
+    }
+   ],
+   "get": [
+    [
+     "code",
+     "saml_recipient_mismatch"
+    ]
+   ],
+   "post": [],
+   "responseStatus": 200,
+   "responseStatusText": "HTTP/1.1 200 OK",
+   "responseHeaders": [
+    {
+     "name": "Content-Type",
+     "value": "text/html; charset=utf-8"
+    }
+   ]
+  }
+ ],
+ "timestamp": "2026-11-06T09:45:09.000Z"
+}
