@@ -154,7 +154,8 @@ export function linkExchange(items) {
   for (const it of items) {
     if (!it.parsed || it.parsed.type !== 'Response' || !it.parsed.inResponseTo) continue
     const r = reqs.find((q) => q.parsed.id === it.parsed.inResponseTo)
-    out.set(it.id, r ? { request: r, ms: it.entry.startMs - r.entry.startMs } : { missing: true })
+    const both = Number.isFinite(it.entry.startMs) && Number.isFinite(r && r.entry.startMs)
+    out.set(it.id, r ? { request: r, ms: both ? it.entry.startMs - r.entry.startMs : null } : { missing: true })
   }
   return out
 }

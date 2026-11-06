@@ -153,3 +153,11 @@ export async function fromPasted(input) {
     return { error: e.message }
   }
 }
+
+/** How many SAML messages a HAR carries, without decoding any of them. Cheap enough to run on every upload. */
+export function countSaml(har) {
+  const list = (har.raw && har.raw.log && har.raw.log.entries) || []
+  let n = 0
+  for (const entry of har.entries) n += findIn(entry, list[entry.rawIndex]).length
+  return n
+}

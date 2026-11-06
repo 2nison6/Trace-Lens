@@ -141,6 +141,12 @@ export function parseSamlXml(xml) {
   const out = { xml: prettyXml(parsed.root), rootName: root.localName }
   const isProtocol = root.namespaceURI === NS.samlp && MESSAGE_TYPES.includes(root.localName)
   const isAssertion = root.namespaceURI === NS.saml && root.localName === 'Assertion'
+  if (/^RequestSecurityTokenResponse(Collection)?$/.test(root.localName)) {
+    return { ...out, error: 'This is a WS-Federation (WS-Trust) token response, not a SAML 2.0 protocol message. WS-Federation is not analysed here; the XML is shown below.' }
+  }
+  if (root.namespaceURI === 'urn:oasis:names:tc:SAML:1.0:assertion' || root.namespaceURI === 'urn:oasis:names:tc:SAML:1.0:protocol') {
+    return { ...out, error: 'This is a SAML 1.1 message. Only SAML 2.0 is analysed here.' }
+  }
   if (!isProtocol && !isAssertion) {
     return { ...out, error: `The root element is <${root.localName}>${root.namespaceURI ? ` in the namespace ${root.namespaceURI}` : ''}, which is not a SAML 2.0 message.` }
   }
