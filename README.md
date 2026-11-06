@@ -20,6 +20,8 @@ Live at <https://har-analyzer.2nison6.com>.
 
 ### Locked pages
 
+**Samples.** The start screen has "Try a sample" buttons: a working and a broken load of the same page (open both for Compare), a HAR with a working SAML sign-in, and a SAML-tracer export of a failed one. They live in `public/demo/` and are made by `node scripts/make-demo-data.mjs`. Every host, user and token in them is invented, and the XML signatures are placeholders (the certificates' private keys were discarded), so the app can read them but nothing could verify them.
+
 Every page except SAML needs data, so the sidebar, tab bar and shortcuts are locked until a HAR is loaded, and **Compare** stays locked until two are loaded. SAML also works on a pasted message, so it is always open. Clicking a locked page, or pressing its number key (1 to 7), shows an error toast at the top right and does not navigate.
 
 ## Getting started

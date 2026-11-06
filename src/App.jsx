@@ -17,6 +17,7 @@ import { NAV, SHORTCUTS, TAB_PRIMARY, isLocked, lockReason } from './nav'
 import useMediaQuery from './hooks/useMediaQuery'
 import usePicker from './hooks/usePicker'
 import DropZone, { AddFiles } from './components/DropZone'
+import Demos from './components/Demos'
 import FilterBar from './components/FilterBar'
 import Inspector from './components/Inspector'
 import RequestList from './components/RequestList'
@@ -114,6 +115,7 @@ function Home({ onFiles, fileCount, error, onDismiss, toast }) {
         <p className="start-lede">Drop a HAR file and HAR.lens replays the traffic, flags what went wrong, and lets you compare captures side by side.</p>
         <DropZone onFiles={onFiles} />
         {error && <Notice tone="crit" icon={faTriangleExclamation} onDismiss={() => onDismiss()}>{error}</Notice>}
+        <Demos onFiles={onFiles} onError={(m) => toast(m, 'error')} />
         <KeepFiles onFiles={onFiles} fileCount={fileCount} toast={toast} />
         <ol className="how">
           <li><b>Export</b><span>In DevTools, open Network, then choose “Save all as HAR with content”.</span></li>
