@@ -1,6 +1,8 @@
 // Redact secrets from a raw HAR object, and build trimmed or merged copies of one. Nothing here mutates its input.
 const SENSITIVE_HEADERS = /^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|x-auth-token|x-csrf-token|x-xsrf-token)$/i
-const SENSITIVE_KEYS = /(token|password|passwd|pwd|secret|api[_-]?key|apikey|auth|session|sid|jwt|credential|signature)/i
+// SAMLResponse carries the user's identity and works as a login credential until it expires; SAMLart is a reference to one.
+// (SAMLRequest is left alone: it holds no credential, and a recipient debugging a sign-in needs it.)
+const SENSITIVE_KEYS = /(token|password|passwd|pwd|secret|api[_-]?key|apikey|auth|session|sid|jwt|credential|signature|samlresponse|samlart)/i
 const MASK = '[REDACTED]'
 
 export const KINDS = ['headers', 'cookies', 'params', 'bodies']
@@ -90,10 +92,20 @@ export function scrubHar(raw, { apply = true, skip = new Set(), custom = [] } = 
       const out = JSON.stringify(walk(JSON.parse(text)))
       return runCustom(apply ? out : text)
     } catch {
-      const out = text.replace(/(["']?(?:token|password|secret|api[_-]?key|authorization)["']?\s*[:=]\s*["']?)[^"'&\s,}]+/gi, (m, p) => (hit('bodies', p.replace(/["'\s:=]+$/g, '').replace(/^["']/, '')) ? `${p}${MASK}` : m))
+      const out = text.replace(/(["']?(?:token|password|secret|api[_-]?key|authorization|SAMLResponse|SAMLart)["']?\s*[:=]\s*["']?)[^"'&\s,}]+/gi, (m, p) => (hit('bodies', p.replace(/["'\s:=]+$/g, '').replace(/^["']/, '')) ? `${p}${MASK}` : m))
       return runCustom(out)
     }
   }
+
+  // <input ... name="SAMLResponse" ... value="..."> in either attribute order, either quote style
+  const maskHtmlSaml = (html) => html.replace(/<input\b[^>]*>/gi, (tag) => {
+    const name = /\bname\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(tag)
+    const key = name && (name[1] ?? name[2])
+    if (!key || !/^(SAMLResponse|SAMLart)$/i.test(key)) return tag
+    const val = /\bvalue\s*=\s*(?:"[^"]*"|'[^']*')/i.exec(tag)
+    if (!val || /\[REDACTED\]/.test(val[0]) || !hit('bodies', key)) return tag
+    return tag.replace(val[0], `value="${MASK}"`)
+  })
 
   for (const e of (doc.log && doc.log.entries) || []) {
     const req = e.request || {}
@@ -115,6 +127,10 @@ export function scrubHar(raw, { apply = true, skip = new Set(), custom = [] } = 
     }
     if (res.content && res.content.text && /json|x-www-form|text\/plain/i.test(res.content.mimeType || '')) {
       const t = maskJsonText(res.content.text)
+      if (apply) res.content.text = t
+    }
+    if (res.content && res.content.text && /html/i.test(res.content.mimeType || '') && /SAML(Response|art)/i.test(res.content.text)) {
+      const t = maskHtmlSaml(res.content.text)
       if (apply) res.content.text = t
     }
   }
