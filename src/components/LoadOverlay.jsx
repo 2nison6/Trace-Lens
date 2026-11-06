@@ -10,9 +10,11 @@ import { STAGE_TEXT, loadStore } from '../loadStore'
  */
 export default function LoadOverlay() {
   const load = useSyncExternalStore(loadStore.subscribe, loadStore.get)
-  const busy = !!load
+  const opening = load?.stage === 'opening' // the file dialog just closed and the file has not arrived yet
+  const busy = !!load && !opening
 
-  // The overlay blocks the mouse; this makes the app behind it unreachable by keyboard and screen reader too
+  // The overlay blocks the mouse; this makes the app behind it unreachable by keyboard and screen reader too. (Not while
+  // opening: the file input that is about to receive the file lives in the app.)
   useEffect(() => {
     const app = document.querySelector('.app')
     if (!busy || !app) return undefined
@@ -25,14 +27,15 @@ export default function LoadOverlay() {
   return (
     <>
       {/* Always mounted: screen readers announce text changes inside an existing live region far more reliably than a new one */}
-      <div className="sr-only" role="status" aria-live="polite">{load ? `Analyzing HAR. ${stage}${which}` : ''}</div>
+      <div className="sr-only" role="status" aria-live="polite">{load ? `${opening ? 'Opening file' : 'Analyzing HAR'}. ${stage}${which}` : ''}</div>
       {load && (
-        <div className="loading-wrap" aria-hidden="true">
+        <div className="loading-wrap" aria-hidden="true" onClick={opening ? () => loadStore.clear() : undefined}>
           <div className="loading-card">
             <span className="spinner" />
-            <strong>Analyzing HAR…</strong>
+            <strong>{opening ? 'Opening file…' : 'Analyzing HAR…'}</strong>
             <span className="loading-stage">{stage}{which}</span>
-            <span className="loading-file ellipsis">{load.file}</span>
+            {opening && <span className="loading-file">Cancelled the dialog? Click anywhere to dismiss.</span>}
+            {load.file && <span className="loading-file ellipsis">{load.file}</span>}
           </div>
         </div>
       )}
