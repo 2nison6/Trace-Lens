@@ -29,3 +29,19 @@
   X-Robots-Tag: noindex
 /saml
   X-Robots-Tag: noindex
+/har/overview
+  X-Robots-Tag: noindex
+/har/issues
+  X-Robots-Tag: noindex
+/har/waterfall
+  X-Robots-Tag: noindex
+/har/flow
+  X-Robots-Tag: noindex
+/har/insights
+  X-Robots-Tag: noindex
+/har/compare
+  X-Robots-Tag: noindex
+/har/tools
+  X-Robots-Tag: noindex
+/saml/messages
+  X-Robots-Tag: noindex

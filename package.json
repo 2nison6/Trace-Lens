@@ -2,7 +2,7 @@
   "name": "har-analyzer",
   "private": true,
   "version": "0.0.0",
-  "description": "HAR.lens - analyze HAR files entirely in your browser: replay request flow, find errors and slow requests, inspect headers and compare captures.",
+  "description": "TraceLens - troubleshoot network and sign-in problems entirely in your browser: HAR, SAML, OAuth/OIDC, tokens and cookies.",
   "author": "Nitish Soni <nitish.soni@2nison6.com> (https://github.com/2nison6)",
   "homepage": "https://har-analyzer.2nison6.com",
   "repository": {
@@ -20,7 +20,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:routes": "node scripts/check-routes.mjs",
+    "demo:data": "node scripts/make-demo-data.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",

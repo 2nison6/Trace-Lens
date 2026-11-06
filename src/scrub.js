@@ -156,7 +156,7 @@ export function mergeHars(hars) {
   })
   entries.sort((a, b) => (Date.parse(a.startedDateTime) || 0) - (Date.parse(b.startedDateTime) || 0))
   const first = (hars[0].raw && hars[0].raw.log) || {}
-  return { log: { version: first.version || '1.2', creator: { name: 'HAR.lens', version: 'merge' }, ...(pages.length ? { pages } : {}), entries } }
+  return { log: { version: first.version || '1.2', creator: { name: 'TraceLens', version: 'merge' }, ...(pages.length ? { pages } : {}), entries } }
 }
 
 export function download(name, text, type = 'application/json') {

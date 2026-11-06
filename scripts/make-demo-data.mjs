@@ -29,7 +29,7 @@ function har(title, start, entries, pageTimings) {
   return {
     log: {
       version: '1.2',
-      creator: { name: 'HAR.lens sample data', version: '1' },
+      creator: { name: 'TraceLens sample data', version: '1' },
       pages: [{ startedDateTime: iso(start), id: 'page_1', title, pageTimings }],
       entries: entries.map((e) => e),
     },

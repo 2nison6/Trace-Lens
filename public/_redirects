@@ -1,7 +1,9 @@
-# Single-page app: serve index.html for the routes the client router knows (see NAV in src/nav.js). "/" is index.html itself.
+# Single-page app: serve index.html for the routes the client router knows (see SECTIONS in src/nav.js). "/" is index.html itself.
 # There is deliberately NO catch-all "/* /index.html 200": with it every unknown URL answers 200, which search engines treat
 # as a soft 404. Without it, an unknown path gets a real 404 status and public/404.html.
-# Adding a page means adding its path here too, or reloading that page will 404.
+# Adding a page means adding its path here too, or reloading that page will 404 (npm run check:routes verifies this).
+
+# Old, un-prefixed addresses (bookmarks from before the tools were split into sections): the app redirects them client-side
 /overview   /index.html   200
 /issues     /index.html   200
 /waterfall  /index.html   200
@@ -10,3 +12,15 @@
 /compare    /index.html   200
 /tools      /index.html   200
 /saml       /index.html   200
+
+# HAR analyzer
+/har/overview   /index.html   200
+/har/issues     /index.html   200
+/har/waterfall  /index.html   200
+/har/flow       /index.html   200
+/har/insights   /index.html   200
+/har/compare    /index.html   200
+/har/tools      /index.html   200
+
+# SAML analyzer
+/saml/messages  /index.html   200

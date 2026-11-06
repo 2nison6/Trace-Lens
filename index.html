@@ -6,11 +6,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
     <!-- Primary SEO -->
-    <title>HAR.lens – HAR File Analyzer &amp; Request Flow Viewer</title>
-    <meta name="description" content="Analyze HAR files in your browser. Replay request flow, find errors and slow requests, inspect headers and compare captures. Nothing is uploaded." />
-    <meta name="keywords" content="HAR analyzer, HAR viewer, HAR file, network waterfall, HTTP archive, web performance, request inspector, compare HAR, packet flow" />
-    <meta name="author" content="HAR.lens" />
-    <meta name="application-name" content="HAR.lens" />
+    <title>TraceLens – HAR, SAML and sign-in troubleshooting in your browser</title>
+    <meta name="description" content="Troubleshoot network and sign-in problems in your browser: analyze HAR files, decode SAML and SAML-tracer exports, follow OAuth and OpenID Connect flows, inspect tokens and cookies. Nothing is uploaded." />
+    <meta name="keywords" content="HAR analyzer, HAR viewer, SAML tracer, SAML decoder, JWT decoder, OAuth debugger, OIDC troubleshooting, SSO troubleshooting, network waterfall, compare HAR, cookie analyzer" />
+    <meta name="author" content="TraceLens" />
+    <meta name="application-name" content="TraceLens" />
     <meta name="generator" content="Vite + React" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -33,27 +33,27 @@
 
     <!-- Open Graph (Facebook, LinkedIn, Slack, WhatsApp, Discord) -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="HAR.lens" />
-    <meta property="og:title" content="HAR.lens – See exactly what your network did" />
-    <meta property="og:description" content="Replay request flow, find errors and slow requests, inspect headers and compare HAR captures. 100% in your browser." />
+    <meta property="og:site_name" content="TraceLens" />
+    <meta property="og:title" content="TraceLens – See exactly what your network and sign-in did" />
+    <meta property="og:description" content="Analyze HAR files, decode SAML sign-ins, follow OAuth and OIDC flows, inspect tokens and cookies. 100% in your browser." />
     <meta property="og:image" content="/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="HAR.lens: see exactly what your network did" />
+    <meta property="og:image:alt" content="TraceLens: see exactly what your network and sign-in did" />
     <meta property="og:locale" content="en_US" />
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="HAR.lens – See exactly what your network did" />
-    <meta name="twitter:description" content="Replay request flow, find errors and slow requests, inspect headers and compare HAR captures. 100% in your browser." />
+    <meta name="twitter:title" content="TraceLens – See exactly what your network and sign-in did" />
+    <meta name="twitter:description" content="Analyze HAR files, decode SAML sign-ins, follow OAuth and OIDC flows, inspect tokens and cookies. 100% in your browser." />
     <meta name="twitter:image" content="/og-image.png" />
-    <meta name="twitter:image:alt" content="HAR.lens: see exactly what your network did" />
+    <meta name="twitter:image:alt" content="TraceLens: see exactly what your network and sign-in did" />
 
     <!-- iOS web app -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="HAR.lens" />
+    <meta name="apple-mobile-web-app-title" content="TraceLens" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="format-detection" content="telephone=no" />
 
@@ -67,16 +67,16 @@
             "@type": "WebSite",
             "@id": "__SITE_URL__/#website",
             "url": "__SITE_URL__/",
-            "name": "HAR.lens",
-            "alternateName": ["HAR Analyzer", "HAR.lens HAR File Analyzer"],
+            "name": "TraceLens",
+            "alternateName": ["HAR Analyzer", "HAR.lens", "SAML Tracer Analyzer"],
             "inLanguage": "en"
           },
           {
             "@type": "WebApplication",
             "@id": "__SITE_URL__/#app",
             "url": "__SITE_URL__/",
-            "name": "HAR.lens",
-            "description": "Browser-based HAR file analyzer: request flow replay, issue detection, request inspector and capture comparison. Files never leave your browser.",
+            "name": "TraceLens",
+            "description": "Browser-based troubleshooting for network and sign-in problems: HAR analysis, SAML and SAML-tracer decoding, OAuth/OIDC flow checks, token and cookie inspection. Files never leave your browser.",
             "applicationCategory": "DeveloperApplication",
             "operatingSystem": "Any",
             "browserRequirements": "Requires JavaScript",
@@ -88,7 +88,10 @@
               "Rule-based issue detection with a health score",
               "Request inspector with headers, cookies and copy as cURL",
               "Compare two or three captures",
-              "Redact secrets from a HAR and export HTML or JSON reports"
+              "Redact secrets from a HAR and export HTML or JSON reports",
+              "Decode SAML messages and SAML-tracer exports and check them",
+              "Follow OAuth 2.0 and OpenID Connect sign-ins and decode JWTs",
+              "Cookie and session analysis"
             ],
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
             "isPartOf": { "@id": "__SITE_URL__/#website" },
@@ -161,7 +164,7 @@
     </div>
     <noscript>
       <div style="font:16px/1.5 system-ui,sans-serif;color:#f5f7ff;background:#030407;padding:48px 24px;text-align:center">
-        <h1 style="margin:0 0 8px">HAR.lens</h1>
+        <h1 style="margin:0 0 8px">TraceLens</h1>
         <p>This app analyzes HAR files entirely in your browser, so it needs JavaScript enabled.</p>
       </div>
     </noscript>
