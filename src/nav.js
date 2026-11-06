@@ -1,5 +1,5 @@
 import {
-  faBarsStaggered, faChartPie, faCodeCompare, faLightbulb, faNetworkWired, faToolbox, faTriangleExclamation,
+  faBarsStaggered, faChartPie, faCodeCompare, faKey, faLightbulb, faNetworkWired, faToolbox, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 
 // One list drives the sidebar, the tab bar and the number shortcuts.
@@ -12,9 +12,11 @@ export const NAV = [
   { to: '/insights', label: 'Insights', icon: faLightbulb },
   { to: '/compare', label: 'Compare', icon: faCodeCompare, needs: 2 },
   { to: '/tools', label: 'Tools', icon: faToolbox },
+  // needs: 0 because it also works on a pasted message, with no file loaded
+  { to: '/saml', label: 'SAML', icon: faKey, needs: 0 },
 ]
 
-const needs = (page) => page.needs || 1
+const needs = (page) => page.needs ?? 1
 
 export const isLocked = (page, fileCount) => fileCount < needs(page)
 
@@ -30,7 +32,7 @@ export function lockReason(page, fileCount) {
 export const TAB_PRIMARY = ['/overview', '/issues', '/waterfall', '/flow']
 
 export const SHORTCUTS = [
-  ['1 – 7', 'Go to a page'],
+  ['1 – 8', 'Go to a page'],
   ['O', 'Open HAR files'],
   ['/', 'Search requests'],
   ['T', 'Switch light / dark'],

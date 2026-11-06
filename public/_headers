@@ -27,3 +27,5 @@
   X-Robots-Tag: noindex
 /tools
   X-Robots-Tag: noindex
+/saml
+  X-Robots-Tag: noindex

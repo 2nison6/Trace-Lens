@@ -27,6 +27,7 @@ import Compare from './components/Compare'
 import Issues from './components/Issues'
 import Insights from './components/Insights'
 import Tools from './components/Tools'
+import Saml from './components/Saml'
 import Footer from './components/Footer'
 import LoadOverlay from './components/LoadOverlay'
 import { EmptyState, Kbd, Notice, Segmented } from './components/ui'
@@ -240,7 +241,7 @@ export default function App() {
       else if (k === 'b') toggleSide()
       else if (k === 'o') pickerRef.current?.click()
       else if (k === '/') { e.preventDefault(); searchRef.current?.focus() }
-      else if (/^[1-7]$/.test(k)) {
+      else if (/^[1-8]$/.test(k)) {
         const page = NAV[Number(k) - 1]
         const reason = lockReason(page, fileCount)
         if (!reason) navigate(page.to)
@@ -333,6 +334,7 @@ export default function App() {
                     <Route path="/flow" element={need(<FlowView har={filtered} key={`${active}-${filtered ? filtered.entries.length : 0}`} />)} />
                     <Route path="/insights" element={need(<Insights har={har} key={active} />)} />
                     <Route path="/compare" element={hars.length ? <Page><Compare hars={hars} toast={toast} key={hars.length} /></Page> : need(null)} />
+                    <Route path="/saml" element={<Page><Saml har={har} toast={toast} key={active} /></Page>} />
                     <Route path="/tools" element={need(<Tools har={har} hars={hars} toast={toast} key={active} />)} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>

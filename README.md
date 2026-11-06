@@ -14,12 +14,13 @@ Live at <https://har-analyzer.2nison6.com>.
 - **Insights**: timing estimates, critical path, third-party cost, potential savings, latency distribution, protocols, concurrency, cache lifetime and endpoint latency
 - **Compare** up to three captures
 - **Request inspector** with headers, cookies, params, response preview and copy as cURL
+- **SAML**: finds the SAML sign-in and logout messages in a capture (redirect, form post, auto-submit page and SOAP), decodes them, and shows the issuer, user, attributes, audience, validity window, status and signing certificate. It checks them for the usual causes of a broken sign-in (expired or not-yet-valid assertion, audience or ACS URL mismatch, denied status, unsigned or SHA-1 signed messages, an expired or soon-to-expire certificate) and links each response to its request. You can also paste a `SAMLRequest` / `SAMLResponse` value, a URL, or XML with no file loaded. It reads messages; it cannot prove a signature is valid, because that needs your identity provider's key
 - **Tools**: redact secrets from a HAR, export an HTML or JSON report
 - Light and dark themes, keyboard shortcuts (press `?`)
 
 ### Locked pages
 
-Every page needs data, so the sidebar, tab bar and shortcuts are locked until a HAR is loaded, and **Compare** stays locked until two are loaded. Clicking a locked page, or pressing its number key (1 to 7), shows an error toast at the top right and does not navigate.
+Every page except SAML needs data, so the sidebar, tab bar and shortcuts are locked until a HAR is loaded, and **Compare** stays locked until two are loaded. SAML also works on a pasted message, so it is always open. Clicking a locked page, or pressing its number key (1 to 7), shows an error toast at the top right and does not navigate.
 
 ## Getting started
 
@@ -47,7 +48,7 @@ The site builds from this repository: build command `npm run build`, publish dir
 **No environment variables are required.** The canonical site URL defaults to the production origin in `vite.config.js`. Set `VITE_SITE_URL` in Netlify (Site configuration, Environment variables) only to override it, for example on a staging site. Do not mark it as a secret: the value is public and appears in the built HTML.
 
 - `public/_headers`: security headers and CSP, immutable caching for `/assets/*`, the manifest content type, and `X-Robots-Tag: noindex` for the app pages.
-- `public/_redirects`: the single-page-app routes, listed explicitly. There is deliberately no `/* /index.html 200` catch-all, so an unknown URL returns a real 404 with `public/404.html` instead of a "soft 404" that search engines distrust. **When you add a page, add its path to `_redirects` (and `_headers`) as well, or reloading it will 404.**
+- `public/_redirects`: the single-page-app routes (including `/saml`), listed explicitly. There is deliberately no `/* /index.html 200` catch-all, so an unknown URL returns a real 404 with `public/404.html` instead of a "soft 404" that search engines distrust. **When you add a page, add its path to `_redirects` (and `_headers`) as well, or reloading it will 404.**
 - Other hosts need the same security headers, the same route fallbacks to `index.html`, and a 404 page.
 
 ## SEO and search
