@@ -293,3 +293,18 @@ button.pill-btn:active:not(:disabled) { transform: scale(0.97); }
 .saml-check .sev { font-size: 12px; white-space: nowrap; }
 .saml-xml { margin: 0; max-height: 460px; overflow: auto; padding: 12px 14px; background: var(--s2); border: 1px solid var(--line); border-radius: var(--r-s); font-family: var(--mono); font-size: 12px; line-height: 1.5; white-space: pre; tab-size: 2; }
 .saml-xml:focus-visible { outline: 2px solid var(--blue-line); outline-offset: 2px; }
+
+.saml-seq-h { margin: 14px 0 6px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--t3); }
+.saml-seq { margin: 0; padding: 0; list-style: none; max-height: 340px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-s); font-size: 12.5px; }
+.saml-seq li { display: grid; grid-template-columns: 34px 46px minmax(0, 1fr) 40px auto; align-items: center; gap: 10px; min-height: 32px; padding: 0 10px; border-top: 1px solid var(--line); }
+.saml-seq li:first-child { border-top: 0; }
+.saml-seq li.has { background: var(--blue-tint); }
+.saml-seq .pill { min-height: 22px; padding: 0 9px; font-size: 11.5px; }
+.file.trace .file-b svg { color: var(--blue-text); margin-right: 2px; }
+@media (max-width: 760px) { .saml-seq li { grid-template-columns: 26px 40px minmax(0, 1fr) auto; } .saml-seq li > :nth-child(4) { display: none; } }
+
+/* a SAML-tracer export in the Files list is a link, not a button: look like the HAR entries beside it */
+a.file-b { text-decoration: none; }
+.file.trace .file-b { color: var(--t2); }
+.file.trace .file-b .ellipsis { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.file.trace .file-b .ellipsis svg { flex: none; }

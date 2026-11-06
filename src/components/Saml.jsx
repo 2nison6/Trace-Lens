@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faArrowRight, faCircleCheck, faCircleExclamation, faCircleInfo, faClipboard, faCopy, faDownload, faKey, faTriangleExclamation, faWandMagicSparkles,
+  faArrowRight, faCircleCheck, faCircleExclamation, faCircleInfo, faClipboard, faCopy, faDownload, faFileImport, faKey, faTriangleExclamation, faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons'
 import { checkMessage, linkExchange } from '../saml/checks'
 import { extractSaml, fromPasted } from '../saml/extract'
@@ -9,6 +9,7 @@ import { parseSamlXml } from '../saml/parse'
 import { fingerprints } from '../saml/x509'
 import { copyText, fmtMs } from '../utils'
 import { download } from '../scrub'
+import usePicker from '../hooks/usePicker'
 import { Card, EmptyState, Notice, Segmented, Switch } from './ui'
 
 const ICON = { critical: faCircleExclamation, warning: faTriangleExclamation, info: faCircleInfo, ok: faCircleCheck }
@@ -114,7 +115,7 @@ function Detail({ item, parsed, link, fps, now, expect, notify }) {
         <>
           <KV rows={[
             ['Type', TITLE[p.type] || p.type], ['ID', p.id], ['Issuer', p.issuer], ['Sent to', p.destination], ['Issued', fmtTime(p.issueInstant)],
-            ['Answers request', p.inResponseTo && (linked ? `${p.inResponseTo} (sent ${fmtMs(link.ms)} earlier in this capture)` : `${p.inResponseTo} (request not in this capture)`)], ['RelayState', item.relayState],
+            ['Answers request', p.inResponseTo && (linked ? `${p.inResponseTo} (${link.ms != null ? `sent ${fmtMs(link.ms)} earlier in this capture` : 'its request is in this capture'})` : `${p.inResponseTo} (request not in this capture)`)], ['RelayState', item.relayState],
           ]}
           />
           {p.request && p.type === 'AuthnRequest' && (
@@ -154,7 +155,7 @@ function Detail({ item, parsed, link, fps, now, expect, notify }) {
         <>
           <p className="hint" style={{ marginTop: 0 }}>
             Validity windows are checked as of {fmtTime(new Date(now).toISOString())}.{' '}
-            {item.at == null ? 'A pasted message has no capture time, so it is checked against the current time.' : now === item.at ? 'That is when this message was captured. The switch under the list checks against the current time instead.' : 'That is the current time, not when the message was captured. The switch under the list changes it.'}
+            {item.atIssued ? (now === item.at ? '' : 'A SAML-tracer export records no time for each request, so this is one second after the time the message says it was issued. The switch under the list checks against the current time instead.') : item.at == null ? 'A pasted message has no capture time, so it is checked against the current time.' : now === item.at ? 'That is when this message was captured. The switch under the list checks against the current time instead.' : 'That is the current time, not when the message was captured. The switch under the list changes it.'}
           </p>
           <ul className="saml-checks">{checks.map((f, i) => <Check key={i} f={f} />)}</ul>
         </>
@@ -171,7 +172,40 @@ function Detail({ item, parsed, link, fps, now, expect, notify }) {
   )
 }
 
-export default function Saml({ har, toast: notify }) {
+function TraceCard({ t, setOpen }) {
+  const shown = t.requests.length > 400 ? t.requests.filter((r) => r.saml) : t.requests
+  return (
+    <Card title={`${t.name}`} aside={<span className="t-cap">SAML-tracer export · {t.total} request{t.total === 1 ? '' : 's'} · {t.items.length} with SAML</span>}>
+      <KV rows={[['Exported', t.exportedAt && fmtTime(t.exportedAt)], ['Format', t.legacy ? 'older export (before v1.0.0)' : 'current']]} />
+      {t.masked && (
+        <Notice tone={t.maskedButDecoded ? 'info' : 'warn'} icon={faTriangleExclamation}>
+          {t.maskedButDecoded
+            ? 'This export was made with a cookie profile that masks form values, but SAML-tracer kept the decoded messages, so they can still be read. Treat the file as sensitive.'
+            : 'This export was made with a cookie profile that masks form values, so the SAML messages in it are not readable. Export again with “no filtering”.'}
+        </Notice>
+      )}
+      {!t.items.length && <p className="dim">No SAML messages in this export. SAML-tracer only records what happened while it was open: reproduce the whole sign-in with the tracer window open, then export.</p>}
+      {t.requests.length > 0 && (
+        <>
+          <h4 className="saml-seq-h">Request sequence{shown.length < t.requests.length ? ` (showing the ${shown.length} with SAML of ${t.requests.length})` : ''}</h4>
+          <ol className="saml-seq">
+            {shown.map((r) => (
+              <li key={r.n} className={r.saml ? 'has' : ''}>
+                <span className="num dim">{r.n}</span>
+                <span className="mono dim">{r.method}</span>
+                <span className="ellipsis" title={`${r.host}${r.path}`}>{r.host}{r.path}</span>
+                <span className={`num ${r.status >= 400 || r.status === 0 ? 'tone-crit' : 'dim'}`}>{r.status || '—'}</span>
+                {r.saml ? <button type="button" className="pill pill-btn" onClick={() => setOpen(r.itemId)}><FontAwesomeIcon icon={faKey} /> {r.kind}</button> : <span />}
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+    </Card>
+  )
+}
+
+export default function Saml({ har, traces = [], onFiles, toast: notify }) {
   const [found, setFound] = useState(null) // null while scanning
   const [pasted, setPasted] = useState([])
   const [text, setText] = useState('')
@@ -192,10 +226,11 @@ export default function Saml({ har, toast: notify }) {
     return () => { live = false }
   }, [har])
 
+  const traceItems = useMemo(() => traces.flatMap((t) => t.items), [traces])
   const items = useMemo(() => {
-    const all = [...(found || []), ...pasted]
+    const all = [...(found || []), ...traceItems, ...pasted]
     return all.map((it) => ({ ...it, parsed: it.xml ? parseSamlXml(it.xml) : null }))
-  }, [found, pasted])
+  }, [found, traceItems, pasted])
   const links = useMemo(() => linkExchange(items.filter((i) => i.parsed && !i.parsed.error && i.entry)), [items])
 
   // certificate fingerprints are computed once per certificate, for the details and the "expected fingerprint" check
@@ -224,7 +259,21 @@ export default function Saml({ har, toast: notify }) {
     try { setText(await navigator.clipboard.readText()) } catch { setErr('The browser did not allow reading the clipboard. Paste into the box with Ctrl/Cmd+V instead.') }
   }
 
-  const asOf = (it) => (atCapture && it.at != null ? it.at : loadedAt)
+  // - a HAR records when each request happened, so that is the time to check against;
+  // - a SAML-tracer export records no time per request, so the best available is the moment the message says it was issued
+  //   (a message is then never "expired" merely because the file is old; it is still flagged if its own window is wrong);
+  // - a pasted message has neither, and is checked against now.
+  const issuedAt = (it) => {
+    const p = it.parsed
+    const t = p && !p.error ? Date.parse(p.issueInstant || (p.assertions && p.assertions[0] && p.assertions[0].issueInstant) || '') : NaN
+    return Number.isFinite(t) ? t + 1000 : null
+  }
+  const asOf = (it) => {
+    if (!atCapture) return loadedAt
+    if (it.at != null) return it.at
+    if (it.atIssued) return issuedAt(it) ?? loadedAt
+    return loadedAt
+  }
 
   const exportMd = () => {
     const lines = ['## SAML messages', '']
@@ -241,6 +290,7 @@ export default function Saml({ har, toast: notify }) {
   }
 
   const scanning = found === null
+  const tracePicker = usePicker((files) => onFiles?.(files))
 
   return (
     <div className="stack">
@@ -268,10 +318,10 @@ export default function Saml({ har, toast: notify }) {
             <article key={it.id} className={`finding saml-item${isOpen ? ' open' : ''} sev-${bad ? 'crit' : p.status && !p.status.success ? 'crit' : 'info'}`}>
               <button type="button" className="f-head" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? '' : it.id)}>
                 <FontAwesomeIcon icon={bad ? faCircleExclamation : faKey} className={`f-ic tone-${bad ? 'crit' : 'info'}`} />
-                <span className="f-title">{bad ? 'Could not be read' : TITLE[p.type] || p.type}<span className="dim saml-sub"> · {it.hit.param}{it.entry ? ` · ${it.entry.method} ${it.entry.host}` : ' · pasted'}</span></span>
+                <span className="f-title">{bad ? 'Could not be read' : TITLE[p.type] || p.type}<span className="dim saml-sub"> · {it.hit.param}{it.entry ? ` · ${it.entry.method} ${it.entry.host}` : ' · pasted'}{it.source === 'tracer' ? ` · #${it.seq}` : ''}</span></span>
                 <span className="f-meta">
                   {status && <span className={`sev tone-${p.status.success ? 'good' : 'crit'}`}>{status}</span>}
-                  {it.entry && <span className="dim num">{fmtMs(it.entry.startMs)}</span>}
+                  {it.entry && Number.isFinite(it.entry.startMs) && <span className="dim num">{fmtMs(it.entry.startMs)}</span>}
                 </span>
                 <FontAwesomeIcon icon={faArrowRight} className="f-chev" />
               </button>
@@ -288,7 +338,18 @@ export default function Saml({ har, toast: notify }) {
       </div>
 
 
-      {!har && !pasted.length && <EmptyState icon={faKey} title="No capture loaded">Paste a message below, or open a HAR file to find the SAML messages in it.</EmptyState>}
+      {!har && !traces.length && !pasted.length && <EmptyState icon={faKey} title="No capture loaded">Open a HAR file or a SAML-tracer export, or paste a message below.</EmptyState>}
+
+      <Card title="SAML-tracer export" aside={<FontAwesomeIcon icon={faFileImport} className="dim" />}>
+        <p className="lede">If you recorded the sign-in with the <b>SAML-tracer</b> browser extension, use its Export button and add the JSON file here (or drop it anywhere on the page). It is analysed the same way as a HAR.</p>
+        <div className="actions">
+          <button type="button" className="btn primary" onClick={tracePicker.open}><FontAwesomeIcon icon={faFileImport} /> Add a SAML-tracer export</button>
+        </div>
+        {tracePicker.input}
+        <p className="hint">In SAML-tracer: open the extension, reproduce the sign-in, click <b>Export</b>, choose a cookie profile, and save. Choosing the profile that masks form values hides the messages: use &ldquo;no filtering&rdquo; for the analysis, and remove secrets afterwards.</p>
+      </Card>
+
+      {traces.map((t) => <TraceCard key={t.uid} t={t} setOpen={setOpen} />)}
 
       <Card title="Paste a SAML message" aside={<FontAwesomeIcon icon={faKey} className="dim" />}>
         <p className="lede">Paste a SAMLRequest or SAMLResponse value, a whole URL or form body that contains one, or the XML itself. It is decoded here in your browser, and nothing is sent anywhere.</p>
@@ -312,7 +373,7 @@ export default function Saml({ har, toast: notify }) {
       {items.length > 0 && (
         <Card>
           <div className="toolrow">
-            <Switch checked={atCapture} onChange={setAtCapture} label="Check as of the time of the capture" hint="On (default): validity is checked at the moment each message was sent. Off: against now, so an old capture looks expired." />
+            <Switch checked={atCapture} onChange={setAtCapture} label="Check as of the time of the capture" hint="On (default): validity is checked when each message was sent (for a SAML-tracer export, which records no times, when the message says it was issued). Off: against now, so an old capture looks expired." />
           </div>
         </Card>
       )}

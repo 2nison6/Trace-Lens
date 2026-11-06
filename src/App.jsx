@@ -3,7 +3,7 @@ import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'reac
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faCircleHalfStroke, faDesktop, faEllipsis, faFolderOpen, faKeyboard, faLock, faMoon, faNetworkWired, faSun,
+  faCircleHalfStroke, faDesktop, faEllipsis, faFolderOpen, faKeyboard, faKey, faLock, faMoon, faNetworkWired, faSun,
   faTriangleExclamation, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import { DEFAULT_FILTERS, InspectCtx, ListCtx, SelectedCtx } from './context'
@@ -28,6 +28,7 @@ import Issues from './components/Issues'
 import Insights from './components/Insights'
 import Tools from './components/Tools'
 import Saml from './components/Saml'
+import SamlPrompt from './components/SamlPrompt'
 import Footer from './components/Footer'
 import LoadOverlay from './components/LoadOverlay'
 import { EmptyState, Kbd, Notice, Segmented } from './components/ui'
@@ -59,12 +60,13 @@ function Page({ children }) {
 // Loaded captures and which one is selected, kept together so adding or removing files updates both atomically.
 function library(state, action) {
   switch (action.type) {
-    case 'add': return { hars: [...state.hars, ...action.parsed], active: state.hars.length }
+    case 'add': return { ...state, hars: [...state.hars, ...action.parsed], active: action.parsed.length ? state.hars.length : state.active, traces: [...state.traces, ...(action.traces || [])] }
     case 'select': return { ...state, active: action.index }
+    case 'removeTrace': return { ...state, traces: state.traces.filter((t) => t.uid !== action.uid) }
     case 'remove': {
       const hars = state.hars.filter((_, j) => j !== action.index)
       const a = state.active
-      return { hars, active: a > action.index ? a - 1 : Math.max(0, Math.min(a, state.hars.length - 2)) }
+      return { ...state, hars, active: a > action.index ? a - 1 : Math.max(0, Math.min(a, state.hars.length - 2)) }
     }
     default: return state
   }
@@ -124,12 +126,13 @@ function Home({ onFiles, fileCount, error, onDismiss, toast }) {
 }
 
 export default function App() {
-  const [{ hars, active }, dispatch] = useReducer(library, { hars: [], active: 0 })
+  const [{ hars, active, traces }, dispatch] = useReducer(library, { hars: [], active: 0, traces: [] })
   const [error, setError] = useState('')
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [dock, setDock] = useState(null) // { type: 'inspect' | 'list', ... }
   const [toastMsg, setToastMsg] = useState(null) // { id, text, tone } or null
   const [help, setHelp] = useState(false)
+  const [samlAsk, setSamlAsk] = useState(null) // { found: [{ name, n }], hadTrace } after a HAR with SAML in it was opened
   const [more, setMore] = useState(false)
   const [themePref, setThemePref] = useState(() => readPref('harlens-theme', 'system'))
   const [collapsed, setCollapsed] = useState(() => readPref('harlens-side', '0') === '1')
@@ -165,24 +168,32 @@ export default function App() {
 
   // Adds freshly parsed captures and opens Overview in ONE transition, so data and route commit together. Resolves once
   // that commit has happened; the upload overlay waits for it (and for the next paint) before it goes away.
-  const commit = useCallback((parsed) => new Promise((resolve) => {
+  const commit = useCallback(({ hars: parsed, traces: opened }) => new Promise((resolve) => {
     readyRef.current = resolve
     startTransition(() => {
-      dispatch({ type: 'add', parsed })
+      dispatch({ type: 'add', parsed, traces: opened })
       setFilters(DEFAULT_FILTERS)
       setDock(null)
-      if (pathRef.current === '/') navigate('/overview')
+      // A SAML-tracer export has no Overview to show, so adding one with no HAR takes you to the SAML page wherever you are:
+      // otherwise picking one from the popup would seem to do nothing. A HAR opens Overview from the start screen as before.
+      if (!parsed.length && opened.length) { if (pathRef.current !== '/saml') navigate('/saml') }
+      else if (pathRef.current === '/') navigate('/overview')
     })
   }), [navigate])
   useEffect(() => {
     readyRef.current?.()
     readyRef.current = null
-  }, [hars, location.pathname])
+  }, [hars, traces, location.pathname])
 
   // Reading, parsing and the overlay live in ingest.js
   const onFiles = useCallback((files) => {
     setError('')
-    ingest(files, { commit, report: (failed) => setError(failed.join(' · ')) })
+    ingest(files, {
+      commit,
+      report: (failed) => setError(failed.join(' · ')),
+      // a HAR that carries SAML: offer to add the matching SAML-tracer export
+      finish: ({ samlFound }) => setSamlAsk({ found: samlFound }),
+    })
   }, [commit])
 
   // Dropping a file anywhere on the page opens it, so the start screen is never the only way in
@@ -197,6 +208,7 @@ export default function App() {
 
   // A page that just became locked (the last file went, or Compare lost its second one) stays open and shows its own
   // empty state, which says what to do next and offers the button for it.
+  const removeTrace = (t) => { deleteSaved(t.name); dispatch({ type: 'removeTrace', uid: t.uid }) }
   const remove = (i) => {
     if (hars[i]) deleteSaved(hars[i].fileName)
     dispatch({ type: 'remove', index: i })
@@ -291,7 +303,7 @@ export default function App() {
                   ))}
                 </nav>
 
-                {hars.length > 0 && (
+                {(hars.length > 0 || traces.length > 0) && (
                   <div className="files" aria-label="Loaded files">
                     <h2 className="side-h">Files</h2>
                     {hars.map((h, i) => (
@@ -301,6 +313,15 @@ export default function App() {
                           <small className="num">{h.summary.count}</small>
                         </button>
                         <button type="button" className="file-x" onClick={() => remove(i)} aria-label={`Remove ${h.fileName}`}><FontAwesomeIcon icon={faXmark} /></button>
+                      </div>
+                    ))}
+                    {traces.map((t) => (
+                      <div key={t.uid} className="file trace">
+                        <NavLink className="file-b" to="/saml" title={`${t.name}: a SAML-tracer export`}>
+                          <span className="ellipsis"><FontAwesomeIcon icon={faKey} /><span className="ellipsis">{t.name}</span></span>
+                          <small className="num">{t.items.length}</small>
+                        </NavLink>
+                        <button type="button" className="file-x" onClick={() => removeTrace(t)} aria-label={`Remove ${t.name}`}><FontAwesomeIcon icon={faXmark} /></button>
                       </div>
                     ))}
                     <AddFiles onFiles={onFiles} />
@@ -334,7 +355,7 @@ export default function App() {
                     <Route path="/flow" element={need(<FlowView har={filtered} key={`${active}-${filtered ? filtered.entries.length : 0}`} />)} />
                     <Route path="/insights" element={need(<Insights har={har} key={active} />)} />
                     <Route path="/compare" element={hars.length ? <Page><Compare hars={hars} toast={toast} key={hars.length} /></Page> : need(null)} />
-                    <Route path="/saml" element={<Page><Saml har={har} toast={toast} key={active} /></Page>} />
+                    <Route path="/saml" element={<Page><Saml har={har} traces={traces} onFiles={onFiles} toast={toast} key={active} /></Page>} />
                     <Route path="/tools" element={need(<Tools har={har} hars={hars} toast={toast} key={active} />)} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
@@ -389,6 +410,9 @@ export default function App() {
 
             <LoadOverlay />
             <AnimatePresence>
+              {samlAsk && !loadStore.get() && (
+                <SamlPrompt found={samlAsk.found} hasTrace={traces.length > 0} onFiles={onFiles} onClose={() => setSamlAsk(null)} onOpen={() => { setSamlAsk(null); navigate('/saml') }} />
+              )}
               {help && (
                 <motion.div className="modal-wrap" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} onClick={() => setHelp(false)}>
                   <motion.div className="modal" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" onClick={(e) => e.stopPropagation()}
