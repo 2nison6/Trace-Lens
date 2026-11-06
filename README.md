@@ -1,28 +1,54 @@
-# HAR.lens
+# TraceLens
 
-Analyze HAR files entirely in your browser: replay request flow, find errors and slow requests, inspect headers and compare captures. Nothing is uploaded.
+Troubleshoot network and sign-in problems entirely in your browser. Analyze HAR files, decode SAML and SAML-tracer exports, follow OAuth 2.0 / OpenID Connect sign-ins, inspect JWTs, and find out why a cookie did not stick. Nothing is uploaded.
+
+(Formerly HAR.lens.)
 
 Live at <https://har-analyzer.2nison6.com>.
 
-## Features
+## Tools
 
-- **Upload** by drag and drop or file picker, several files at once, with a progress overlay that shows each stage (reading, parsing, checking, building the view)
+TraceLens is a set of tools that share one place to drop captures. The sidebar switches between them, and each has its own menu. Number keys `1` to `9` open the pages of the current tool.
+
+### Network (HAR analyzer)
+
+- **Upload** by drag and drop or file picker, several files at once, with an overlay that shows progress
 - **Overview** with totals, phase timing, content types, hosts and status codes; click a bar to list its requests
 - **Issues** found by rule-based checks (errors, redirects, slow phases, payload size, caching, security headers, cookies) with a health score
 - **Waterfall** with sortable columns and filters by text, status, type, host, size and time
-- **Packet flow**: animated replay of requests and responses, with real-time mode and a Follow mode that isolates one request
+- **Flow**: animated replay of requests and responses, with real-time mode and a Follow mode that isolates one request
 - **Insights**: timing estimates, critical path, third-party cost, potential savings, latency distribution, protocols, concurrency, cache lifetime and endpoint latency
 - **Compare** up to three captures
 - **Request inspector** with headers, cookies, params, response preview and copy as cURL
-- **SAML**: finds the SAML sign-in and logout messages in a capture (redirect, form post, auto-submit page and SOAP), decodes them, and shows the issuer, user, attributes, audience, validity window, status and signing certificate. It checks them for the usual causes of a broken sign-in (expired or not-yet-valid assertion, audience or ACS URL mismatch, denied status, unsigned or SHA-1 signed messages, an expired or soon-to-expire certificate) and links each response to its request. It also reads exports from the **SAML-tracer** browser extension (the JSON file from its Export button; current and pre-1.0 formats): drop one in like a HAR, or add one when the app offers to after you open a HAR that contains SAML. A SAML-tracer export records no time for each request, so the checks use the time each message says it was issued. You can also paste a `SAMLRequest` / `SAMLResponse` value, a URL, or XML with no file loaded. It reads messages; it cannot prove a signature is valid, because that needs your identity provider's key
-- **Tools**: redact secrets from a HAR, export an HTML or JSON report
+- **Tools**: redact secrets from a HAR, trim and merge, export an HTML or JSON report
+
+### SAML
+
+Finds the SAML sign-in and logout messages in a capture (redirect, form post, auto-submit page and SOAP), decodes them, and shows the issuer, user, attributes, audience, validity window, status and signing certificate. It checks them for the usual causes of a broken sign-in (expired or not-yet-valid assertion, audience or ACS URL mismatch, denied status, unsigned or SHA-1 signed messages, an expired or soon-to-expire certificate) and links each response to its request. It also reads exports from the **SAML-tracer** browser extension (the JSON file from its Export button; current and pre-1.0 formats): drop one in like a HAR, or add one when the app offers to after you open a HAR that contains SAML. A SAML-tracer export records no time for each request, so the checks use the time each message says it was issued. You can also paste a `SAMLRequest` / `SAMLResponse` value, a URL, or XML with no file loaded. It reads messages; it cannot prove a signature is valid, because that needs your identity provider's key.
+
+### OAuth / OpenID Connect
+
+Finds each sign-in in a HAR (authorization request, the response to the app, the token request) and compares the steps with each other: `redirect_uri` that differs between requests, `state` that does not come back, a PKCE verifier that does not match its challenge, a missing or wrong `nonce`, dropped scopes, a client secret sent from the browser, and an ID token with the wrong audience or an expired time. An **Error lookup** page explains `invalid_grant`, `redirect_uri_mismatch`, `AADSTS…` codes and about sixty other errors, and works with nothing loaded. The browser only shows its own side: when the app's server makes the token request, it is not in a browser capture, and the tool says so.
+
+### Tokens
+
+Paste a JWT, or list the tokens found in a loaded HAR (Authorization headers, URL and form parameters, JSON responses, cookies). Checks expiry, not-before, issued-at, issuer, audience, scopes, the algorithm (`none`, shared-secret tokens, embedded key sources), dates written in milliseconds instead of seconds, and a missing `exp`. It decodes; it cannot verify a signature, which needs the issuer's key.
+
+### Cookies
+
+Lists every cookie a capture sets or sends, judges whether a browser would have stored each one (Secure over HTTP, `SameSite=None` without `Secure`, `__Host-` and `__Secure-` prefixes, wrong `Domain`, third-party context, size), and replays the capture against a model of the browser's cookie jar to find cookies that should have been sent and were not. Chrome's default "Save all as HAR" removes cookies; the tool says so when it sees none. It cannot see the browser's own privacy settings, so a missing cookie may have been blocked by one of those.
+
+### Everywhere
+
 - Light and dark themes, keyboard shortcuts (press `?`)
+
+### Samples
+
+The start screen has "Try a sample" buttons: a working and a broken load of the same page (open both for Compare), a HAR with a working SAML sign-in, a SAML-tracer export of a failed one, an OAuth sign-in that fails with `invalid_grant`, and a login loop caused by cookies. They live in `public/demo/` and are made by `node scripts/make-demo-data.mjs`. Every host, user and token in them is invented, and the XML signatures are placeholders (the certificates' private keys were discarded), so the app can read them but nothing could verify them.
 
 ### Locked pages
 
-**Samples.** The start screen has "Try a sample" buttons: a working and a broken load of the same page (open both for Compare), a HAR with a working SAML sign-in, and a SAML-tracer export of a failed one. They live in `public/demo/` and are made by `node scripts/make-demo-data.mjs`. Every host, user and token in them is invented, and the XML signatures are placeholders (the certificates' private keys were discarded), so the app can read them but nothing could verify them.
-
-Every page except SAML needs data, so the sidebar, tab bar and shortcuts are locked until a HAR is loaded, and **Compare** stays locked until two are loaded. SAML also works on a pasted message, so it is always open. Clicking a locked page, or pressing its number key (1 to 7), shows an error toast at the top right and does not navigate.
+Pages that need data are locked until a HAR is loaded, and **Compare** stays locked until two are loaded. Pages that also work on pasted text (SAML messages, the token inspector, error lookup) stay open.
 
 ## Getting started
 
@@ -33,6 +59,8 @@ npm install
 npm run dev      # start the dev server
 npm run build    # production build in dist/
 npm run lint
+npm run check:routes   # every page in src/nav.js has a hosting rule and a noindex header
+npm run demo:data      # regenerate the sample captures in public/demo/
 ```
 
 Export a HAR from DevTools: Network tab, then "Save all as HAR with content".
