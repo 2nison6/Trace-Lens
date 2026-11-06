@@ -45,3 +45,7 @@
   X-Robots-Tag: noindex
 /saml/messages
   X-Robots-Tag: noindex
+/tokens/inspect
+  X-Robots-Tag: noindex
+/tokens/capture
+  X-Robots-Tag: noindex

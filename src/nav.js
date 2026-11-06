@@ -1,5 +1,5 @@
 import {
-  faBarsStaggered, faChartPie, faCodeCompare, faKey, faLightbulb, faNetworkWired, faToolbox, faTriangleExclamation,
+  faBarsStaggered, faChartPie, faCodeCompare, faKey, faLightbulb, faListCheck, faNetworkWired, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 
 // TraceLens is a set of troubleshooting tools that share one place to drop captures. Each SECTION is a tool with its own menu
@@ -35,6 +35,17 @@ export const SECTIONS = [
     icon: faKey,
     pages: [
       { to: '/saml/messages', label: 'Messages', icon: faKey, needs: 0 },
+    ],
+  },
+  {
+    id: 'tokens',
+    label: 'Tokens',
+    title: 'Token inspector',
+    blurb: 'Decode a JWT and check its expiry, audience, issuer and algorithm. Finds the tokens in a HAR too.',
+    icon: faStamp,
+    pages: [
+      { to: '/tokens/inspect', label: 'Inspect', icon: faShieldHalved, needs: 0 },
+      { to: '/tokens/capture', label: 'In capture', icon: faListCheck },
     ],
   },
 ]

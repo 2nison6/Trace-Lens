@@ -30,6 +30,7 @@ import Insights from './components/Insights'
 import Tools from './components/Tools'
 import Saml from './components/Saml'
 import SamlPrompt from './components/SamlPrompt'
+import { TokenInspect, TokensInCapture } from './components/Tokens'
 import Footer from './components/Footer'
 import LoadOverlay from './components/LoadOverlay'
 import { EmptyState, Kbd, Notice, Segmented } from './components/ui'
@@ -415,6 +416,8 @@ export default function App() {
                     <Route path="/har/compare" element={hars.length ? <Page><Compare hars={hars} toast={toast} key={hars.length} /></Page> : need(null)} />
                     <Route path="/har/tools" element={need(<Tools har={har} hars={hars} toast={toast} key={active} />)} />
                     <Route path="/saml/messages" element={<Page><Saml har={har} traces={traces} onFiles={onFiles} toast={toast} key={active} /></Page>} />
+                    <Route path="/tokens/inspect" element={<Page><TokenInspect toast={toast} /></Page>} />
+                    <Route path="/tokens/capture" element={need(<TokensInCapture har={har} toast={toast} key={active} />)} />
                     {/* the old, un-prefixed addresses keep working for bookmarks */}
                     {['overview', 'issues', 'waterfall', 'flow', 'insights', 'compare', 'tools'].map((p) => <Route key={p} path={`/${p}`} element={<Navigate to={`/har/${p}`} replace />} />)}
                     <Route path="/saml" element={<Navigate to="/saml/messages" replace />} />

@@ -326,3 +326,7 @@ a.file-b { text-decoration: none; }
 .tool-card.locked { opacity: 0.72; }
 @media (hover: hover) and (pointer: fine) { .tool-card:not(.locked):hover { border-color: var(--blue-line); background: var(--s2); } .tool-card.locked { cursor: not-allowed; } }
 .tool-card:not(.locked):active { transform: scale(0.99); }
+
+/* token uses */
+.saml-uses { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12.5px; }
+.saml-uses li { display: flex; gap: 8px; align-items: baseline; min-width: 0; }

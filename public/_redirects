@@ -24,3 +24,7 @@
 
 # SAML analyzer
 /saml/messages  /index.html   200
+
+# Token inspector
+/tokens/inspect  /index.html   200
+/tokens/capture  /index.html   200
