@@ -10,6 +10,8 @@ import { DEFAULT_FILTERS, InspectCtx, ListCtx, SelectedCtx } from './context'
 import { filterHar } from './harParser'
 import { ingest } from './ingest'
 import { loadStore } from './loadStore'
+import { deleteSaved } from './persist'
+import KeepFiles from './components/KeepFiles'
 import { isReady, signalReady } from './boot'
 import { NAV, SHORTCUTS, TAB_PRIMARY, isLocked, lockReason } from './nav'
 import useMediaQuery from './hooks/useMediaQuery'
@@ -100,7 +102,7 @@ const EXPLORE = [
   'Your files are loaded: pick a page from the sidebar.',
 ]
 
-function Home({ onFiles, fileCount, error, onDismiss }) {
+function Home({ onFiles, fileCount, error, onDismiss, toast }) {
   return (
     <Page>
       <section className="start">
@@ -109,6 +111,7 @@ function Home({ onFiles, fileCount, error, onDismiss }) {
         <p className="start-lede">Drop a HAR file and HAR.lens replays the traffic, flags what went wrong, and lets you compare captures side by side.</p>
         <DropZone onFiles={onFiles} />
         {error && <Notice tone="crit" icon={faTriangleExclamation} onDismiss={() => onDismiss()}>{error}</Notice>}
+        <KeepFiles onFiles={onFiles} fileCount={fileCount} toast={toast} />
         <ol className="how">
           <li><b>Export</b><span>In DevTools, open Network, then choose “Save all as HAR with content”.</span></li>
           <li><b>Drop it here</b><span>Nothing is uploaded. Files stay in this tab and disappear when you close it.</span></li>
@@ -194,6 +197,7 @@ export default function App() {
   // A page that just became locked (the last file went, or Compare lost its second one) stays open and shows its own
   // empty state, which says what to do next and offers the button for it.
   const remove = (i) => {
+    if (hars[i]) deleteSaved(hars[i].fileName)
     dispatch({ type: 'remove', index: i })
     setDock(null)
   }
@@ -247,7 +251,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [navigate, help, more, theme, toggleSide, toast, fileCount])
 
-  const need = (el) => (har ? <Page>{el}</Page> : <Page><EmptyState icon={faFolderOpen} title="No file loaded" action={<NavLink className="btn primary" to="/">Open a HAR file</NavLink>}>Files are kept in memory, so a reload clears them.</EmptyState></Page>)
+  const need = (el) => (har ? <Page>{el}</Page> : <Page><EmptyState icon={faFolderOpen} title="No file loaded" action={<NavLink className="btn primary" to="/">Open a HAR file</NavLink>}>Files are kept in memory, so a reload clears them.</EmptyState><KeepFiles restoreOnly onFiles={onFiles} fileCount={fileCount} toast={toast} /></Page>)
   const showFilters = har && FILTERED.has(location.pathname)
   const current = NAV.find((n) => n.to === location.pathname)
   // Home keeps the title and robots rule index.html ships with. Every other page is named after itself and asks search
@@ -322,14 +326,14 @@ export default function App() {
                   {error && location.pathname !== '/' && <Notice tone="crit" icon={faTriangleExclamation} onDismiss={() => setError('')}>{error}</Notice>}
                   {showFilters && <FilterBar filters={filters} setFilters={setFilters} har={har} shown={filtered.entries.length} searchRef={searchRef} />}
                   <Routes location={location} key={location.pathname}>
-                    <Route path="/" element={<Home onFiles={onFiles} fileCount={fileCount} error={error} onDismiss={() => setError('')} />} />
-                    <Route path="/overview" element={need(<Overview har={filtered} filters={filters} setFilters={setFilters} />)} />
-                    <Route path="/issues" element={need(<Issues har={har} key={active} />)} />
-                    <Route path="/waterfall" element={need(<Waterfall har={filtered} key={active} />)} />
+                    <Route path="/" element={<Home onFiles={onFiles} fileCount={fileCount} error={error} onDismiss={() => setError('')} toast={toast} />} />
+                    <Route path="/overview" element={need(<Overview har={filtered} full={har} filters={filters} setFilters={setFilters} toast={toast} />)} />
+                    <Route path="/issues" element={need(<Issues har={har} toast={toast} key={active} />)} />
+                    <Route path="/waterfall" element={need(<Waterfall har={filtered} toast={toast} key={active} />)} />
                     <Route path="/flow" element={need(<FlowView har={filtered} key={`${active}-${filtered ? filtered.entries.length : 0}`} />)} />
                     <Route path="/insights" element={need(<Insights har={har} key={active} />)} />
-                    <Route path="/compare" element={hars.length ? <Page><Compare hars={hars} key={hars.length} /></Page> : need(null)} />
-                    <Route path="/tools" element={need(<Tools har={har} toast={toast} key={active} />)} />
+                    <Route path="/compare" element={hars.length ? <Page><Compare hars={hars} toast={toast} key={hars.length} /></Page> : need(null)} />
+                    <Route path="/tools" element={need(<Tools har={har} hars={hars} toast={toast} key={active} />)} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </main>

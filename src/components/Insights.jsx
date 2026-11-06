@@ -3,8 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight, faCircleCheck, faCircleExclamation, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons'
 import { InspectCtx, ListCtx } from '../context'
 import {
-  cachePolicy, concurrency, connectionSetup, criticalPath, endpoints, heaviest, latencyBuckets,
-  optimizations, protocols, renderBlocking, thirdParty, vitals,
+  biggestWins, cachePolicy, concurrency, connectionSetup, criticalPath, endpoints, heaviest, latencyBuckets,
+  optimizations, protocols, renderBlocking, thirdParty, vitals, withoutThirdParty,
 } from '../insights'
 import { fmtBytes, fmtMs } from '../utils'
 import Bars, { HoverTip } from './Bars'
@@ -31,6 +31,8 @@ export default function Insights({ har }) {
   const cache = useMemo(() => cachePolicy(har), [har])
   const opts = useMemo(() => optimizations(har), [har])
   const block = useMemo(() => renderBlocking(har), [har])
+  const wins = useMemo(() => biggestWins(har), [har])
+  const noThird = useMemo(() => withoutThirdParty(har), [har])
 
   const totalBytes = tp.firstBytes + tp.thirdBytes || 1
   const share = (tp.thirdBytes / totalBytes) * 100
@@ -42,6 +44,22 @@ export default function Insights({ har }) {
 
   return (
     <div className="page-grid">
+      {wins.length > 0 && (
+        <Card className="span-3" title="Biggest wins" aside={<span className="t-cap">estimated, largest first</span>}>
+          <div className="wins">
+            {wins.map((w, i) => (
+              <button key={w.key} type="button" className="win" onClick={() => showList(w.title, w.entries)}>
+                <span className="win-n">{i + 1}. {w.upTo ? 'up to' : 'about'} {fmtBytes(w.bytes)}</span>
+                <b>{w.title}</b>
+                <span className="dim">{w.note}</span>
+                <span className="opt-n">{w.entries.length} request{w.entries.length === 1 ? '' : 's'} <FontAwesomeIcon icon={faArrowRight} /></span>
+              </button>
+            ))}
+          </div>
+          <p className="hint">Start here. These are the changes that would save the most data; the cards below show every estimate in full.</p>
+        </Card>
+      )}
+
       {vit && (
         <Card className="span-3" title="Timing estimates" aside={<span className="t-cap">estimated from HAR timings</span>}>
           <div className="vitals">
@@ -61,7 +79,7 @@ export default function Insights({ har }) {
       {opts.length > 0 && (
         <Card className="span-3" title="Potential savings" aside={<span className="t-cap">about {fmtBytes(savingTotal)} in total</span>}>
           <div className="opt-grid">
-            {opts.map((o) => (
+            {[...opts].sort((a, b) => b.saving - a.saving).map((o) => (
               <button key={o.key} type="button" className="opt" onClick={() => showList(o.title, o.entries)}>
                 <span className="opt-save num">{fmtBytes(o.saving)}</span>
                 <b>{o.title}</b>
@@ -179,6 +197,13 @@ export default function Insights({ har }) {
               <i style={{ width: `${100 - share}%` }} /><i className="tp" style={{ width: `${share}%` }} />
             </div>
             <div className="split-key pad-h"><span><i />{tp.first} (your site)</span><span><i className="tp" />Third parties</span></div>
+            {noThird && noThird.saved > 0 && (
+              <p className="whatif">
+                <b>What if they were blocked?</b>
+                <span>Your own requests would finish by about <b className="num">{fmtMs(noThird.end)}</b> instead of <b className="num">{fmtMs(noThird.total)}</b>, up to <b className="num">{fmtMs(noThird.saved)}</b> sooner.</span>
+                <span className="dim">A best case: it assumes nothing waits on a third party.</span>
+              </p>
+            )}
             <table className="tbl">
               <thead><tr><th>Domain</th><th className="num w70">Req</th><th className="num w90">Bytes</th><th className="num w90">Time</th><th className="num w110">Connect cost</th><th className="w120"><span className="sr">Share</span></th></tr></thead>
               <tbody>

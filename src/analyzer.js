@@ -141,6 +141,38 @@ export function analyze(har) {
   add('info', 'Efficiency', 'Same URL fetched multiple times', 'Identical GET requests were repeated (3+ times), wasting bandwidth.', 'Cache the result client-side or de-duplicate the calls.', [...dupGroups.values()].filter((g) => g.length >= 3).flat())
   add('warning', 'Content', 'Asset URL returned HTML', 'A .js/.css/.json/image URL returned text/html with 200, usually an SPA fallback or error page served instead of the file.', 'Check the deploy path/rewrite rules so missing assets return a real 404.', where((e) => e.status === 200 && e.type === 'html' && /\.(js|mjs|css|json|png|jpe?g|gif|svg|woff2?|map)(\?|$)/i.test(e.path)))
 
+  // ---- CORS preflights ----------------------------------------------------------------------------
+  // A browser sends an OPTIONS request first for many cross-origin calls; if that is not answered with 2xx the real request
+  // is never sent, and the console only says "blocked by CORS policy".
+  add(
+    'warning',
+    'Errors',
+    'CORS preflight (OPTIONS) requests that failed',
+    'The browser asks the server for permission with an OPTIONS request before some cross-origin calls. These were not answered with a 2xx status, so the real request was blocked.',
+    'Make the server answer OPTIONS with 204/200 and the Access-Control-Allow-Origin, -Methods and -Headers headers the call needs.',
+    where((e) => e.method === 'OPTIONS' && (e.status === 0 || e.status >= 300)),
+  )
+  // Cross-origin calls that were sent without a preflight even though the matching OPTIONS failed are not detectable from a HAR,
+  // so only the failed preflight itself is reported.
+
+  // ---- Request size ---------------------------------------------------------------------------------
+  add(
+    'warning',
+    'Performance',
+    'Very large request headers (> 8 KB)',
+    'Large Cookie or other request headers are resent on every request to that host and are rejected by many servers and proxies (often as 431 or 400).',
+    'Trim cookies, keep session data on the server, and scope cookies to the paths and hosts that need them.',
+    where((e) => e.reqHeaderList.reduce((n, h) => n + String(h.name).length + String(h.value).length + 4, 0) > 8192),
+  )
+  add(
+    'info',
+    'Content',
+    'Responses without a Content-Type',
+    'These responses have a body but no Content-Type header, so browsers have to guess how to read them (and may refuse scripts and styles).',
+    'Send the right Content-Type for every response, with X-Content-Type-Options: nosniff.',
+    where((e) => e.status >= 200 && e.status < 300 && e.status !== 204 && e.transfer > 0 && !e.mime && !e.resHeaders['content-type']),
+  )
+
   if (entries.length > 100) {
     findings.push({ id: `f${seq++}`, severity: 'info', category: 'Efficiency', title: `High request count (${entries.length})`, detail: 'Many requests increase load time and server load.', fix: 'Bundle, sprite, lazy-load or drop unneeded requests.', ids: [] })
   }
@@ -191,12 +223,16 @@ export function analyze(har) {
 }
 
 // 100 = clean. Each distinct problem costs points by severity.
-export function healthScore(findings) {
+export function healthScore(findings, dismissed) {
   const cost = { critical: 12, warning: 5, info: 1 }
-  return Math.max(0, 100 - findings.reduce((s, f) => s + cost[f.severity], 0))
+  const counted = dismissed && dismissed.size ? findings.filter((f) => !dismissed.has(findingKey(f))) : findings
+  return Math.max(0, 100 - counted.reduce((s, f) => s + cost[f.severity], 0))
 }
 
 export { short as shortName }
+
+/** Identifies the same kind of finding in different captures: its ids and the numbers in its title (counts) differ. */
+export const findingKey = (f) => `${f.severity}|${f.category}|${f.title.replace(/\d+/g, '#')}`
 
 const cache = new WeakMap()
 export function analyzeCached(har) {

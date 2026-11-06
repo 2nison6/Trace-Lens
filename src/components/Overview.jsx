@@ -1,11 +1,12 @@
 import { useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCircleCheck, faCircleExclamation } from '@fortawesome/free-solid-svg-icons'
+import { faCircleCheck, faCircleExclamation, faCopy } from '@fortawesome/free-solid-svg-icons'
 import { PHASES, TYPE_ORDER } from '../harParser'
 import { DEFAULT_FILTERS, InspectCtx } from '../context'
 import { PHASE_LABEL, PHASE_VAR, STATUS_GROUPS, groupOfStatus } from '../theme'
-import { fmtBytes, fmtMs } from '../utils'
+import { copyText, fmtBytes, fmtMs } from '../utils'
+import { summaryText } from '../summary'
 import Bars, { HoverTip } from './Bars'
 import { Card, StatusCode } from './ui'
 
@@ -13,7 +14,7 @@ const byTime = (e) => e.time
 const byBytes = (e) => e.transfer
 const STATUS_FILTER = { '2xx': 'ok', '3xx': '3xx', '4xx': '4xx', '5xx': '5xx', failed: 'failed' }
 
-function Stat({ label, value, sub, tone, entries, onPick, hint, icon }) {
+function Stat({ label, value, sub, tone, entries, onPick, hint, icon, rank = byTime }) {
   const body = (
     <>
       <span className="stat-label">{icon && <FontAwesomeIcon icon={icon} />} {label}</span>
@@ -22,7 +23,7 @@ function Stat({ label, value, sub, tone, entries, onPick, hint, icon }) {
     </>
   )
   if (entries) {
-    return <HoverTip className={`stat${onPick ? ' pick' : ''}`} title={label} entries={entries} rank={byTime} footer={hint} onClick={onPick}>{body}</HoverTip>
+    return <HoverTip className={`stat${onPick ? ' pick' : ''}`} title={label} entries={entries} rank={rank} fmtRank={rank === byBytes ? fmtBytes : fmtMs} footer={hint} onClick={onPick}>{body}</HoverTip>
   }
   if (onPick) {
     return <div className="stat pick" role="button" tabIndex={0} title={hint} onClick={onPick} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onPick())}>{body}</div>
@@ -30,7 +31,7 @@ function Stat({ label, value, sub, tone, entries, onPick, hint, icon }) {
   return <div className="stat">{body}</div>
 }
 
-export default function Overview({ har, filters, setFilters }) {
+export default function Overview({ har, filters, setFilters, full, toast }) {
   const inspect = useContext(InspectCtx)
   const navigate = useNavigate()
   const s = har.summary
@@ -42,6 +43,7 @@ export default function Overview({ har, filters, setFilters }) {
   }
 
   const errors = all.filter((e) => e.error)
+  const copySummary = async () => toast?.((await copyText(summaryText(full || har))) ? 'Summary copied' : 'Copy failed')
   const phaseTotal = PHASES.reduce((n, p) => n + s.phaseTotals[p], 0) || 1
   const phaseRows = PHASES.filter((p) => s.phaseTotals[p] > 0).map((p) => ({ key: p, label: PHASE_LABEL[p], value: s.phaseTotals[p], color: PHASE_VAR[p], entries: all.filter((e) => e.phases[p] > 0), rank: (e) => e.phases[p], fmtRank: fmtMs }))
   const typeRows = TYPE_ORDER.filter((k) => s.byType[k]).map((k) => ({ label: `${k} · ${s.byType[k].count}`, value: s.byType[k].bytes, entries: all.filter((e) => e.type === k), rank: byBytes, fmtRank: fmtBytes, filter: { type: k } })).sort((a, b) => b.value - a.value)
@@ -52,12 +54,23 @@ export default function Overview({ har, filters, setFilters }) {
     <div className="page-grid">
       <div className="stats">
         <Stat label="Requests" value={s.count} sub={`${s.hosts.length} host${s.hosts.length === 1 ? '' : 's'}`} onPick={() => go(null)} hint="Open every request in the Waterfall" />
-        <Stat label="Load time" value={fmtMs(s.totalTime)} sub={`avg request ${fmtMs(s.avgTime)}`} />
-        <Stat label="Transferred" value={fmtBytes(s.totalBytes)} />
+        <Stat label="Load time" value={fmtMs(s.totalTime)} sub={`avg request ${fmtMs(s.avgTime)}`} entries={s.slowest} onPick={() => go({ minMs: String(Math.floor(Math.min(...s.slowest.map((e) => e.time), 1000))) })} hint="Open the slowest requests in the Waterfall" />
+        <Stat label="Transferred" value={fmtBytes(s.totalBytes)} entries={[...all].sort((a, b) => b.transfer - a.transfer).slice(0, 5)} rank={byBytes} onPick={() => go({ minKB: '100' })} hint="Open the requests of 100 KB or more in the Waterfall" />
         <Stat label="Errors" icon={s.errors ? faCircleExclamation : faCircleCheck} value={s.errors} tone={s.errors ? 'crit' : 'good'} sub={s.errors ? 'failed or 4xx / 5xx' : 'none found'} entries={errors} onPick={errors.length ? () => go({ status: 'errors' }) : undefined} hint="Filter the Waterfall to errors" />
       </div>
 
-      <Card title="Where the time goes" className="span-3" aside={<span className="t-cap">summed across all requests</span>}>
+      {har.markers.length > 0 && (
+        <Card className="span-3" title="Page load milestones" aside={<button type="button" className="btn sm" onClick={copySummary}><FontAwesomeIcon icon={faCopy} /> <span>Copy summary</span></button>}>
+          <div className="milestones" role="img" aria-label={har.markers.map((m) => `${m.label} at ${fmtMs(m.ms)}`).join(', ')}>
+            <div className="ms-track">
+              {har.markers.map((m) => <span key={m.label} className={`ms-pin ${m.tone}`} style={{ left: `${Math.min(100, (m.ms / Math.max(1, s.totalTime)) * 100)}%` }}><i /><b>{m.label}</b><small className="num">{fmtMs(m.ms)}</small></span>)}
+            </div>
+          </div>
+          <p className="hint">Recorded by the browser. The bar is the whole capture, {fmtMs(s.totalTime)} long.</p>
+        </Card>
+      )}
+
+      <Card title="Where the time goes" className="span-3" aside={har.markers.length ? <span className="t-cap">summed across all requests</span> : <><span className="t-cap">summed across all requests</span> <button type="button" className="btn sm" onClick={copySummary}><FontAwesomeIcon icon={faCopy} /> <span>Copy summary</span></button></>}>
         <div className="phase-strip" role="img" aria-label={phaseRows.map((r) => `${r.label} ${fmtMs(r.value)}`).join(', ')}>
           {phaseRows.map((r) => (
             <HoverTip key={r.key} className="phase-seg" style={{ flexGrow: r.value }} title={r.label} entries={r.entries} rank={r.rank} fmtRank={r.fmtRank} footer="Click to list these requests" onClick={() => go(null)} label={`${r.label}: ${fmtMs(r.value)}`}>
