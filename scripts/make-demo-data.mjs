@@ -51,8 +51,8 @@ function entry(base, o) {
       method: o.method || 'GET',
       url: o.url,
       httpVersion: o.http || 'h2',
-      headers: [H('accept', o.accept || '*/*'), H('user-agent', 'Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/150 Safari/537.36'), ...(o.reqHeaders || [])],
-      cookies: [],
+      headers: [H('accept', o.accept || '*/*'), H('user-agent', 'Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/150 Safari/537.36'), ...(o.nav ? [H('sec-fetch-dest', 'document'), H('sec-fetch-mode', 'navigate')] : []), ...(o.send ? [H('cookie', o.send.map(([n, v]) => `${n}=${v}`).join('; '))] : []), ...(o.reqHeaders || [])],
+      cookies: (o.send || []).map(([name, value]) => ({ name, value })),
       queryString: qs(o.url),
       headersSize: 420,
       bodySize: o.post ? o.post.text.length : 0,
@@ -106,7 +106,7 @@ function shopWorking() {
     t: { send: 0.5, wait: 24 + (i % 3) * 6, receive: 14 + i * 2 },
   }))
   const list = [
-    entry(base, { at: 0, url: `${SHOP}/`, mime: 'text/html', size: 41200, transfer: 9800, conn: '100', body: html('Example Shop'),
+    entry(base, { at: 0, url: `${SHOP}/`, mime: 'text/html', size: 41200, transfer: 9800, conn: '100', body: html('Example Shop'), nav: true,
       headers: [ctype('text/html; charset=utf-8'), enc('br'), H('cache-control', 'no-cache'), ...SEC, H('set-cookie', 'sid=demo-session; Path=/; Secure; HttpOnly; SameSite=Lax'), H('server', 'edge')],
       t: { blocked: 2, dns: 14, connect: 22, ssl: 31, send: 1, wait: 128, receive: 18 } }),
     entry(base, { at: 222, url: `${CDN}/css/app.4f1a9c2e.css`, mime: 'text/css', size: 61000, transfer: 11200, conn: '101', init: `${SHOP}/`, ip: '203.0.113.20',
@@ -135,7 +135,7 @@ function shopWorking() {
       headers: [ctype('application/javascript'), enc('br'), H('cache-control', 'public, max-age=3600')], t: { dns: 18, connect: 21, ssl: 29, send: 0.5, wait: 47, receive: 21 } }),
     entry(base, { at: 1010, method: 'POST', url: 'https://metrics.example-analytics.test/collect', mime: '', size: 0, transfer: 420, status: 204, conn: '103', init: 'https://metrics.example-analytics.test/tag.js', priority: 'Low', ip: '198.51.100.7',
       post: { mimeType: 'application/json', text: '{"event":"page_view","page":"/"}' }, headers: [H('access-control-allow-origin', SHOP)], t: { send: 0.6, wait: 41, receive: 0.5 } }),
-    entry(base, { at: 1015, url: `${SHOP}/favicon.ico`, mime: 'image/x-icon', size: 4286, transfer: 4500, conn: '100', priority: 'Low',
+    entry(base, { at: 1015, url: `${SHOP}/favicon.ico`, mime: 'image/x-icon', size: 4286, transfer: 4500, conn: '100', priority: 'Low', send: [['sid', 'demo-session']],
       headers: [ctype('image/x-icon'), H('cache-control', 'public, max-age=86400')], t: { send: 0.5, wait: 17, receive: 2 } }),
   ]
   return har('Example Shop', base, list, { onContentLoad: 560, onLoad: 1180 })
@@ -310,6 +310,33 @@ function oauthHar() {
   return har('Example SPA (sign-in)', base, list, { onContentLoad: 4400, onLoad: 4700 })
 }
 
+// ---------------------------------------------------------------------------------------------------------------- cookies
+// A login that loops. portal_auth is stored but never sent back, portal_sso is rejected by the browser (SameSite=None without Secure),
+// and portal_session is scoped to /app so it is correctly not sent to /account (the tool must NOT flag that one).
+function cookieLoopHar() {
+  const base = T('2026-11-06T09:55:00Z')
+  const APP = 'https://portal.example.test'
+  const list = [
+    entry(base, { at: 0, url: `${APP}/account`, status: 302, mime: '', size: 0, transfer: 500, nav: true, send: [['theme', 'dark']], redirect: `${APP}/login`, headers: [H('location', `${APP}/login`)], t: { dns: 12, connect: 20, ssl: 28, wait: 40, receive: 0.5 } }),
+    entry(base, { at: 120, url: `${APP}/login`, mime: 'text/html', size: 6100, transfer: 2100, nav: true, send: [['theme', 'dark']], body: html('Sign in'), headers: [ctype('text/html; charset=utf-8'), enc('br'), H('cache-control', 'no-store'), ...SEC], t: { wait: 52, receive: 5 } }),
+    entry(base, { at: 3000, method: 'POST', url: `${APP}/login`, status: 302, mime: '', size: 0, transfer: 900, nav: true, send: [['theme', 'dark']], redirect: `${APP}/account`,
+      post: { mimeType: 'application/x-www-form-urlencoded', text: 'username=alex%40example.test&password=demo-password-not-real', params: [{ name: 'username', value: 'alex@example.test' }, { name: 'password', value: 'demo-password-not-real' }] },
+      headers: [H('location', `${APP}/account`),
+        // accepted, but a session cookie scoped to /app: the pages below are under /account, so it is never due
+        H('set-cookie', 'portal_session=demo-session-value; Path=/app; Secure; HttpOnly; SameSite=Lax'),
+        // rejected by the browser: SameSite=None must come with Secure
+        H('set-cookie', 'portal_sso=demo-sso-value; Path=/; HttpOnly; SameSite=None'),
+        // accepted, and sent back on every later request
+        H('set-cookie', 'csrf=demo-csrf-new; Path=/; Secure; SameSite=Lax')], t: { wait: 310, receive: 1 } }),
+    entry(base, { at: 3330, url: `${APP}/account`, status: 302, mime: '', size: 0, transfer: 500, nav: true, send: [['theme', 'dark'], ['csrf', 'demo-csrf-new']], redirect: `${APP}/login`, headers: [H('location', `${APP}/login`)], t: { wait: 38, receive: 0.5 } }),
+    entry(base, { at: 3400, url: `${APP}/login`, mime: 'text/html', size: 6100, transfer: 2100, nav: true, send: [['theme', 'dark'], ['csrf', 'demo-csrf-new']], body: html('Sign in'), headers: [ctype('text/html; charset=utf-8'), enc('br'), H('cache-control', 'no-store'), ...SEC], t: { wait: 49, receive: 5 } }),
+  ]
+  // a session cookie that SHOULD come back: set at the site root, then missing from the next request
+  list.splice(3, 0, entry(base, { at: 3320, method: 'POST', url: `${APP}/session/refresh`, status: 204, mime: '', size: 0, transfer: 400, send: [['theme', 'dark'], ['csrf', 'demo-csrf-new']],
+    headers: [H('set-cookie', 'portal_auth=demo-auth-value; Path=/; Secure; HttpOnly; SameSite=Strict')], t: { wait: 40, receive: 0.5 } }))
+  return har('Portal (login loop)', base, list, { onContentLoad: 3500, onLoad: 3550 })
+}
+
 // ---------------------------------------------------------------------------------------------------------------- write
 const files = {
   'shop-working.har': shopWorking(),
@@ -317,6 +344,7 @@ const files = {
   'sso-signin.har': ssoHar(),
   'sso-failed-saml-tracer.json': failedTrace(),
   'oauth-signin-failed.har': oauthHar(),
+  'cookie-login-loop.har': cookieLoopHar(),
 }
 mkdirSync(OUT, { recursive: true })
 for (const [name, data] of Object.entries(files)) {

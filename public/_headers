@@ -53,3 +53,7 @@
   X-Robots-Tag: noindex
 /oauth/errors
   X-Robots-Tag: noindex
+/cookies/all
+  X-Robots-Tag: noindex
+/cookies/problems
+  X-Robots-Tag: noindex

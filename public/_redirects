@@ -32,3 +32,7 @@
 # OAuth / OIDC analyzer
 /oauth/flow    /index.html   200
 /oauth/errors  /index.html   200
+
+# Cookie analyzer
+/cookies/all       /index.html   200
+/cookies/problems  /index.html   200

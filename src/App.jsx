@@ -32,6 +32,7 @@ import Saml from './components/Saml'
 import SamlPrompt from './components/SamlPrompt'
 import { TokenInspect, TokensInCapture } from './components/Tokens'
 import { OAuthErrors, OAuthFlow } from './components/OAuth'
+import { CookiesAll, CookiesProblems } from './components/Cookies'
 import Footer from './components/Footer'
 import LoadOverlay from './components/LoadOverlay'
 import { EmptyState, Kbd, Notice, Segmented } from './components/ui'
@@ -419,6 +420,8 @@ export default function App() {
                     <Route path="/saml/messages" element={<Page><Saml har={har} traces={traces} onFiles={onFiles} toast={toast} key={active} /></Page>} />
                     <Route path="/oauth/flow" element={need(<OAuthFlow har={har} key={active} />)} />
                     <Route path="/oauth/errors" element={<Page><OAuthErrors /></Page>} />
+                    <Route path="/cookies/all" element={need(<CookiesAll har={har} key={active} />)} />
+                    <Route path="/cookies/problems" element={need(<CookiesProblems har={har} key={active} />)} />
                     <Route path="/tokens/inspect" element={<Page><TokenInspect toast={toast} /></Page>} />
                     <Route path="/tokens/capture" element={need(<TokensInCapture har={har} toast={toast} key={active} />)} />
                     {/* the old, un-prefixed addresses keep working for bookmarks */}

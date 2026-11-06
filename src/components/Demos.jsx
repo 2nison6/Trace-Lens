@@ -9,6 +9,7 @@ const SETS = [
   { id: 'broken', label: 'Broken page load', hint: 'Slow server, 500 errors, a failed CORS call, heavy files, a redirect chain.', files: ['shop-broken.har'] },
   { id: 'sso', label: 'HAR with a SAML sign-in', hint: 'A single sign-in that works. Opens the “SAML found” prompt.', files: ['sso-signin.har'] },
   { id: 'oauth', label: 'OAuth sign-in that fails', hint: 'A single-page app signing in with PKCE. The token request fails with invalid_grant for two reasons the OAuth tool finds.', files: ['oauth-signin-failed.har'] },
+  { id: 'cookies', label: 'Login loop (cookies)', hint: 'A sign-in that bounces back to the login page: one session cookie is rejected and one is never sent back.', files: ['cookie-login-loop.har'] },
   { id: 'tracer', label: 'SAML-tracer export', hint: 'A sign-in that fails: the identity provider says Success, the app answers 403.', files: ['sso-failed-saml-tracer.json'] },
 ]
 

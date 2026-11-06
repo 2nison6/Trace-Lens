@@ -1,5 +1,5 @@
 import {
-  faBarsStaggered, faChartPie, faCodeCompare, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
+  faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCookieBite, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 
 // TraceLens is a set of troubleshooting tools that share one place to drop captures. Each SECTION is a tool with its own menu
@@ -59,6 +59,17 @@ export const SECTIONS = [
       { to: '/tokens/capture', label: 'In capture', icon: faListCheck },
     ],
   },
+  {
+    id: 'cookies',
+    label: 'Cookies',
+    title: 'Cookie and session analyzer',
+    blurb: 'Every cookie a capture sets or sends, what is wrong with it, and why a session cookie did not come back.',
+    icon: faCookieBite,
+    pages: [
+      { to: '/cookies/all', label: 'All cookies', icon: faCookieBite },
+      { to: '/cookies/problems', label: 'Problems', icon: faCircleExclamation },
+    ],
+  },
 ]
 
 const needs = (page) => page.needs ?? 1
@@ -69,7 +80,6 @@ export const sectionOf = (pathname) => SECTIONS.find((s) => pathname === `/${s.i
 export const pageOf = (pathname) => PAGES.find((p) => p.to === pathname) || null
 // The page a tool opens on: its first page that can open with what is loaded, else its first page (which then explains itself)
 export const entryPage = (section, fileCount) => section.pages.find((p) => !isLocked(p, fileCount)) || section.pages[0]
-
 
 // Why `page` can't be opened with `fileCount` files loaded, or '' when it can. Every entry point (sidebar, tab bar,
 // More sheet, number keys) asks this one function, so they can never disagree. The copy covers pages that need 1 or 2 files.
