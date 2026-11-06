@@ -60,7 +60,7 @@ export function parseHar(input, fileName = 'capture.har') {
   })
   const t0 = raw.reduce((m, r) => Math.min(m, r.start), raw.length ? raw[0].start : 0)
 
-  const entries = raw.map(({ e, start }) => {
+  const entries = raw.map(({ e, start }, rawIndex) => {
     const req = e.request || {}
     const res = e.response || {}
     const u = safeUrl(req.url || '')
@@ -130,6 +130,8 @@ export function parseHar(input, fileName = 'capture.har') {
       type: classify(mime, req.url),
       httpVersion: res.httpVersion || req.httpVersion || '',
       ip: e.serverIPAddress || '',
+      connection: e.connection ? String(e.connection) : '',
+      rawIndex, // position in the original log.entries, for trimming and merging the raw HAR
       contentSize: Math.max(0, (res.content && res.content.size) || 0),
       transfer,
       time,
@@ -242,11 +244,12 @@ export function filterHar(har, f) {
 const keyOf = (e) => `${e.method} ${e.origin}${e.path}`
 
 // Align requests across any number of captures by method + origin + path (repeats pair up in order).
-export function compareMulti(hars) {
+// `keyFn` can loosen the match, for example to ignore build hashes in file names (see compare.js).
+export function compareMulti(hars, keyFn = keyOf) {
   const queues = hars.map((h) => {
     const m = new Map()
     for (const e of h.entries) {
-      const k = keyOf(e)
+      const k = keyFn(e)
       if (!m.has(k)) m.set(k, [])
       m.get(k).push(e)
     }
