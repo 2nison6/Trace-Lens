@@ -3,8 +3,8 @@ import { loadStore } from './loadStore'
 // Between choosing a file in the browser's file dialog and the page being handed that file there can be a gap (a file in a
 // synced or network folder, a very large file). The page gets no event during it, so nothing could show progress and the app
 // looked frozen. When the dialog closes the window regains focus, which is the one signal the page gets: from then until the
-// file arrives (change), or the dialog is cancelled (cancel), we show an "Opening file" overlay.
-const SHOW_AFTER = 200 // ms after the dialog closes: a cancel or an instant change must not flash the overlay
+// file arrives (change), or the dialog is cancelled (cancel), we show the same "Analyzing HAR" overlay the rest of the upload uses.
+const SHOW_AFTER = 80 // ms after the dialog closes: just long enough that a cancel or an instant change does not flash the overlay
 const GIVE_UP = 30000 // never leave the overlay up forever if neither event ever comes
 
 let active = null // stops the watch in progress

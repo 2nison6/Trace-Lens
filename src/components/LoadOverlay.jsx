@@ -2,10 +2,11 @@ import { useEffect, useSyncExternalStore } from 'react'
 import { STAGE_TEXT, loadStore } from '../loadStore'
 
 /**
- * Progress overlay for opening a file. It subscribes to loadStore on its own, so a change of stage re-renders only this
- * component, never the app and the page behind it.
+ * Progress overlay for opening a file: the words "Analyzing HAR…" with a spinner on the next line, and nothing else on
+ * screen. The current stage is only announced to screen readers (the visually hidden live region below).
  *
- * The overlay is shown by CSS alone (a delayed fade, see .loading-wrap in layout.css): the browser keeps running it while
+ * It subscribes to loadStore on its own, so a change of stage re-renders only this component, never the app and the page
+ * behind it. It is shown by CSS alone (see .loading-wrap in layout.css): the browser keeps running that animation while
  * JavaScript is busy parsing, which a JavaScript-driven animation cannot do.
  */
 export default function LoadOverlay() {
@@ -27,15 +28,13 @@ export default function LoadOverlay() {
   return (
     <>
       {/* Always mounted: screen readers announce text changes inside an existing live region far more reliably than a new one */}
-      <div className="sr-only" role="status" aria-live="polite">{load ? `${opening ? 'Opening file' : 'Analyzing HAR'}. ${stage}${which}` : ''}</div>
+      <div className="sr-only" role="status" aria-live="polite">{load ? `Analyzing HAR. ${stage}${which}` : ''}</div>
+      {/* While we only wait for the file dialog's result, a click dismisses the overlay (some browsers send no event when a dialog is cancelled) */}
       {load && (
         <div className="loading-wrap" aria-hidden="true" onClick={opening ? () => loadStore.clear() : undefined}>
           <div className="loading-card">
+            <strong>Analyzing HAR…</strong>
             <span className="spinner" />
-            <strong>{opening ? 'Opening file…' : 'Analyzing HAR…'}</strong>
-            <span className="loading-stage">{stage}{which}</span>
-            {opening && <span className="loading-file">Cancelled the dialog? Click anywhere to dismiss.</span>}
-            {load.file && <span className="loading-file ellipsis">{load.file}</span>}
           </div>
         </div>
       )}
