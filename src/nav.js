@@ -1,5 +1,5 @@
 import {
-  faBarsStaggered, faChartPie, faCodeCompare, faKey, faLightbulb, faListCheck, faNetworkWired, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
+  faBarsStaggered, faChartPie, faCodeCompare, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 
 // TraceLens is a set of troubleshooting tools that share one place to drop captures. Each SECTION is a tool with its own menu
@@ -35,6 +35,17 @@ export const SECTIONS = [
     icon: faKey,
     pages: [
       { to: '/saml/messages', label: 'Messages', icon: faKey, needs: 0 },
+    ],
+  },
+  {
+    id: 'oauth',
+    label: 'OAuth / OIDC',
+    title: 'OAuth and OpenID Connect analyzer',
+    blurb: 'Follow an OAuth or OpenID Connect sign-in through a HAR, check each step, and look up what an error means.',
+    icon: faRoute,
+    pages: [
+      { to: '/oauth/flow', label: 'Flow', icon: faRoute },
+      { to: '/oauth/errors', label: 'Error lookup', icon: faMagnifyingGlass, needs: 0 },
     ],
   },
   {

@@ -330,3 +330,4 @@ a.file-b { text-decoration: none; }
 /* token uses */
 .saml-uses { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12.5px; }
 .saml-uses li { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.bullets { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; color: var(--t2); max-width: 80ch; }

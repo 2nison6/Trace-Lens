@@ -49,3 +49,7 @@
   X-Robots-Tag: noindex
 /tokens/capture
   X-Robots-Tag: noindex
+/oauth/flow
+  X-Robots-Tag: noindex
+/oauth/errors
+  X-Robots-Tag: noindex

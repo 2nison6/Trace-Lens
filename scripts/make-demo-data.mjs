@@ -275,12 +275,48 @@ function failedTrace() {
   return { requests, timestamp: iso(base + 9000) }
 }
 
+// ---------------------------------------------------------------------------------------------------------------- OAuth / OIDC
+// A single-page app signing in with the authorization code flow + PKCE, as DevTools records it. The token request fails with
+// invalid_grant because of two bugs the OAuth tool should find: redirect_uri has a trailing slash that the authorization request
+// did not, and the PKCE verifier sent is not the one the challenge was made from (a second tab overwrote the stored verifier).
+import { createHash } from 'node:crypto'
+
+function oauthHar() {
+  const base = T('2026-11-06T09:50:00Z')
+  const APP = 'https://spa.example.test'
+  const IDP = 'https://login.example.test'
+  const cb = `${APP}/callback`
+  const verifier = 'q7Zr1mT0xV9bN3cK5pL8wE2hY6uA4sD1fG0jI7oM9tR'
+  const challenge = createHash('sha256').update(verifier).digest('base64url')
+  const state = 'st_7f3a91c2'
+  const nonce = 'nc_5b8e04d7'
+  const authz = `${IDP}/oauth2/v2.0/authorize?${new URLSearchParams({ client_id: 'spa-client-1', response_type: 'code', redirect_uri: cb, scope: 'openid profile email offline_access', state, nonce, code_challenge: challenge, code_challenge_method: 'S256' })}`
+  const callback = `${cb}?code=demo-auth-code-9d41c7e2a5b8&state=${state}`
+  const form = { grant_type: 'authorization_code', client_id: 'spa-client-1', code: 'demo-auth-code-9d41c7e2a5b8', redirect_uri: `${cb}/`, code_verifier: 'W1xK9pE3rT7yU2iO5aS8dF4gH6jL0zC3vB9nM1qA7eR' }
+  const body = new URLSearchParams(form).toString()
+  const failBody = JSON.stringify({ error: 'invalid_grant', error_description: 'AADSTS50148: The code_verifier does not match the code_challenge supplied in the authorization request for PKCE.' })
+  const list = [
+    entry(base, { at: 0, url: `${APP}/`, mime: 'text/html', size: 3200, transfer: 1400, conn: '1', body: html('Example SPA'), headers: [ctype('text/html'), enc('br'), H('cache-control', 'no-cache'), ...SEC], t: { dns: 12, connect: 20, ssl: 28, wait: 60, receive: 4 } }),
+    entry(base, { at: 160, url: authz, mime: 'text/html', status: 302, size: 0, transfer: 900, conn: '2', ip: '203.0.113.50', redirect: `${IDP}/login?session=demo`, headers: [H('location', `${IDP}/login?session=demo`), H('cache-control', 'no-store')], t: { dns: 15, connect: 21, ssl: 30, wait: 88, receive: 1 } }),
+    entry(base, { at: 330, url: `${IDP}/login?session=demo`, mime: 'text/html', size: 9300, transfer: 3100, conn: '2', ip: '203.0.113.50', body: '<!doctype html><title>Sign in</title>', headers: [ctype('text/html; charset=utf-8'), enc('br'), H('cache-control', 'no-store'), ...SEC], t: { wait: 70, receive: 6 } }),
+    entry(base, { at: 3900, method: 'POST', url: `${IDP}/login/submit`, mime: 'text/html', status: 302, size: 0, transfer: 800, conn: '2', ip: '203.0.113.50', redirect: callback,
+      post: { mimeType: 'application/x-www-form-urlencoded', text: 'username=alex%40example.test&password=demo-password-not-real', params: [{ name: 'username', value: 'alex@example.test' }, { name: 'password', value: 'demo-password-not-real' }] },
+      headers: [H('location', callback), H('cache-control', 'no-store')], t: { wait: 420, receive: 1 } }),
+    entry(base, { at: 4340, url: callback, mime: 'text/html', size: 3200, transfer: 1400, conn: '1', body: html('Example SPA'), headers: [ctype('text/html'), enc('br'), H('cache-control', 'no-cache'), ...SEC], t: { wait: 48, receive: 3 } }),
+    entry(base, { at: 4560, method: 'POST', url: `${IDP}/oauth2/v2.0/token`, mime: 'application/json', status: 400, size: failBody.length, transfer: 620, conn: '2', ip: '203.0.113.50', body: failBody,
+      post: { mimeType: 'application/x-www-form-urlencoded', text: body, params: Object.entries(form).map(([name, value]) => ({ name, value })) },
+      reqHeaders: [H('content-type', 'application/x-www-form-urlencoded'), H('origin', APP)], headers: [ctype('application/json'), H('cache-control', 'no-store'), H('access-control-allow-origin', APP)], t: { wait: 156, receive: 1 } }),
+  ]
+  return har('Example SPA (sign-in)', base, list, { onContentLoad: 4400, onLoad: 4700 })
+}
+
 // ---------------------------------------------------------------------------------------------------------------- write
 const files = {
   'shop-working.har': shopWorking(),
   'shop-broken.har': shopBroken(),
   'sso-signin.har': ssoHar(),
   'sso-failed-saml-tracer.json': failedTrace(),
+  'oauth-signin-failed.har': oauthHar(),
 }
 mkdirSync(OUT, { recursive: true })
 for (const [name, data] of Object.entries(files)) {

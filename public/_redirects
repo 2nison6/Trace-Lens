@@ -28,3 +28,7 @@
 # Token inspector
 /tokens/inspect  /index.html   200
 /tokens/capture  /index.html   200
+
+# OAuth / OIDC analyzer
+/oauth/flow    /index.html   200
+/oauth/errors  /index.html   200
