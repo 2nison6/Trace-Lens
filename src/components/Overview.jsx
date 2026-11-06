@@ -63,8 +63,12 @@ export default function Overview({ har, filters, setFilters, full, toast }) {
         <Card className="span-3" title="Page load milestones" aside={<button type="button" className="btn sm" onClick={copySummary}><FontAwesomeIcon icon={faCopy} /> <span>Copy summary</span></button>}>
           <div className="milestones" role="img" aria-label={har.markers.map((m) => `${m.label} at ${fmtMs(m.ms)}`).join(', ')}>
             <div className="ms-track">
-              {har.markers.map((m) => <span key={m.label} className={`ms-pin ${m.tone}`} style={{ left: `${Math.min(100, (m.ms / Math.max(1, s.totalTime)) * 100)}%` }}><i /><b>{m.label}</b><small className="num">{fmtMs(m.ms)}</small></span>)}
+              {har.markers.map((m) => <i key={m.label} className={`ms-tick ${m.tone}`} style={{ left: `${Math.min(100, (m.ms / Math.max(1, s.totalTime)) * 100)}%` }} />)}
             </div>
+            {/* The labels are a row of their own, not placed on the bar: two milestones a few milliseconds apart would otherwise print on top of each other */}
+            <ul className="ms-labels">
+              {har.markers.map((m) => <li key={m.label} className={m.tone}><i aria-hidden="true" /><b>{m.label}</b> <span className="num">{fmtMs(m.ms)}</span></li>)}
+            </ul>
           </div>
           <p className="hint">Recorded by the browser. The bar is the whole capture, {fmtMs(s.totalTime)} long.</p>
         </Card>
