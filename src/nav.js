@@ -35,6 +35,8 @@ export const SHORTCUTS = [
   ['/', 'Search requests'],
   ['T', 'Switch light / dark'],
   ['B', 'Hide or show the sidebar'],
+  ['Space  ← →', 'Flow: play or pause, step through'],
+  ['P', 'Waterfall: pin the focused request'],
   ['Esc', 'Close the inspector or a dialog'],
   ['?', 'Show this help'],
 ]

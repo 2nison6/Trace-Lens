@@ -2,6 +2,7 @@ import { flushSync } from 'react-dom'
 import { analyzeCached } from './analyzer'
 import { parseHar } from './harParser'
 import { loadStore } from './loadStore'
+import { keepEnabled, saveFile } from './persist'
 import { afterPaint, sleep } from './paint'
 
 // Opening a file: read -> parse -> analyze -> add to the app and open Overview.
@@ -35,6 +36,7 @@ async function run(files) {
       const text = await file.text()
       await stage({ stage: 'parsing' })
       const har = parseHar(text, file.name)
+      if (keepEnabled()) saveFile(file.name, text) // opt-in, stored on this device only (see persist.js)
       await stage({ stage: 'analyzing' })
       analyzeCached(har) // warm the findings so the first page opens instantly
       parsed.push(har)
