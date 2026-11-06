@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { watchPicker } from '../pickerWatch'
 
 /** Hidden file input + a function that opens it. Shared by the start screen and the toolbar. */
 export default function usePicker(onFiles, externalRef) {
@@ -10,7 +11,7 @@ export default function usePicker(onFiles, externalRef) {
   }
   return {
     open: () => ref.current && ref.current.click(),
-    input: <input ref={ref} type="file" accept=".har,.json,application/json" multiple hidden onChange={(e) => { handle(e.target.files); e.target.value = '' }} />,
+    input: <input ref={ref} type="file" accept=".har,.json,application/json" multiple hidden onClick={(e) => watchPicker(e.currentTarget)} onChange={(e) => { handle(e.target.files); e.target.value = '' }} />,
     handle,
   }
 }

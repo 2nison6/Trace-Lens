@@ -23,6 +23,7 @@ export const loadStore = {
 }
 
 export const STAGE_TEXT = {
+  opening: 'Waiting for the browser to hand over the file…',
   reading: 'Reading file…',
   parsing: 'Parsing requests…',
   analyzing: 'Checking for issues…',
