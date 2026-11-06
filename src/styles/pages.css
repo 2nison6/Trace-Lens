@@ -216,15 +216,16 @@
 @media (hover: none) { .wf-pin { opacity: 0.7; } }
 
 /* ---------- overview milestones ---------- */
-.milestones { padding: 8px 6px 46px; }
+.milestones { padding: 8px 6px 4px; }
 .ms-track { position: relative; height: 10px; border-radius: 5px; background: var(--track); }
-.ms-pin { position: absolute; top: -4px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap; }
-.ms-pin i { width: 3px; height: 18px; border-radius: 2px; background: var(--blue-text); }
-.ms-pin.load i { background: var(--lime); }
-:root[data-theme='light'] .ms-pin.load i { background: var(--serious); }
-.ms-pin b { margin-top: 2px; font-size: 12px; color: var(--t1); }
-.ms-pin small { font-size: 11px; color: var(--t3); }
-.milestones + .hint { margin-top: 4px; }
+.ms-tick { position: absolute; top: -4px; width: 3px; height: 18px; margin-left: -1.5px; border-radius: 2px; background: var(--blue-text); }
+.ms-tick.load, .ms-labels li.load i { background: var(--lime); }
+:root[data-theme='light'] .ms-tick.load, :root[data-theme='light'] .ms-labels li.load i { background: var(--serious); }
+.ms-labels { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 14px 0 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--t2); }
+.ms-labels li { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.ms-labels li i { flex: none; width: 3px; height: 14px; border-radius: 2px; background: var(--blue-text); }
+.ms-labels b { color: var(--t1); font-weight: 600; }
+.milestones + .hint { margin-top: 8px; }
 
 /* ---------- tools ---------- */
 .redact-groups { display: grid; gap: 10px; margin: 6px 0 10px; max-height: 260px; overflow-y: auto; }
@@ -261,3 +262,10 @@
 /* Compare's summary has only four short columns: let it fit its card instead of forcing a 560px minimum and scrolling */
 .card.flush .tbl.sum { min-width: 0; table-layout: auto; }
 .tbl.sum th:first-child, .tbl.sum td:first-child { width: 34%; }
+
+/* the Findings counts in Compare are buttons that open their list */
+button.pill-btn { cursor: pointer; font: inherit; font-size: 12px; transition: border-color var(--t-fast) ease, background var(--t-fast) ease; }
+button.pill-btn:disabled { cursor: default; opacity: 0.6; }
+@media (hover: hover) and (pointer: fine) { button.pill-btn:not(:disabled):hover { border-color: var(--t3); background: var(--hover); } }
+button.pill-btn.on { border-color: var(--blue-line); background: var(--blue-tint); color: var(--t1); }
+button.pill-btn:active:not(:disabled) { transform: scale(0.97); }

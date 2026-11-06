@@ -60,14 +60,20 @@ export const isNotable = (d) => !!(d.only || d.sc || Math.abs(d.dt) > 50 || Math
 
 // ---- findings ------------------------------------------------------------------------------------------------------
 
-/** Findings that are new in `last`, fixed since `first`, and how many are unchanged. Counts inside titles are ignored. */
+/**
+ * Findings that are new in `last`, fixed since `first`, and unchanged. Counts inside titles are ignored when deciding that two
+ * findings are the same. `same` is the number of unchanged ones, and `kept` lists them: each as it reads in `last`, with
+ * `before` and `now` the number of requests it affected in each capture.
+ */
 export function findingsDiff(first, last) {
   const a = new Map(first.map((f) => [findingKey(f), f]))
   const b = new Map(last.map((f) => [findingKey(f), f]))
+  const kept = last.filter((f) => a.has(findingKey(f))).map((f) => ({ ...f, before: a.get(findingKey(f)).ids.length, now: f.ids.length }))
   return {
     added: last.filter((f) => !a.has(findingKey(f))),
     fixed: first.filter((f) => !b.has(findingKey(f))),
-    same: last.filter((f) => a.has(findingKey(f))).length,
+    same: kept.length,
+    kept,
   }
 }
 

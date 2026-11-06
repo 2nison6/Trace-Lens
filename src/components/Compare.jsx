@@ -34,6 +34,7 @@ export default function Compare({ hars, toast }) {
   const [sel, setSel] = useState([0, Math.min(1, hars.length - 1), -1])
   const [show, setShow] = useState('changed')
   const [loose, setLoose] = useState(true)
+  const [fshow, setFshow] = useState('') // which findings list is open: '', 'added', 'fixed' or 'kept'
 
   // index in `hars` of each active slot, so a click can open the request from the right capture
   const activeIdx = sel.filter((i) => i >= 0 && hars[i])
@@ -144,18 +145,23 @@ export default function Compare({ hars, toast }) {
 
       {fd && (
         <Card title="Findings" aside={<span className="t-cap">{names2[0]} → {names2[1]}</span>}>
-          <div className="pillrow" style={{ marginTop: 0 }}>
-            <span className={`pill${fd.added.length ? ' bad' : ''}`}><b>{fd.added.length}</b> new</span>
-            <span className={`pill${fd.fixed.length ? ' good' : ''}`}><b>{fd.fixed.length}</b> fixed</span>
-            <span className="pill"><b>{fd.same}</b> unchanged</span>
+          <div className="pillrow" style={{ marginTop: 0 }} role="group" aria-label="Show findings that are">
+            {[
+              ['added', fd.added.length, 'new', fd.added.length ? ' bad' : ''],
+              ['fixed', fd.fixed.length, 'fixed', fd.fixed.length ? ' good' : ''],
+              ['kept', fd.same, 'unchanged', ''],
+            ].map(([key, n, label, tone]) => (
+              <button key={key} type="button" className={`pill pill-btn${tone}${fshow === key ? ' on' : ''}`} aria-pressed={fshow === key} disabled={!n} onClick={() => setFshow(fshow === key ? '' : key)}>
+                <b>{n}</b> {label}
+              </button>
+            ))}
           </div>
-          {(fd.added.length > 0 || fd.fixed.length > 0) && (
-            <ul className="list-plain" style={{ marginTop: 10 }}>
-              {fd.added.map((f) => <li key={f.id}><span className="tone-crit">New</span> · {f.title} <span className="dim">({f.severity})</span></li>)}
-              {fd.fixed.map((f) => <li key={f.id}><span className="tone-good">Fixed</span> · {f.title}</li>)}
-            </ul>
-          )}
-          {!fd.added.length && !fd.fixed.length && <p className="hint">Both captures raise the same findings.</p>}
+          {fshow === 'added' && <FindingList items={fd.added} tone="crit" word="New" />}
+          {fshow === 'fixed' && <FindingList items={fd.fixed} tone="good" word="Fixed" />}
+          {fshow === 'kept' && <FindingList items={fd.kept} tone="dim" word="Unchanged" kept />}
+          {!fshow && (fd.added.length > 0 || fd.fixed.length > 0 || fd.same > 0) && <p className="hint">Select a count to see which findings it is.</p>}
+          {!fd.added.length && !fd.fixed.length && !fd.same && <p className="hint">Neither capture raises any findings.</p>}
+          {!fd.added.length && !fd.fixed.length && fd.same > 0 && !fshow && <p className="hint">Both captures raise the same findings.</p>}
         </Card>
       )}
 
@@ -196,4 +202,16 @@ export default function Compare({ hars, toast }) {
 function ScoreDelta({ a, b }) {
   const d = b - a
   return <span className={d > 0 ? 'tone-good' : d < 0 ? 'tone-crit' : 'dim'}>{d > 0 ? '↑ +' : d < 0 ? '↓ -' : ''}{d === 0 ? '0' : Math.abs(d)}</span>
+}
+
+function FindingList({ items, tone, word, kept = false }) {
+  return (
+    <ul className="list-plain" style={{ marginTop: 10 }}>
+      {items.map((f) => (
+        <li key={f.id}>
+          <span className={`tone-${tone}`}>{word}</span> · {f.title} <span className="dim">({f.severity}){kept && f.before !== f.now ? `, ${f.before} → ${f.now} requests` : ''}</span>
+        </li>
+      ))}
+    </ul>
+  )
 }
