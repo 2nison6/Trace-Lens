@@ -1,5 +1,5 @@
-import { useEffect, useSyncExternalStore } from 'react'
-import { STAGE_TEXT, loadStore } from '../loadStore'
+import { useEffect, useSyncExternalStore } from "react";
+import { STAGE_TEXT, loadStore } from "../loadStore";
 
 /**
  * Progress overlay for opening a file: the words "Analyzing HAR…" with a spinner on the next line, and nothing else on
@@ -10,34 +10,39 @@ import { STAGE_TEXT, loadStore } from '../loadStore'
  * JavaScript is busy parsing, which a JavaScript-driven animation cannot do.
  */
 export default function LoadOverlay() {
-  const load = useSyncExternalStore(loadStore.subscribe, loadStore.get)
-  const opening = load?.stage === 'opening' // the file dialog just closed and the file has not arrived yet
-  const busy = !!load && !opening
+  const load = useSyncExternalStore(loadStore.subscribe, loadStore.get);
+  const opening = load?.stage === "opening"; // the file dialog just closed and the file has not arrived yet
+  const busy = !!load && !opening;
 
   // The overlay blocks the mouse; this makes the app behind it unreachable by keyboard and screen reader too. (Not while
   // opening: the file input that is about to receive the file lives in the app.)
   useEffect(() => {
-    const app = document.querySelector('.app')
-    if (!busy || !app) return undefined
-    app.setAttribute('inert', '')
-    return () => app.removeAttribute('inert')
-  }, [busy])
+    const app = document.querySelector(".app");
+    if (!busy || !app) return undefined;
+    app.setAttribute("inert", "");
+    return () => app.removeAttribute("inert");
+  }, [busy]);
 
-  const stage = load ? STAGE_TEXT[load.stage] || '' : ''
-  const which = load && load.n > 1 ? ` (file ${load.i + 1} of ${load.n})` : ''
+  const stage = load ? STAGE_TEXT[load.stage] || "" : "";
+  const which = load && load.n > 1 ? ` (file ${load.i + 1} of ${load.n})` : "";
   return (
     <>
       {/* Always mounted: screen readers announce text changes inside an existing live region far more reliably than a new one */}
-      <div className="sr-only" role="status" aria-live="polite">{load ? `Analyzing HAR. ${stage}${which}` : ''}</div>
+      <div className="sr-only" role="status" aria-live="polite">
+        {load ? `Analyzing HAR. ${stage}${which}` : ""}
+      </div>
       {/* While we only wait for the file dialog's result, a click dismisses the overlay (some browsers send no event when a dialog is cancelled) */}
       {load && (
-        <div className="loading-wrap" aria-hidden="true" onClick={opening ? () => loadStore.clear() : undefined}>
+        <div
+          className="loading-wrap"
+          aria-hidden="true"
+          onClick={opening ? () => loadStore.clear() : undefined}
+        >
           <div className="loading-card">
-            <strong>Analyzing HAR…</strong>
             <span className="spinner" />
           </div>
         </div>
       )}
     </>
-  )
+  );
 }
