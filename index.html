@@ -119,10 +119,9 @@
       @media (prefers-color-scheme: light) {
         html:not([data-theme]) #boot { --b-bg: #f4f6fa; --b-fg: #070a12; --b-dim: #444d60; --b-track: rgba(20, 40, 90, 0.12); --b-accent: #1558c9; }
       }
-      #boot .boot-brand { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
       #boot .boot-spin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--b-track); border-top-color: var(--b-accent); animation: boot-spin 0.8s linear infinite; }
       #boot .boot-msg, #boot .boot-reload { display: none; }
-      #boot[data-state='slow'] .boot-spin, #boot[data-state='slow'] .boot-text { display: none; }
+      #boot[data-state='slow'] .boot-spin { display: none; }
       #boot[data-state='slow'] .boot-msg { display: block; max-width: 36ch; color: var(--b-dim); }
       #boot[data-state='slow'] .boot-reload { display: inline-block; min-height: 40px; padding: 0 18px; border: 1px solid var(--b-track); border-radius: 10px; background: transparent; color: var(--b-fg); font: inherit; font-weight: 600; cursor: pointer; }
       @keyframes boot-in { from { opacity: 0; } }
@@ -155,10 +154,8 @@
   </head>
   <body>
     <div id="root"></div>
-    <div id="boot" role="status">
-      <span class="boot-brand">HAR.lens</span>
+    <div id="boot" role="status" aria-label="Loading">
       <span class="boot-spin" aria-hidden="true"></span>
-      <span class="boot-text">Loading HAR.lens…</span>
       <p class="boot-msg">Still loading. This is taking longer than usual, so check your connection and reload the page.</p>
       <button type="button" class="boot-reload">Reload</button>
     </div>
