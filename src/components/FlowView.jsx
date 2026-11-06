@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBackwardStep, faPause, faPlay, faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { PHASES } from '../harParser'
+import { connections, notableMoments } from '../insights'
 import { InspectCtx } from '../context'
 import { PHASE_LABEL, PHASE_VAR } from '../theme'
 import { fmtBytes, fmtMs } from '../utils'
@@ -54,6 +55,8 @@ export default function FlowView({ har, initialFollow = '' }) {
 
   const fe = follow === '' ? null : har.entries.find((e) => e.id === Number(follow)) || null
   const scope = useMemo(() => (fe ? [fe] : har.entries), [fe, har])
+  const moments = useMemo(() => notableMoments(har), [har])
+  const conns = useMemo(() => connections(har), [har])
   const winStart = fe ? fe.startMs : 0
   const winEnd = fe ? winStart + Math.max(1, fe.endMs - fe.startMs) : Math.max(1, har.summary.totalTime)
   const span = winEnd - winStart
@@ -105,6 +108,30 @@ export default function FlowView({ har, initialFollow = '' }) {
     setFollow(v)
     const e = v === '' ? null : har.entries.find((x) => x.id === Number(v))
     seek(e ? e.startMs : 0)
+  }
+  // Keyboard: Space plays and pauses, ← → step 2% of the window (hold Shift for 10%), Home and End jump to the ends.
+  // Ignored while typing, over buttons (they use Space themselves) and with a modifier held.
+  useEffect(() => {
+    const onKey = (ev) => {
+      if (ev.metaKey || ev.ctrlKey || ev.altKey) return
+      const tag = (ev.target.tagName || '').toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button' || ev.target.isContentEditable) return
+      const step = span * (ev.shiftKey ? 0.1 : 0.02)
+      if (ev.key === ' ') { ev.preventDefault(); if (!playing && tRef.current >= winEnd) { tRef.current = winStart; setT(winStart) } setPlaying((p) => !p) }
+      else if (ev.key === 'ArrowRight') { ev.preventDefault(); setPlaying(false); tRef.current = Math.min(winEnd, tRef.current + step); setT(tRef.current) }
+      else if (ev.key === 'ArrowLeft') { ev.preventDefault(); setPlaying(false); tRef.current = Math.max(winStart, tRef.current - step); setT(tRef.current) }
+      else if (ev.key === 'Home') { ev.preventDefault(); setPlaying(false); tRef.current = winStart; setT(winStart) }
+      else if (ev.key === 'End') { ev.preventDefault(); setPlaying(false); tRef.current = winEnd; setT(winEnd) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [playing, span, winStart, winEnd])
+
+  // Jump to a failure or slow request. Leaving "follow" first, because a followed request only shows its own window.
+  const jumpTo = (m) => {
+    setPlaying(false)
+    if (fe) setFollow('')
+    seek(Math.max(0, m.ms - Math.max(40, har.summary.totalTime * 0.01)))
   }
 
   let lo = 0
@@ -171,6 +198,7 @@ export default function FlowView({ har, initialFollow = '' }) {
             onChange={(e) => { setPlaying(false); seek(Number(e.target.value)) }} />
           <div className="scrub-marks" aria-hidden="true">
             {!fe && har.markers.map((m) => <i key={m.label} className={m.tone} style={{ left: `${pctOf(m.ms, winStart, winEnd)}%` }} title={`${m.label} ${fmtMs(m.ms)}`} />)}
+            {!fe && moments.map((m) => <i key={`m${m.id}`} className={`jmp ${m.kind}`} style={{ left: `${pctOf(m.ms, winStart, winEnd)}%` }} title={m.label} />)}
           </div>
         </div>
         <output className="clock num">{fmtMs(t - winStart)} <span className="dim">/ {fmtMs(span)}</span></output>
@@ -181,6 +209,18 @@ export default function FlowView({ har, initialFollow = '' }) {
         <Switch checked={realtime} onChange={setRealtime} label="Real time" />
         <FollowPicker entries={har.entries} value={follow} onPick={pickFollow} />
       </div>
+
+      {moments.length > 0 && (
+        <div className="jumps" aria-label="Jump to a failure or slow request">
+          <span className="dim">Jump to</span>
+          {moments.slice(0, 8).map((m) => (
+            <button key={m.id} type="button" className={`jump ${m.kind}`} onClick={() => jumpTo(m)} title={`${m.label} at ${fmtMs(m.ms)}`}>
+              <span className="ellipsis">{m.label}</span>
+            </button>
+          ))}
+          {moments.length > 8 && <span className="dim">+{moments.length - 8} more marked on the bar</span>}
+        </div>
+      )}
 
       {fe && (
         <Card className="follow">
@@ -195,6 +235,12 @@ export default function FlowView({ har, initialFollow = '' }) {
             {PHASES.filter((p) => fe.phases[p] > 0).map((p) => <i key={p} title={`${PHASE_LABEL[p]}: ${fmtMs(fe.phases[p])}`} style={{ width: `${(fe.phases[p] / span) * 100}%`, background: PHASE_VAR[p] }} />)}
             <u style={{ left: `${at}%` }} />
           </div>
+          {fe.connection && (
+            <p className="hint conn-key" style={{ margin: '8px 0 0' }}>
+              <span><span className="conn-tag">#{fe.connection}</span>{(conns.byConn.get(fe.connection) || []).length > 1 ? `Connection shared with ${(conns.byConn.get(fe.connection) || []).length - 1} other request${(conns.byConn.get(fe.connection) || []).length === 2 ? '' : 's'}` : 'This request used its own connection'}</span>
+              {fe.phases.dns + fe.phases.connect + fe.phases.ssl === 0 && <span>Reused an open connection (no DNS, TCP or TLS)</span>}
+            </p>
+          )}
           <dl className="fkey">
             {PHASES.filter((p) => fe.phases[p] > 0).map((p) => <div key={p}><dt><i style={{ background: PHASE_VAR[p] }} />{PHASE_LABEL[p]}</dt><dd className="num">{fmtMs(fe.phases[p])}</dd></div>)}
           </dl>
@@ -205,6 +251,7 @@ export default function FlowView({ har, initialFollow = '' }) {
         <span>In flight <b className="num">{inFlight}</b></span>
         <span>Completed <b className="num">{done}/{scope.length}</b></span>
         <span>Received <b className="num">{fmtBytes(bytesDone)}</b></span>
+        {(conns.created + conns.reused) > 0 && <span title="Requests that opened a new connection versus reused one">Connections <b className="num">{conns.created} new</b> · <b className="num">{conns.reused} reused</b></span>}
       </div>
 
       <div className="flow-scroll">

@@ -269,3 +269,53 @@ export function renderBlocking(har) {
     .sort((a, b) => a.endMs - b.endMs)
   return { doc, entries, endsAt: entries.reduce((m, e) => Math.max(m, e.endMs), doc.endMs) }
 }
+
+// ---- additions: biggest wins, third-party estimate, connection reuse, notable moments ------------------------------
+
+/** The estimated top savings first, with the third-party cost as one more candidate. */
+export function biggestWins(har, limit = 3) {
+  const wins = optimizations(har).map((o) => ({ key: o.key, title: o.title, note: o.note, bytes: o.saving, entries: o.entries }))
+  const tp = thirdParty(har)
+  if (tp.rows.length && tp.thirdBytes > 0) {
+    const ids = tp.rows.flatMap((r) => r.ids)
+    wins.push({ key: 'third', upTo: true, title: 'Trim third-party requests', note: `${tp.count} requests to other domains. This is everything they transfer: drop, delay or self-host the ones you do not need.`, bytes: tp.thirdBytes, entries: ids.map((id) => har.entries[id]) })
+  }
+  return wins.filter((w) => w.bytes > 0).sort((a, b) => b.bytes - a.bytes).slice(0, limit)
+}
+
+/**
+ * Rough "what if" for third parties: when would the page have finished if only the site's own requests had run?
+ * It keeps every first-party request where it was, so it is a best case, not a prediction.
+ */
+export function withoutThirdParty(har) {
+  const tp = thirdParty(har)
+  if (!tp.rows.length) return null
+  const third = new Set(tp.rows.flatMap((r) => r.ids))
+  let end = 0
+  for (const e of har.entries) if (!third.has(e.id) && e.endMs > end) end = e.endMs
+  const total = har.summary.totalTime
+  return { end, saved: Math.max(0, total - end), total }
+}
+
+/** New versus reused connections, and which requests share a connection id (when the HAR records one). */
+export function connections(har) {
+  const byConn = new Map()
+  let created = 0
+  let reused = 0
+  for (const e of har.entries) {
+    if (e.connection) (byConn.get(e.connection) || byConn.set(e.connection, []).get(e.connection)).push(e)
+    if (e.phases.dns > 0 || e.phases.connect > 0 || e.phases.ssl > 0) created++
+    else reused++
+  }
+  return { byConn, created, reused }
+}
+
+/** Requests worth jumping to in the Flow replay: failures and anything slower than the threshold. */
+export function notableMoments(har, slowMs = 1000, limit = 60) {
+  return har.entries
+    .filter((e) => e.error || e.time >= slowMs)
+    .sort((a, b) => a.startMs - b.startMs)
+    .slice(0, limit)
+    .map((e) => ({ id: e.id, ms: e.startMs, kind: e.error ? 'error' : 'slow', label: `${e.error ? (e.status || 'ERR') : fmtSlow(e.time)} ${e.method} ${e.name}` }))
+}
+const fmtSlow = (ms) => (ms >= 1000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.round(ms)} ms`)
