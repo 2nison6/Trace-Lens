@@ -51,11 +51,35 @@ export function criticalPath(har) {
   const byUrl = new Map()
   for (const e of entries) if (!byUrl.has(e.url)) byUrl.set(e.url, e)
   const hasInit = entries.some((e) => e.initiator)
+  // Without initiator info (Firefox, Safari, proxies) the "parent" is the request that finished last before this one
+  // started. Scanning every entry for each entry is O(n²) (seconds at tens of thousands of requests); instead sort by end
+  // time once and keep a running best while sweeping the entries in start order: O(n log n).
+  const fallbackParent = new Map()
+  if (!hasInit) {
+    // Ties on end time go to the earliest entry (lowest id), as the plain scan would pick.
+    const byEnd = [...entries].sort((a, b) => a.endMs - b.endMs || a.id - b.id)
+    let k = 0
+    let bestEnd = -Infinity
+    let candidates = [] // the (at most two) lowest ids that share bestEnd; two, so the entry itself can be skipped
+    for (const e of entries) {
+      while (k < byEnd.length && byEnd[k].endMs <= e.startMs + 1) {
+        const o = byEnd[k]
+        if (o.endMs > bestEnd) { bestEnd = o.endMs; candidates = [o] }
+        else if (o.endMs === bestEnd && candidates.length < 2) candidates.push(o)
+        k++
+      }
+      let parent = candidates.find((o) => o.id !== e.id) || null
+      if (!parent && candidates.length === 1 && candidates[0].id === e.id) {
+        // the only entry at the best end time is the entry itself (zero duration): the best other one ends earlier
+        for (let j = k - 1; j >= 0; j--) if (byEnd[j].id !== e.id) { parent = byEnd[j]; break }
+        if (parent) { const t = parent.endMs; parent = byEnd.find((o) => o.endMs === t && o.id !== e.id) }
+      }
+      fallbackParent.set(e.id, parent)
+    }
+  }
   const parentOf = (e) => {
     if (hasInit) return e.initiator ? byUrl.get(e.initiator) : null
-    let best = null
-    for (const o of entries) if (o.id !== e.id && o.endMs <= e.startMs + 1 && (!best || o.endMs > best.endMs)) best = o
-    return best
+    return fallbackParent.get(e.id) || null
   }
   const memo = new Map()
   const finish = (e, depth = 0) => {

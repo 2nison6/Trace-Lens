@@ -6,6 +6,7 @@ import { InspectCtx } from '../context'
 import { PHASE_LABEL, PHASE_VAR } from '../theme'
 import { fmtBytes, fmtMs } from '../utils'
 import { Card, Segmented, StatusCode, Switch } from './ui'
+import FollowPicker from './FollowPicker'
 
 const W = 1000
 const CLIENT_X = 96
@@ -178,12 +179,7 @@ export default function FlowView({ har, initialFollow = '' }) {
       <div className="transport-opts">
         <Segmented size="s" label="Playback speed" value={speed} onChange={setSpeed} options={[{ value: '0.5', label: '0.5×' }, { value: '1', label: '1×' }, { value: '2', label: '2×' }, { value: '4', label: '4×' }]} />
         <Switch checked={realtime} onChange={setRealtime} label="Real time" />
-        <label className="follow-pick">Follow
-          <select value={follow} onChange={(e) => pickFollow(e.target.value)}>
-            <option value="">All requests</option>
-            {har.entries.map((e) => <option key={e.id} value={e.id}>{e.method} {clip(e.name, 30)}</option>)}
-          </select>
-        </label>
+        <FollowPicker entries={har.entries} value={follow} onPick={pickFollow} />
       </div>
 
       {fe && (

@@ -50,7 +50,14 @@ export function parseHar(input, fileName = 'capture.har') {
     throw new Error('Not a valid HAR file (missing log.entries)')
   }
 
-  const raw = log.entries.map((e) => ({ e, start: Date.parse(e.startedDateTime) || 0 }))
+  // A missing or unparsable startedDateTime must not count as time 0: that would put every other request ~50 years after
+  // "the start" and wreck the waterfall, flow and totals. Such an entry borrows the previous valid start instead.
+  const parsedStarts = log.entries.map((e) => Date.parse(e && e.startedDateTime))
+  let lastValid = parsedStarts.find((t) => Number.isFinite(t)) ?? 0
+  const raw = log.entries.map((e, i) => {
+    if (Number.isFinite(parsedStarts[i])) lastValid = parsedStarts[i]
+    return { e: e || {}, start: lastValid }
+  })
   const t0 = raw.reduce((m, r) => Math.min(m, r.start), raw.length ? raw[0].start : 0)
 
   const entries = raw.map(({ e, start }) => {
@@ -141,7 +148,8 @@ export function parseHar(input, fileName = 'capture.har') {
   const markers = []
   const page = (log.pages || [])[0]
   if (page && page.pageTimings) {
-    const base = (Date.parse(page.startedDateTime) || t0) - t0
+    const pageStart = Date.parse(page.startedDateTime)
+    const base = (Number.isFinite(pageStart) ? pageStart : t0) - t0
     if (num(page.pageTimings.onContentLoad)) {
       markers.push({ label: 'DOMContentLoaded', short: 'DCL', ms: base + page.pageTimings.onContentLoad, tone: 'dcl' })
     }
