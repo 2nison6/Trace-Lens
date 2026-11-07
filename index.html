@@ -6,9 +6,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
     <!-- Primary SEO -->
-    <title>TraceLens – HAR, SAML and sign-in troubleshooting in your browser</title>
-    <meta name="description" content="Troubleshoot network and sign-in problems in your browser: analyze HAR files, decode SAML and SAML-tracer exports, follow OAuth and OpenID Connect flows, inspect tokens and cookies. Nothing is uploaded." />
-    <meta name="keywords" content="HAR analyzer, HAR viewer, SAML tracer, SAML decoder, JWT decoder, OAuth debugger, OIDC troubleshooting, SSO troubleshooting, network waterfall, compare HAR, cookie analyzer" />
+    <title>TraceLens – Troubleshoot HAR, SAML, OAuth, tokens, certificates and cookies in your browser</title>
+    <meta name="description" content="Find out why a page is slow or a sign-in broke. Eight tools for HAR files, SAML, OAuth and OpenID Connect, JWT tokens, certificates, Windows sign-in (Kerberos and NTLM) and cookies, with guides, plain-language explanations and a report for each. It all runs in your browser; nothing is uploaded." />
+    <meta name="keywords" content="HAR analyzer, HAR viewer, SAML tracer, SAML decoder, SAML metadata checker, JWT decoder, OAuth debugger, OIDC troubleshooting, SSO troubleshooting, certificate chain checker, Kerberos NTLM troubleshooting, cookie analyzer, network waterfall, compare HAR" />
     <meta name="author" content="TraceLens" />
     <meta name="application-name" content="TraceLens" />
     <meta name="generator" content="Vite + React" />
@@ -35,7 +35,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="TraceLens" />
     <meta property="og:title" content="TraceLens – See exactly what your network and sign-in did" />
-    <meta property="og:description" content="Analyze HAR files, decode SAML sign-ins, follow OAuth and OIDC flows, inspect tokens and cookies. 100% in your browser." />
+    <meta property="og:description" content="Eight troubleshooting tools for HAR, SAML, OAuth and OIDC, tokens, certificates, Windows sign-in and cookies. Everything runs in your browser." />
     <meta property="og:image" content="/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
@@ -46,7 +46,7 @@
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="TraceLens – See exactly what your network and sign-in did" />
-    <meta name="twitter:description" content="Analyze HAR files, decode SAML sign-ins, follow OAuth and OIDC flows, inspect tokens and cookies. 100% in your browser." />
+    <meta name="twitter:description" content="Eight troubleshooting tools for HAR, SAML, OAuth and OIDC, tokens, certificates, Windows sign-in and cookies. Everything runs in your browser." />
     <meta name="twitter:image" content="/og-image.png" />
     <meta name="twitter:image:alt" content="TraceLens: see exactly what your network and sign-in did" />
 
@@ -68,7 +68,7 @@
             "@id": "__SITE_URL__/#website",
             "url": "__SITE_URL__/",
             "name": "TraceLens",
-            "alternateName": ["HAR Analyzer", "HAR.lens", "SAML Tracer Analyzer"],
+            "alternateName": ["HAR Analyzer", "HAR.lens", "SAML Tracer Analyzer", "Sign-in troubleshooting"],
             "inLanguage": "en"
           },
           {
@@ -76,22 +76,23 @@
             "@id": "__SITE_URL__/#app",
             "url": "__SITE_URL__/",
             "name": "TraceLens",
-            "description": "Browser-based troubleshooting for network and sign-in problems: HAR analysis, SAML and SAML-tracer decoding, OAuth/OIDC flow checks, token and cookie inspection. Files never leave your browser.",
+            "description": "Troubleshooting for network and sign-in problems in the browser: HAR analysis, SAML and SAML-tracer checks, OAuth and OpenID Connect flows, JWT tokens, X.509 certificates, Windows sign-in and cookies. Files never leave your browser.",
             "applicationCategory": "DeveloperApplication",
             "operatingSystem": "Any",
             "browserRequirements": "Requires JavaScript",
             "isAccessibleForFree": true,
             "inLanguage": "en",
             "featureList": [
-              "Waterfall of every request with filters",
-              "Animated request and response flow",
-              "Rule-based issue detection with a health score",
-              "Request inspector with headers, cookies and copy as cURL",
-              "Compare two or three captures",
-              "Redact secrets from a HAR and export HTML or JSON reports",
-              "Decode SAML messages and SAML-tracer exports and check them",
-              "Follow OAuth 2.0 and OpenID Connect sign-ins and decode JWTs",
-              "Cookie and session analysis"
+              "HAR analyzer: waterfall, request flow, health score, insights and comparison of captures",
+              "SAML: decode messages and SAML-tracer exports, check conditions and signatures, compare with metadata",
+              "OAuth and OpenID Connect: follow each sign-in, check PKCE, state and nonce, read discovery documents and signing keys",
+              "Tokens: decode and check JWTs, verify signatures with a pasted key, compare two tokens, see lifetimes in a capture",
+              "Certificates: read a certificate or chain, check dates, names, key usage and chain order",
+              "Windows sign-in: follow Negotiate, Kerberos and NTLM exchanges and look up error codes",
+              "Cookies: every cookie a capture sets or sends, why one was rejected, size limits and browser differences",
+              "An explanation in plain language for each finding",
+              "A report with charts for each tool, and one report for everything, as HTML, Markdown or JSON",
+              "Guides for each topic: how it works, what to capture, common errors and their causes"
             ],
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
             "isPartOf": { "@id": "__SITE_URL__/#website" },
@@ -165,7 +166,7 @@
     <noscript>
       <div style="font:16px/1.5 system-ui,sans-serif;color:#f5f7ff;background:#030407;padding:48px 24px;text-align:center">
         <h1 style="margin:0 0 8px">TraceLens</h1>
-        <p>This app analyzes HAR files entirely in your browser, so it needs JavaScript enabled.</p>
+        <p>TraceLens checks HAR files, SAML, OAuth, tokens, certificates and cookies entirely in your browser, so it needs JavaScript turned on.</p>
       </div>
     </noscript>
     <script type="module" src="/src/main.jsx"></script>

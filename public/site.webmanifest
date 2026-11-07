@@ -1,7 +1,7 @@
 {
-  "name": "TraceLens – HAR, SAML and sign-in troubleshooting",
+  "name": "TraceLens – network and sign-in troubleshooting",
   "short_name": "TraceLens",
-  "description": "Troubleshoot network and sign-in problems in your browser: HAR, SAML, OAuth/OIDC, tokens and cookies.",
+  "description": "Troubleshoot network and sign-in problems in your browser: HAR, SAML, OAuth and OIDC, tokens, certificates, Windows sign-in and cookies.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
