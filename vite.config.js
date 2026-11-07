@@ -4,7 +4,7 @@ import { defineConfig, loadEnv } from 'vite'
 
 // Canonical origin of the production site. Builds use it when VITE_SITE_URL is not set, so Netlify needs no environment
 // variable. Set VITE_SITE_URL (shell or Netlify UI) to override it, for example for a staging site.
-const PRODUCTION_SITE_URL = 'https://har-analyzer.2nison6.com'
+const PRODUCTION_SITE_URL = 'https://tracelens.2nison6.com'
 
 // Search and social crawlers need absolute URLs: a canonical link must be absolute, and Open Graph / Twitter ignore
 // relative images. Given the deployed origin this
