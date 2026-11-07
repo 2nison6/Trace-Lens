@@ -65,3 +65,7 @@
 # Cookie browsers and size
 /cookies/browsers  /index.html   200
 /cookies/size      /index.html   200
+
+# Guide
+/guide       /index.html   200
+/guide/help  /index.html   200

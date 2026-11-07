@@ -31,6 +31,7 @@ import Saml from './components/Saml'
 import SamlPrompt from './components/SamlPrompt'
 import SamlMetadata from './components/SamlMetadata'
 import Certificates from './components/Certificates'
+import Guide from './components/Guide'
 import { WindowsExchange, WindowsLookup } from './components/WindowsAuth'
 import { TokenCompare, TokenInspect, TokenTimeline, TokensInCapture } from './components/Tokens'
 import { OAuthErrors, OAuthFlow } from './components/OAuth'
@@ -387,6 +388,7 @@ export default function App() {
                     <Route path="/oauth/flow" element={need(<OAuthFlow har={har} key={active} />)} />
                     <Route path="/oauth/discovery" element={<Page><OAuthDiscovery har={har} key={active} /></Page>} />
                     <Route path="/oauth/errors" element={<Page><OAuthErrors /></Page>} />
+                    <Route path="/guide/help" element={<Page><Guide /></Page>} />
                     <Route path="/certs/inspect" element={<Page><Certificates /></Page>} />
                     <Route path="/windows/exchange" element={need(<WindowsExchange har={har} key={active} />)} />
                     <Route path="/windows/lookup" element={<Page><WindowsLookup /></Page>} />

@@ -87,3 +87,7 @@
   X-Robots-Tag: noindex
 /cookies/size
   X-Robots-Tag: noindex
+/guide
+  X-Robots-Tag: noindex
+/guide/help
+  X-Robots-Tag: noindex

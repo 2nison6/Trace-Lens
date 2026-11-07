@@ -1,5 +1,5 @@
 import {
-  faArrowUpFromBracket, faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCertificate, faClockRotateLeft, faGlobe, faRuler, faCompass, faCookieBite, faFileCode, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
+  faArrowUpFromBracket, faBookOpen, faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCertificate, faClockRotateLeft, faGlobe, faRuler, faCompass, faCookieBite, faFileCode, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 import { faWindows } from '@fortawesome/free-brands-svg-icons'
 
@@ -119,6 +119,19 @@ export const SECTIONS = [
       { to: '/cookies/problems', label: 'Problems', icon: faCircleExclamation },
       { to: '/cookies/browsers', label: 'Browsers', icon: faGlobe },
       { to: '/cookies/size', label: 'Size & lifetime', icon: faRuler },
+    ],
+  },
+  {
+    id: 'guide',
+    landing: '/guide/help',
+    label: 'Guide',
+    title: 'Guide and checklists',
+    blurb: 'How to capture each kind of trace, a checklist per symptom, and what these tools can and cannot tell you.',
+    icon: faBookOpen,
+    pasteOnly: true,
+    pages: [
+      { to: '/guide', label: 'Start', icon: faBookOpen, start: true },
+      { to: '/guide/help', label: 'Troubleshooting guide', icon: faBookOpen },
     ],
   },
 ]
