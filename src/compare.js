@@ -148,3 +148,33 @@ export function compareMarkdown({ hars, names, verdict: v, diffs, fd, limit = 40
   }
   return `${lines.join('\n')}\n`
 }
+
+// ---- regression check ----------------------------------------------------------------------------------------------
+// "Is B worse than A by more than I allow?" as a pass/fail with the reason for each failure, so a comparison can be used as a
+// gate: the same page, before and after a change.
+
+export const DEFAULT_BUDGET = { loadPct: 10, bytesPct: 10, newErrors: 0, requestsPct: 20, scoreDrop: 5 }
+
+/**
+ * Compare two parsed captures against a budget. `budget` values are the most B may get worse than A:
+ *   loadPct / bytesPct / requestsPct  % increase allowed, newErrors  how many more failed requests, scoreDrop  health points.
+ * Returns { pass, checks: [{ id, label, a, b, change, limit, pass, unit }] }.
+ */
+export function regressionCheck(a, b, budget = DEFAULT_BUDGET, { analyze, healthScore } = {}) {
+  const bud = { ...DEFAULT_BUDGET, ...budget }
+  const pct = (x, y) => (x > 0 ? ((y - x) / x) * 100 : y > 0 ? Infinity : 0)
+  const checks = []
+  const add = (id, label, av, bv, change, limit, unit, fmt) => checks.push({ id, label, a: av, b: bv, change, limit, unit, fmt, pass: change <= limit })
+  const sa = a.summary
+  const sb = b.summary
+  add('load', 'Load time', sa.totalTime, sb.totalTime, pct(sa.totalTime, sb.totalTime), bud.loadPct, '%', fmtMs)
+  add('bytes', 'Transferred', sa.totalBytes, sb.totalBytes, pct(sa.totalBytes, sb.totalBytes), bud.bytesPct, '%', fmtBytes)
+  add('requests', 'Requests', sa.count, sb.count, pct(sa.count, sb.count), bud.requestsPct, '%', (n) => String(n))
+  add('errors', 'Failed requests', sa.errors, sb.errors, sb.errors - sa.errors, bud.newErrors, ' more', (n) => String(n))
+  if (analyze && healthScore) {
+    const ha = healthScore(analyze(a), new Set())
+    const hb = healthScore(analyze(b), new Set())
+    add('score', 'Health score', ha, hb, ha - hb, bud.scoreDrop, ' points lost', (n) => String(n))
+  }
+  return { pass: checks.every((c) => c.pass), checks, budget: bud }
+}
