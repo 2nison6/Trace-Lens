@@ -1,6 +1,6 @@
 # TraceLens
 
-Troubleshoot network and sign-in problems entirely in your browser. Analyze HAR files, decode SAML and SAML-tracer exports, follow OAuth 2.0 / OpenID Connect sign-ins, inspect JWTs, and find out why a cookie did not stick. Nothing is uploaded.
+Troubleshoot network and sign-in problems entirely in your browser. Analyze HAR files, decode SAML and SAML-tracer exports, follow OAuth 2.0 / OpenID Connect sign-ins, inspect JWTs and certificates, follow Windows sign-in (Kerberos and NTLM), and find out why a cookie did not stick. Each finding can be explained in plain language, and each tool can export its own report. Nothing is uploaded.
 
 (Formerly HAR.lens.)
 
@@ -8,7 +8,7 @@ Live at <https://har-analyzer.2nison6.com>.
 
 ## Tools
 
-TraceLens is a set of tools. The home screen lists them; picking one opens its own start page (where you drop files, with instructions for capturing what that tool needs) and its menu. In the sidebar each tool is a dropdown that holds its pages, and the one you are in is open. Number keys `1` to `9` open the pages of the current tool. A page that needs a capture, opened with none loaded, shows its tool's upload prompt.
+TraceLens is a set of eight tools. The home screen shows them as a 4 × 2 grid; picking one opens its own start page (where you drop files, with instructions for capturing what that tool needs) and its menu. In the sidebar each tool is a dropdown that holds its pages, and the one you are in is open. Number keys `1` to `9` open the pages of the current tool. A page that needs a capture, opened with none loaded, shows its tool's upload prompt.
 
 ### Network (HAR analyzer)
 
@@ -20,7 +20,7 @@ TraceLens is a set of tools. The home screen lists them; picking one opens its o
 - **Insights**: timing estimates, critical path, third-party cost, potential savings, latency distribution, protocols, concurrency, cache lifetime and endpoint latency
 - **Compare** up to three captures, with a **regression check**: a pass/fail against a budget you set (load time, bytes, requests, new errors, health score)
 - **Request inspector** with headers, cookies, params, response preview and copy as cURL
-- **Tools**: redact secrets from a HAR (including OAuth codes, PKCE verifiers and URLs in redirect headers), trim and merge, export an HTML or JSON report
+- **Tools**: redact secrets from a HAR (including OAuth codes, PKCE verifiers and URLs in redirect headers), trim and merge, and export the full request-level HTML or JSON report (the **Report** page makes a shorter, shareable one)
 
 ### SAML
 
@@ -60,8 +60,14 @@ Lists every cookie a capture sets or sends and judges whether a browser would ha
 
 How to capture each kind of trace in each browser (including the Chrome setting that keeps cookies and tokens), a checklist per symptom that links to the right pages, and what the tools cannot tell you. The same capture steps appear on each tool's start page.
 
+Guides have their own page for each topic: how it works, what to capture, a walkthrough in the matching tool, the errors people meet and what causes them, common mistakes and a glossary. The guide index is a 4 × 2 grid of seven topics plus the symptom, privacy and limits page.
+
 ### Everywhere
 
+- **Explain this**: every finding has a button that opens a short note in plain language: what it means, why it matters and what to look at first. Every finding title the checks can produce has a note; a test fails when a new check has none.
+- **Reports**: each tool has a **Report** page at the end of its menu. It builds a report for that tool alone, with headline numbers, charts and the findings, and downloads it as HTML (no scripts, opens anywhere), Markdown, JSON, or through the print dialog as PDF. **All reports** in the sidebar (`/report`) gathers every tool that has something to show: tick the ones to include, get an overview first, and export everything or one file per tool. A switch leaves out the Explain notes.
+- **Charts** in the reports: findings by severity per tool, message or certificate; time by phase; slowest requests; assertion, token and certificate validity on a timeline; cookie header size against the 4 KB and 8 KB limits; Kerberos token size. Each chart has a title and description for screen readers and a "Show the numbers" table behind it, and uses the same colours as the app in light and dark.
+- **What a report leaves out**: token and cookie values, SAML XML and assertions, user names and NameIDs, authorization codes, and the query part of every address. It keeps host names, paths, entity IDs, client IDs and the findings, so read it before it leaves your organisation. The paste-in tools (certificates, a pasted token, discovery, metadata) feed their results to the report while the tab is open; nothing is stored.
 - Light and dark themes, keyboard shortcuts (press `?`)
 
 ## Getting started
@@ -120,4 +126,6 @@ Captures, tokens, keys and certificates are processed in memory in your browser 
 - It cannot see a browser's settings, extensions or policies, so a cookie that should have been sent and was not may have been blocked.
 - Signature checks say whether the key you pasted signed the message, not whether you should trust that key.
 - Findings are leads, not verdicts: confirm them in the identity provider's and the application's logs.
+- Browser captures show only what the browser did, so reports only describe that.
+- Firefox and Safari have not been tried on the newer pages (reports, Explain this, the guide grid); Chrome has.
 - Tested with generated and spec-conformant data and with tokens, signatures and certificates made by independent tools (OpenSSL, Python `cryptography`, `signxml`, `pyspnego`, `impacket`). It has not been run against real Okta, Entra ID, Keycloak or ADFS captures.
