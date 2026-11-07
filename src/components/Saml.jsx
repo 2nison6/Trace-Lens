@@ -240,9 +240,8 @@ function TraceCard({ t, setOpen }) {
   )
 }
 
-export default function Saml({ har, traces = [], onFiles, toast: notify }) {
+export default function Saml({ har, traces = [], pasted, setPasted, onFiles, toast: notify }) {
   const [found, setFound] = useState(null) // null while scanning
-  const [pasted, setPasted] = useState([])
   const [text, setText] = useState('')
   const [err, setErr] = useState('')
   const [open, setOpen] = useState('')
@@ -290,7 +289,7 @@ export default function Saml({ har, traces = [], onFiles, toast: notify }) {
     setPasted((p) => [r, ...p])
     setOpen(r.id)
     setText('')
-  }, [text])
+  }, [text, setPasted])
   const paste = async () => {
     try { setText(await navigator.clipboard.readText()) } catch { setErr('The browser did not allow reading the clipboard. Paste into the box with Ctrl/Cmd+V instead.') }
   }

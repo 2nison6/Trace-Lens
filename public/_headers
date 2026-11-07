@@ -65,3 +65,5 @@
   X-Robots-Tag: noindex
 /cookies
   X-Robots-Tag: noindex
+/saml/metadata
+  X-Robots-Tag: noindex

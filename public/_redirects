@@ -42,3 +42,6 @@
 /oauth  /index.html  200
 /tokens  /index.html  200
 /cookies  /index.html  200
+
+# SAML metadata checker
+/saml/metadata  /index.html   200

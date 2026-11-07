@@ -1,5 +1,5 @@
 import {
-  faArrowUpFromBracket, faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCookieBite, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
+  faArrowUpFromBracket, faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCookieBite, faFileCode, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 
 // TraceLens is a set of troubleshooting tools that share one place to drop captures. Each SECTION is a tool with its own menu
@@ -42,6 +42,7 @@ export const SECTIONS = [
     pages: [
       { to: '/saml', label: 'Upload', addLabel: 'Add files', icon: faArrowUpFromBracket, start: true },
       { to: '/saml/messages', label: 'Messages', icon: faKey },
+      { to: '/saml/metadata', label: 'Metadata', icon: faFileCode },
     ],
   },
   {

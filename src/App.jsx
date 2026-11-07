@@ -29,6 +29,7 @@ import Insights from './components/Insights'
 import Tools from './components/Tools'
 import Saml from './components/Saml'
 import SamlPrompt from './components/SamlPrompt'
+import SamlMetadata from './components/SamlMetadata'
 import { TokenInspect, TokensInCapture } from './components/Tokens'
 import { OAuthErrors, OAuthFlow } from './components/OAuth'
 import { CookiesAll, CookiesProblems } from './components/Cookies'
@@ -115,6 +116,7 @@ export default function App() {
   const [dock, setDock] = useState(null) // { type: 'inspect' | 'list', ... }
   const [toastMsg, setToastMsg] = useState(null) // { id, text, tone } or null
   const [help, setHelp] = useState(false)
+  const [pastedSaml, setPastedSaml] = useState([]) // SAML messages pasted in by hand, shared by the SAML pages
   const [samlAsk, setSamlAsk] = useState(null) // { found: [{ name, n }], hadTrace } after a HAR with SAML in it was opened
   const [more, setMore] = useState(false)
   const [manual, setManual] = useState({}) // sidebar groups the user opened or closed by hand; the current tool's group is open otherwise
@@ -377,7 +379,8 @@ export default function App() {
                     <Route path="/har/insights" element={need(<Insights har={har} key={active} />)} />
                     <Route path="/har/compare" element={need(<Compare hars={hars} toast={toast} key={hars.length} />)} />
                     <Route path="/har/tools" element={need(<Tools har={har} hars={hars} toast={toast} key={active} />)} />
-                    <Route path="/saml/messages" element={<Page><Saml har={har} traces={traces} onFiles={onFiles} toast={toast} key={active} /></Page>} />
+                    <Route path="/saml/messages" element={<Page><Saml har={har} traces={traces} pasted={pastedSaml} setPasted={setPastedSaml} onFiles={onFiles} toast={toast} key={active} /></Page>} />
+                    <Route path="/saml/metadata" element={<Page><SamlMetadata har={har} traces={traces} pasted={pastedSaml} key={active} /></Page>} />
                     <Route path="/oauth/flow" element={need(<OAuthFlow har={har} key={active} />)} />
                     <Route path="/oauth/errors" element={<Page><OAuthErrors /></Page>} />
                     <Route path="/cookies/all" element={need(<CookiesAll har={har} key={active} />)} />
