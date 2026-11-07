@@ -36,3 +36,9 @@
 # Cookie analyzer
 /cookies/all       /index.html   200
 /cookies/problems  /index.html   200
+
+# Each tool's start page (upload prompt + menu)
+/har  /index.html  200
+/oauth  /index.html  200
+/tokens  /index.html  200
+/cookies  /index.html  200

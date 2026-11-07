@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowUpFromBracket, faPlus } from '@fortawesome/free-solid-svg-icons'
 
 /** Large drop target for the start screen. The whole surface is a button, so keyboard and screen-reader users can open the picker too. */
-export default function DropZone({ onFiles }) {
+export default function DropZone({ onFiles, title = 'Drop HAR files here' }) {
   const [over, setOver] = useState(false)
   const { open, input, handle } = usePicker(onFiles)
   return (
@@ -16,7 +16,7 @@ export default function DropZone({ onFiles }) {
     >
       <button type="button" className="drop-btn" onClick={open}>
         <span className="drop-ic"><FontAwesomeIcon icon={faArrowUpFromBracket} /></span>
-        <span className="drop-title">Drop HAR files here</span>
+        <span className="drop-title">{title}</span>
         <span className="drop-sub">or <u>choose files</u> from your computer</span>
       </button>
       {input}

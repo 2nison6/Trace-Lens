@@ -57,3 +57,11 @@
   X-Robots-Tag: noindex
 /cookies/problems
   X-Robots-Tag: noindex
+/har
+  X-Robots-Tag: noindex
+/oauth
+  X-Robots-Tag: noindex
+/tokens
+  X-Robots-Tag: noindex
+/cookies
+  X-Robots-Tag: noindex

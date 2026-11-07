@@ -331,3 +331,9 @@ a.file-b { text-decoration: none; }
 .saml-uses { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12.5px; }
 .saml-uses li { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
 .bullets { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; color: var(--t2); max-width: 80ch; }
+
+.start-why { margin: 0 0 4px; padding: 10px 14px; background: var(--blue-tint); border: 1px solid var(--blue-line); border-radius: var(--r-m); color: var(--t1); font-size: 13.5px; }
+.start-note { margin-top: 28px; color: var(--t3); font-size: 12.5px; display: flex; gap: 8px; align-items: center; }
+.tool-pages { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.tool-pages a { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; background: var(--s1); border: 1px solid var(--line); border-radius: 999px; color: var(--t2); text-decoration: none; font-size: 13px; }
+@media (hover: hover) and (pointer: fine) { .tool-pages a:hover { border-color: var(--blue-line); color: var(--t1); } }

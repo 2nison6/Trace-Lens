@@ -3,7 +3,7 @@ import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'reac
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faCircleHalfStroke, faDesktop, faEllipsis, faFolderOpen, faKeyboard, faKey, faLock, faMagnifyingGlassChart, faMoon, faSun,
+  faChevronDown, faCircleHalfStroke, faDesktop, faEllipsis, faFolderOpen, faKeyboard, faKey, faLock, faMagnifyingGlassChart, faMoon, faSun,
   faTriangleExclamation, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import { DEFAULT_FILTERS, InspectCtx, ListCtx, SelectedCtx } from './context'
@@ -11,13 +11,12 @@ import { filterHar } from './harParser'
 import { ingest } from './ingest'
 import { loadStore } from './loadStore'
 import { deleteSaved } from './persist'
-import KeepFiles from './components/KeepFiles'
 import { isReady, signalReady } from './boot'
-import { PAGES, SECTIONS, SHORTCUTS, TAB_COUNT, entryPage, isLocked, lockReason, pageOf, sectionOf } from './nav'
+import { PAGES, SECTIONS, SHORTCUTS, TAB_COUNT, landingPage, numbered, pageOf, sectionOf } from './nav'
 import useMediaQuery from './hooks/useMediaQuery'
 import usePicker from './hooks/usePicker'
-import DropZone, { AddFiles } from './components/DropZone'
-import Demos from './components/Demos'
+import { AddFiles } from './components/DropZone'
+import ToolStart from './components/ToolStart'
 import FilterBar from './components/FilterBar'
 import Inspector from './components/Inspector'
 import RequestList from './components/RequestList'
@@ -35,7 +34,7 @@ import { OAuthErrors, OAuthFlow } from './components/OAuth'
 import { CookiesAll, CookiesProblems } from './components/Cookies'
 import Footer from './components/Footer'
 import LoadOverlay from './components/LoadOverlay'
-import { EmptyState, Kbd, Notice, Segmented } from './components/ui'
+import { Kbd, Notice, Segmented } from './components/ui'
 import './styles/index.css'
 
 const THEMES = [
@@ -76,97 +75,36 @@ function library(state, action) {
   }
 }
 
-// A link to a whole tool (section). It opens the first page of that tool that can open with what is loaded; when none can, it
-// behaves like a locked page: a real link that never navigates and explains itself in a toast.
-function SectionLink({ section, current, fileCount, toast, onClick, children, ...rest }) {
-  const target = entryPage(section, fileCount)
-  const reason = lockReason(target, fileCount)
-  return (
-    <NavLink
-      {...rest}
-      to={target.to}
-      className={() => (reason ? 'locked' : current ? 'active' : '')}
-      aria-current={current && !reason ? 'true' : null}
-      aria-disabled={reason ? 'true' : undefined}
-      title={reason || section.title}
-      onClick={(e) => {
-        if (reason) { e.preventDefault(); toast(reason, 'error') }
-        onClick?.(e)
-      }}
-    >
-      {children}
-      {reason && <FontAwesomeIcon icon={faLock} className="nav-lock" />}
-    </NavLink>
-  )
-}
-
-// Every link to a page goes through here. A locked page stays a real <a href> (focusable, keeps its URL) but never
-// navigates: it carries aria-disabled and explains itself in an error toast instead.
-function PageLink({ item, fileCount, hint, toast, title, onClick, children, ...rest }) {
-  const reason = lockReason(item, fileCount)
-  return (
-    // A locked page never looks current, even when its own URL is open: a className function drops NavLink's automatic
-    // "active" class, and aria-current={null} drops the attribute (undefined would fall back to NavLink's default "page").
-    // aria-disabled must be omitted, not "false", when unlocked.
-    <NavLink
-      {...rest}
-      to={item.to}
-      className={reason ? () => 'locked' : undefined}
-      aria-current={reason ? null : undefined}
-      aria-disabled={reason ? 'true' : undefined}
-      title={reason || title}
-      onClick={(e) => {
-        if (reason) { e.preventDefault(); toast(reason, 'error') }
-        onClick?.(e)
-      }}
-    >
-      {children}
-      {reason ? <FontAwesomeIcon icon={faLock} className="nav-lock" /> : hint}
-    </NavLink>
-  )
-}
-
-// Home step 3, by how many files are loaded (0, 1, 2+)
-const EXPLORE = [
-  'Load a file to unlock the pages; load two to unlock Compare.',
-  'Your file is loaded: pick a page from the sidebar. Add one more to unlock Compare.',
-  'Your files are loaded: pick a page from the sidebar.',
-]
-
-function Home({ onFiles, fileCount, error, onDismiss, toast }) {
+// The home screen lists the analyzers. Picking one opens that tool's own start page (its upload prompt and menu).
+function Home() {
   return (
     <Page>
       <section className="start">
         <p className="start-eyebrow"><FontAwesomeIcon icon={faLock} /> Runs entirely in your browser</p>
-        <h1 className="t-display">Read your network, request by request.</h1>
-        <p className="start-lede">Drop a HAR file or a SAML-tracer export and TraceLens replays the traffic, decodes the sign-in, flags what went wrong, and lets you compare captures side by side.</p>
-        <DropZone onFiles={onFiles} />
-        {error && <Notice tone="crit" icon={faTriangleExclamation} onDismiss={() => onDismiss()}>{error}</Notice>}
-        <Demos onFiles={onFiles} onError={(m) => toast(m, 'error')} />
-        <KeepFiles onFiles={onFiles} fileCount={fileCount} toast={toast} />
-        <h2 className="tools-h">Pick a tool</h2>
-        <div className="tools-grid">
-          {SECTIONS.map((s) => {
-            const target = entryPage(s, fileCount)
-            const reason = lockReason(target, fileCount)
-            return (
-              <NavLink key={s.id} to={target.to} className={`tool-card${reason ? ' locked' : ''}`} aria-disabled={reason ? 'true' : undefined} title={reason || undefined} data-section={s.id}
-                onClick={(e) => { if (reason) { e.preventDefault(); toast(reason, 'error') } }}>
-                <span className="tool-ic"><FontAwesomeIcon icon={s.icon} /></span>
-                <b>{s.title}</b>
-                <span>{s.blurb}</span>
-                {reason && <small><FontAwesomeIcon icon={faLock} /> {reason}</small>}
-              </NavLink>
-            )
-          })}
+        <h1 className="t-display">Find out why the sign-in broke.</h1>
+        <p className="start-lede">TraceLens is a set of troubleshooting tools for network and sign-in problems. Pick one to start. Nothing you open is uploaded.</p>
+        <div className="tools-grid" role="list">
+          {SECTIONS.map((s) => (
+            <NavLink key={s.id} to={s.pages[0].to} className="tool-card" data-section={s.id} role="listitem">
+              <span className="tool-ic"><FontAwesomeIcon icon={s.icon} /></span>
+              <b>{s.title}</b>
+              <span>{s.blurb}</span>
+              <small>{s.pages.filter((p) => !p.start).map((p) => p.label).join(' · ')}</small>
+            </NavLink>
+          ))}
         </div>
-        <ol className="how">
-          <li><b>Export</b><span>In DevTools, open Network, then choose “Save all as HAR with content”.</span></li>
-          <li><b>Drop it here</b><span>Nothing is uploaded. Files stay in this tab and disappear when you close it.</span></li>
-          <li><b>Explore</b><span>{EXPLORE[Math.min(fileCount, 2)]}</span></li>
-        </ol>
       </section>
     </Page>
+  )
+}
+
+// A link to a page of a tool. The page you are on is marked current by NavLink.
+function PageLink({ item, hint, onClick, children, ...rest }) {
+  return (
+    <NavLink {...rest} to={item.to} end onClick={onClick}>
+      {children}
+      {hint}
+    </NavLink>
   )
 }
 
@@ -179,6 +117,8 @@ export default function App() {
   const [help, setHelp] = useState(false)
   const [samlAsk, setSamlAsk] = useState(null) // { found: [{ name, n }], hadTrace } after a HAR with SAML in it was opened
   const [more, setMore] = useState(false)
+  const [manual, setManual] = useState({}) // sidebar groups the user opened or closed by hand; the current tool's group is open otherwise
+  const [seenTool, setSeenTool] = useState(null)
   const [themePref, setThemePref] = useState(() => readPref('harlens-theme', 'system'))
   const [collapsed, setCollapsed] = useState(() => readPref('harlens-side', '0') === '1')
   const navigate = useNavigate()
@@ -219,10 +159,14 @@ export default function App() {
       dispatch({ type: 'add', parsed, traces: opened })
       setFilters(DEFAULT_FILTERS)
       setDock(null)
-      // A SAML-tracer export has no Overview to show, so adding one with no HAR takes you to the SAML page wherever you are:
-      // otherwise picking one from the popup would seem to do nothing. A HAR opens Overview from the start screen as before.
-      if (!parsed.length && opened.length) { if (sectionOf(pathRef.current)?.id !== 'saml') navigate('/saml/messages') }
-      else if (pathRef.current === '/') navigate('/har/overview')
+      // Where to go once files are open. A tool's start page (or the home screen) moves on to that tool's first real page, so you
+      // see the result of what you just opened; a page that was already showing data stays where it is. A SAML-tracer export
+      // has no Overview to show, so opening one with no HAR takes you to the SAML tool wherever you are.
+      const here = sectionOf(pathRef.current)
+      const onStart = pathRef.current === '/' || (here && pathRef.current === `/${here.id}`)
+      if (!parsed.length && opened.length) {
+        if (here?.id !== 'saml' || onStart) navigate('/saml/messages')
+      } else if (onStart) navigate(here ? landingPage(here) : '/har/overview')
     })
   }), [navigate])
   useEffect(() => {
@@ -299,21 +243,21 @@ export default function App() {
       else if (k === 'o') pickerRef.current?.click()
       else if (k === '/') { e.preventDefault(); searchRef.current?.focus() }
       else if (/^[1-9]$/.test(k)) {
-        const page = sectionOf(pathRef.current)?.pages[Number(k) - 1]
-        if (!page) return
-        const reason = lockReason(page, fileCount)
-        if (!reason) navigate(page.to)
-        else if (!e.repeat) toast(reason, 'error') // a held key would otherwise strobe the toast
+        const sec = sectionOf(pathRef.current)
+        const page = sec && numbered(sec)[Number(k) - 1]
+        if (page) navigate(page.to)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [navigate, help, more, theme, toggleSide, toast, fileCount])
+  }, [navigate, help, more, theme, toggleSide])
 
-  const need = (el) => (har ? <Page>{el}</Page> : <Page><EmptyState icon={faFolderOpen} title="No file loaded" action={<NavLink className="btn primary" to="/">Open a HAR file</NavLink>}>Files are kept in memory, so a reload clears them.</EmptyState><KeepFiles restoreOnly onFiles={onFiles} fileCount={fileCount} toast={toast} /></Page>)
+  // A page that needs a capture, with none loaded, shows its tool's upload prompt (with a line saying why) instead of an empty page
+  const section = sectionOf(location.pathname)
+  const need = (el) => (har ? <Page>{el}</Page> : <Page><ToolStart section={section} onFiles={onFiles} fileCount={fileCount} toast={toast} why={`${pageOf(location.pathname)?.label || 'This page'} needs a capture. Open ${section?.accepts || 'a file'} below.`} /></Page>)
+  const startPage = (sec) => <Page><ToolStart section={sec} onFiles={onFiles} fileCount={fileCount} toast={toast} /></Page>
   const showFilters = har && FILTERED.has(location.pathname)
   const current = pageOf(location.pathname)
-  const section = sectionOf(location.pathname)
   const sectionLabel = section ? section.label : ''
   // Home keeps the title and robots rule index.html ships with. Every other page is named after itself and asks search
   // engines not to index it: they are tools that need a file, so on their own they are empty pages.
@@ -326,6 +270,8 @@ export default function App() {
   useEffect(() => { signalReady() }, []) // the first frame is on screen: the static splash in index.html can go
   const Title = location.pathname === '/' ? 'p' : 'h1' // Home has its own <h1>, and one page should have only one
   const toastError = toastMsg?.tone === 'error'
+  // Entering another tool forgets what was opened or closed by hand, so the tool you are in is always the open one
+  if (seenTool !== (section ? section.id : null)) { setSeenTool(section ? section.id : null); setManual({}) }
   const pageList = section ? section.pages : []
   const tabItems = pageList.slice(0, TAB_COUNT)
   const moreItems = pageList.slice(TAB_COUNT)
@@ -344,25 +290,38 @@ export default function App() {
                   <span className="logo"><FontAwesomeIcon icon={faMagnifyingGlassChart} /></span>
                   <span className="brand-t">Trace<b>Lens</b></span>
                 </NavLink>
-                <nav className="sections" aria-label="Tools">
-                  {SECTIONS.map((s) => (
-                    <SectionLink key={s.id} section={s} current={section?.id === s.id} fileCount={fileCount} toast={toast} title={collapsed ? s.title : undefined}>
-                      <FontAwesomeIcon icon={s.icon} fixedWidth />
-                      <span>{s.label}</span>
-                    </SectionLink>
-                  ))}
+                <nav className="tree" aria-label="Tools">
+                  {SECTIONS.map((s) => {
+                    const cur = section?.id === s.id
+                    const isOpen = manual[s.id] ?? cur
+                    let n = 0
+                    return (
+                      <div key={s.id} className={`grp${cur ? ' current' : ''}`}>
+                        <button
+                          type="button" className="grp-h" aria-expanded={isOpen} aria-controls={`grp-${s.id}`} data-section={s.id} title={collapsed ? s.title : undefined}
+                          onClick={() => { if (!cur) { navigate(s.pages[0].to); setManual((m) => ({ ...m, [s.id]: true })) } else setManual((m) => ({ ...m, [s.id]: !isOpen })) }}
+                        >
+                          <FontAwesomeIcon icon={s.icon} fixedWidth />
+                          <span>{s.label}</span>
+                          <FontAwesomeIcon icon={faChevronDown} className="grp-chev" />
+                        </button>
+                        <div id={`grp-${s.id}`} className="grp-body" data-open={isOpen} inert={!isOpen}>
+                          <div className="grp-in">
+                            {s.pages.map((p) => {
+                              const key = p.start ? null : ++n
+                              return (
+                                <PageLink key={p.to} item={p} hint={key && key <= 9 ? <Kbd>{key}</Kbd> : null} title={collapsed ? p.label : undefined}>
+                                  <FontAwesomeIcon icon={p.icon} fixedWidth />
+                                  <span>{p.label}</span>
+                                </PageLink>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </nav>
-                {section && (
-                  <nav aria-label={`${section.title} pages`}>
-                    <h2 className="side-h nav-h">{section.title}</h2>
-                    {section.pages.map((n, i) => (
-                      <PageLink key={n.to} item={n} fileCount={fileCount} toast={toast} hint={<Kbd>{i + 1}</Kbd>} title={collapsed ? `${n.label} (${i + 1})` : undefined}>
-                        <FontAwesomeIcon icon={n.icon} fixedWidth />
-                        <span>{n.label}</span>
-                      </PageLink>
-                    ))}
-                  </nav>
-                )}
 
                 {(hars.length > 0 || traces.length > 0) && (
                   <div className="files" aria-label="Loaded files">
@@ -406,16 +365,17 @@ export default function App() {
                 </header>
 
                 <main id="main" className="content">
-                  {error && location.pathname !== '/' && <Notice tone="crit" icon={faTriangleExclamation} onDismiss={() => setError('')}>{error}</Notice>}
+                  {error && <Notice tone="crit" icon={faTriangleExclamation} onDismiss={() => setError('')}>{error}</Notice>}
                   {showFilters && <FilterBar filters={filters} setFilters={setFilters} har={har} shown={filtered.entries.length} searchRef={searchRef} />}
                   <Routes location={location} key={location.pathname}>
-                    <Route path="/" element={<Home onFiles={onFiles} fileCount={fileCount} error={error} onDismiss={() => setError('')} toast={toast} />} />
+                    <Route path="/" element={<Home />} />
+                    {SECTIONS.map((s) => <Route key={s.id} path={`/${s.id}`} element={startPage(s)} />)}
                     <Route path="/har/overview" element={need(<Overview har={filtered} full={har} filters={filters} setFilters={setFilters} toast={toast} />)} />
                     <Route path="/har/issues" element={need(<Issues har={har} toast={toast} key={active} />)} />
                     <Route path="/har/waterfall" element={need(<Waterfall har={filtered} toast={toast} key={active} />)} />
                     <Route path="/har/flow" element={need(<FlowView har={filtered} key={`${active}-${filtered ? filtered.entries.length : 0}`} />)} />
                     <Route path="/har/insights" element={need(<Insights har={har} key={active} />)} />
-                    <Route path="/har/compare" element={hars.length ? <Page><Compare hars={hars} toast={toast} key={hars.length} /></Page> : need(null)} />
+                    <Route path="/har/compare" element={need(<Compare hars={hars} toast={toast} key={hars.length} />)} />
                     <Route path="/har/tools" element={need(<Tools har={har} hars={hars} toast={toast} key={active} />)} />
                     <Route path="/saml/messages" element={<Page><Saml har={har} traces={traces} onFiles={onFiles} toast={toast} key={active} /></Page>} />
                     <Route path="/oauth/flow" element={need(<OAuthFlow har={har} key={active} />)} />
@@ -426,7 +386,6 @@ export default function App() {
                     <Route path="/tokens/capture" element={need(<TokensInCapture har={har} toast={toast} key={active} />)} />
                     {/* the old, un-prefixed addresses keep working for bookmarks */}
                     {['overview', 'issues', 'waterfall', 'flow', 'insights', 'compare', 'tools'].map((p) => <Route key={p} path={`/${p}`} element={<Navigate to={`/har/${p}`} replace />} />)}
-                    <Route path="/saml" element={<Navigate to="/saml/messages" replace />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </main>
@@ -456,14 +415,10 @@ export default function App() {
 
               {narrow && (
                 <nav className="tabbar glass" aria-label="Pages">
-                  {section
-                    ? tabItems.map((n) => (
-                      <PageLink key={n.to} item={n} fileCount={fileCount} toast={toast}><FontAwesomeIcon icon={n.icon} /><span>{n.label}</span></PageLink>
-                    ))
-                    : toolTabs.map((s) => (
-                      <SectionLink key={s.id} section={s} fileCount={fileCount} toast={toast}><FontAwesomeIcon icon={s.icon} /><span>{s.label}</span></SectionLink>
-                    ))}
-                  <button type="button" className={`tab-more${more || moreItems.some((n) => n.to === location.pathname && !isLocked(n, fileCount)) ? ' active' : ''}`} aria-expanded={more} onClick={() => setMore((m) => !m)}>
+                  {(section ? tabItems : toolTabs.map((s) => ({ ...s.pages[0], label: s.label, icon: s.icon }))).map((n) => (
+                    <PageLink key={n.to} item={n}><FontAwesomeIcon icon={n.icon} /><span>{n.label}</span></PageLink>
+                  ))}
+                  <button type="button" className={`tab-more${more || moreItems.some((n) => n.to === location.pathname) ? ' active' : ''}`} aria-expanded={more} onClick={() => setMore((m) => !m)}>
                     <FontAwesomeIcon icon={faEllipsis} /><span>More</span>
                   </button>
                 </nav>
@@ -473,8 +428,8 @@ export default function App() {
                   <>
                     <motion.div className="scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMore(false)} />
                     <motion.div className="more-sheet glass" role="menu" initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 24, opacity: 0 }} transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}>
-                      {moreItems.map((n) => <PageLink key={n.to} item={n} fileCount={fileCount} toast={toast} role="menuitem" onClick={() => setMore(false)}><FontAwesomeIcon icon={n.icon} fixedWidth /> {n.label}</PageLink>)}
-                      {(section ? SECTIONS : SECTIONS.slice(TAB_COUNT)).filter((s) => s.id !== section?.id).map((s) => <SectionLink key={s.id} section={s} fileCount={fileCount} toast={toast} role="menuitem" onClick={() => setMore(false)}><FontAwesomeIcon icon={s.icon} fixedWidth /> {s.title}</SectionLink>)}
+                      {moreItems.map((n) => <PageLink key={n.to} item={n} role="menuitem" onClick={() => setMore(false)}><FontAwesomeIcon icon={n.icon} fixedWidth /> {n.label}</PageLink>)}
+                      {(section ? SECTIONS : SECTIONS.slice(TAB_COUNT)).filter((s) => s.id !== section?.id).map((s) => <PageLink key={s.id} item={s.pages[0]} role="menuitem" onClick={() => setMore(false)}><FontAwesomeIcon icon={s.icon} fixedWidth /> {s.title}</PageLink>)}
                       <button type="button" role="menuitem" onClick={() => { setMore(false); pickerRef.current?.click() }}><FontAwesomeIcon icon={faFolderOpen} fixedWidth /> Open files</button>
                       <div className="more-theme"><Segmented size="s" label="Appearance" value={themePref} onChange={changeTheme} options={THEMES.map((t) => ({ value: t.value, label: t.label, icon: t.icon }))} /></div>
                     </motion.div>

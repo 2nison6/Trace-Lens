@@ -337,6 +337,25 @@ function cookieLoopHar() {
   return har('Portal (login loop)', base, list, { onContentLoad: 3500, onLoad: 3550 })
 }
 
+// ---------------------------------------------------------------------------------------------------------------- tokens
+// An app calling its API with a JWT access token that expired before the call (and was issued for a different API than the one it
+// calls), so the API answers 401 invalid_token. Signatures are placeholders, as in the SAML samples.
+function expiredTokenHar() {
+  const base = T('2026-11-06T09:58:00Z')
+  const API2 = 'https://api.example.test'
+  const b64u = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
+  const now = Math.floor(base / 1000)
+  const token = `${b64u({ alg: 'RS256', typ: 'JWT', kid: 'demo-key-1' })}.${b64u({ iss: 'https://login.example.test/', sub: 'alex@example.test', aud: 'api://billing', scope: 'read', iat: now - 7200, nbf: now - 7200, exp: now - 3600, jti: 'demo-jti-1' })}.${Buffer.alloc(64, 'DEMO').toString('base64url')}`
+  const err = JSON.stringify({ error: 'invalid_token', error_description: 'The access token expired' })
+  const list = [
+    entry(base, { at: 0, url: `${API2}/v1/invoices`, status: 401, mime: 'application/json', size: err.length, transfer: 600, body: err, ip: '203.0.113.30',
+      reqHeaders: [H('authorization', `Bearer ${token}`)], headers: [ctype('application/json'), H('www-authenticate', 'Bearer error="invalid_token", error_description="The access token expired"'), H('cache-control', 'no-store')], t: { dns: 9, connect: 16, ssl: 24, wait: 44, receive: 1 } }),
+    entry(base, { at: 300, url: `${API2}/v1/profile`, status: 401, mime: 'application/json', size: err.length, transfer: 600, body: err, ip: '203.0.113.30',
+      reqHeaders: [H('authorization', `Bearer ${token}`)], headers: [ctype('application/json'), H('www-authenticate', 'Bearer error="invalid_token"'), H('cache-control', 'no-store')], t: { wait: 38, receive: 1 } }),
+  ]
+  return har('Billing app (expired token)', base, list, { onContentLoad: 200, onLoad: 400 })
+}
+
 // ---------------------------------------------------------------------------------------------------------------- write
 const files = {
   'shop-working.har': shopWorking(),
@@ -345,6 +364,7 @@ const files = {
   'sso-failed-saml-tracer.json': failedTrace(),
   'oauth-signin-failed.har': oauthHar(),
   'cookie-login-loop.har': cookieLoopHar(),
+  'expired-token.har': expiredTokenHar(),
 }
 mkdirSync(OUT, { recursive: true })
 for (const [name, data] of Object.entries(files)) {

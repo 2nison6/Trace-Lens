@@ -8,7 +8,7 @@ Live at <https://har-analyzer.2nison6.com>.
 
 ## Tools
 
-TraceLens is a set of tools that share one place to drop captures. The sidebar switches between them, and each has its own menu. Number keys `1` to `9` open the pages of the current tool.
+TraceLens is a set of tools. The home screen lists them; picking one opens its own start page (where you drop files, with samples for that tool) and its menu. In the sidebar each tool is a dropdown that holds its pages, and the one you are in is open. Number keys `1` to `9` open the pages of the current tool. A page that needs a capture, opened with none loaded, shows its tool's upload prompt.
 
 ### Network (HAR analyzer)
 
@@ -45,10 +45,6 @@ Lists every cookie a capture sets or sends, judges whether a browser would have 
 ### Samples
 
 The start screen has "Try a sample" buttons: a working and a broken load of the same page (open both for Compare), a HAR with a working SAML sign-in, a SAML-tracer export of a failed one, an OAuth sign-in that fails with `invalid_grant`, and a login loop caused by cookies. They live in `public/demo/` and are made by `node scripts/make-demo-data.mjs`. Every host, user and token in them is invented, and the XML signatures are placeholders (the certificates' private keys were discarded), so the app can read them but nothing could verify them.
-
-### Locked pages
-
-Pages that need data are locked until a HAR is loaded, and **Compare** stays locked until two are loaded. Pages that also work on pasted text (SAML messages, the token inspector, error lookup) stay open.
 
 ## Getting started
 

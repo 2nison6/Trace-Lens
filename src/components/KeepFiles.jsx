@@ -10,7 +10,7 @@ import { Switch } from './ui'
  * nothing is stored unless the user turns this on, and what is stored never reopens by itself. When files are saved, the
  * start screen offers to restore them (or wipe them).
  */
-export default function KeepFiles({ onFiles, fileCount, toast, restoreOnly = false }) {
+export default function KeepFiles({ onFiles, fileCount, toast }) {
   const [on, setOn] = useState(keepEnabled)
   const [saved, setSaved] = useState([])
   const refresh = useCallback(() => { listSaved().then(setSaved) }, [])
@@ -30,13 +30,10 @@ export default function KeepFiles({ onFiles, fileCount, toast, restoreOnly = fal
   const wipe = async () => { await clearSaved(); setSaved([]); toast?.('Saved files removed from this device') }
 
   const offer = on && saved.length > 0 && fileCount === 0
-  // In the "No file loaded" state after a reload only the restore offer is shown, never the settings
-  if (restoreOnly && !offer) return null
-
   return (
     <div className="keep-box">
-      {!restoreOnly && <Switch checked={on} onChange={change} label="Keep my files on this device" hint="Off by default. HAR files can contain live tokens and cookies." />}
-      {!restoreOnly && on && (
+      <Switch checked={on} onChange={change} label="Keep my files on this device" hint="Off by default. HAR files can contain live tokens and cookies." />
+      {on && (
         <p className="hint" style={{ margin: 0 }}>
           Files you open are stored in this browser only (never uploaded) until you remove them or turn this off. Do not use it on a shared computer.
         </p>
