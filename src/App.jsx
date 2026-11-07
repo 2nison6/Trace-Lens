@@ -32,6 +32,7 @@ import SamlPrompt from './components/SamlPrompt'
 import SamlMetadata from './components/SamlMetadata'
 import Certificates from './components/Certificates'
 import Guide from './components/Guide'
+import ErrorBoundary from './components/ErrorBoundary'
 import { GuideTopics, TopicGuide } from './components/TopicGuide'
 import { WindowsExchange, WindowsLookup } from './components/WindowsAuth'
 import { TokenCompare, TokenInspect, TokenTimeline, TokensInCapture } from './components/Tokens'
@@ -374,6 +375,7 @@ export default function App() {
                 <main id="main" className="content">
                   {error && <Notice tone="crit" icon={faTriangleExclamation} onDismiss={() => setError('')}>{error}</Notice>}
                   {showFilters && <FilterBar filters={filters} setFilters={setFilters} har={har} shown={filtered.entries.length} searchRef={searchRef} />}
+                  <ErrorBoundary key={location.pathname}>
                   <Routes location={location} key={location.pathname}>
                     <Route path="/" element={<Home />} />
                     {SECTIONS.map((s) => <Route key={s.id} path={`/${s.id}`} element={startPage(s)} />)}
@@ -407,6 +409,7 @@ export default function App() {
                     {['overview', 'issues', 'waterfall', 'flow', 'insights', 'compare', 'tools'].map((p) => <Route key={p} path={`/${p}`} element={<Navigate to={`/har/${p}`} replace />} />)}
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
+                  </ErrorBoundary>
                 </main>
                 <Footer />
               </div>
