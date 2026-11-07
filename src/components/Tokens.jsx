@@ -6,6 +6,7 @@ import { describeKeys, verifyJwt } from '../auth/verify'
 import { copyText } from '../utils'
 import { CheckList, KV } from './authui'
 import { toneOf, worstOf, wordOf } from './severity'
+import { reportInputs } from '../reports/store'
 import { Card, EmptyState, Notice, Switch } from './ui'
 
 const json = (o) => JSON.stringify(o, null, 2)
@@ -117,6 +118,7 @@ export function TokenInspect({ toast: notify }) {
   const paste = async () => {
     try { setText(await navigator.clipboard.readText()) } catch { notify?.('The browser did not allow reading the clipboard. Paste with Ctrl/Cmd+V instead.', 'error') }
   }
+  useEffect(() => { reportInputs.set('tokenInspect', dec && !dec.error ? [...checkJwt(dec, { now: loadedAt, expect }), ...claimHints(dec)].filter((c) => c.severity !== 'ok') : null) }, [dec, loadedAt, expect])
   return (
     <div className="stack">
       <Card title="Paste a token" aside={<FontAwesomeIcon icon={faShieldHalved} className="dim" />}>

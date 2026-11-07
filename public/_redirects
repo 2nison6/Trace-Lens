@@ -77,3 +77,13 @@
 /guide/windows  /index.html  200
 /guide/cookies  /index.html  200
 /guide/topics  /index.html  200
+
+# Reports: one per tool, and the combined one
+/har/report  /index.html  200
+/saml/report  /index.html  200
+/oauth/report  /index.html  200
+/tokens/report  /index.html  200
+/certs/report  /index.html  200
+/windows/report  /index.html  200
+/cookies/report  /index.html  200
+/report  /index.html  200

@@ -5,6 +5,7 @@ import { extractSaml } from '../saml/extract'
 import { parseSamlXml } from '../saml/parse'
 import { checkMetadata, compareWithMessages, parseMetadata } from '../saml/metadata'
 import { fingerprints } from '../saml/x509'
+import { reportInputs } from '../reports/store'
 import { CheckList, KV } from './authui'
 import { Card, Notice } from './ui'
 
@@ -82,6 +83,11 @@ export default function SamlMetadata({ har, traces = [], pasted = [] }) {
     Promise.all(certs.map(async (c) => [c.base64, await fingerprints(c.der)])).then((pairs) => { if (live) setFps(Object.fromEntries(pairs.filter(([, v]) => v))) })
     return () => { live = false }
   }, [md, items])
+  useEffect(() => {
+    if (!md || md.error) { reportInputs.set('metadata', null); return }
+    const all = md.entities.flatMap((e) => [...checkMetadata(e, { now: loadedAt }), ...compareWithMessages(e, items, { fps })])
+    reportInputs.set('metadata', all.length ? all : null)
+  }, [md, items, fps, loadedAt])
   return (
     <div className="stack">
       <Card title="Paste SAML metadata" aside={<FontAwesomeIcon icon={faFileCode} className="dim" />}>

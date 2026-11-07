@@ -3,7 +3,7 @@ import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'reac
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faChevronDown, faCircleHalfStroke, faDesktop, faEllipsis, faFolderOpen, faKeyboard, faKey, faLock, faMagnifyingGlassChart, faMoon, faSun,
+  faChevronDown, faCircleHalfStroke, faDesktop, faEllipsis, faFileLines, faFolderOpen, faKeyboard, faKey, faLock, faMagnifyingGlassChart, faMoon, faSun,
   faTriangleExclamation, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import { DEFAULT_FILTERS, InspectCtx, ListCtx, SelectedCtx } from './context'
@@ -30,6 +30,7 @@ import Tools from './components/Tools'
 import Saml from './components/Saml'
 import SamlPrompt from './components/SamlPrompt'
 import SamlMetadata from './components/SamlMetadata'
+import { AllReports, ToolReport } from './components/Reports'
 import Certificates from './components/Certificates'
 import Guide from './components/Guide'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -330,6 +331,7 @@ export default function App() {
                     )
                   })}
                 </nav>
+                <nav className="all-reports-nav" aria-label="Reports"><NavLink to="/report" className="all-reports" end><FontAwesomeIcon icon={faFileLines} fixedWidth /><span>All reports</span></NavLink></nav>
 
                 {(hars.length > 0 || traces.length > 0) && (
                   <div className="files" aria-label="Loaded files">
@@ -405,6 +407,8 @@ export default function App() {
                     <Route path="/tokens/compare" element={<Page><TokenCompare /></Page>} />
                     <Route path="/tokens/timeline" element={need(<TokenTimeline har={har} key={active} />)} />
                     <Route path="/tokens/capture" element={need(<TokensInCapture har={har} toast={toast} key={active} />)} />
+                    {['har', 'saml', 'oauth', 'tokens', 'certs', 'windows', 'cookies'].map((t) => <Route key={t} path={`/${t}/report`} element={<Page><ToolReport tool={t} har={har} traces={traces} pasted={pastedSaml} theme={theme} toast={toast} key={`${t}-${active}`} /></Page>} />)}
+                    <Route path="/report" element={<Page><AllReports har={har} traces={traces} pasted={pastedSaml} theme={theme} toast={toast} key={active} /></Page>} />
                     {/* the old, un-prefixed addresses keep working for bookmarks */}
                     {['overview', 'issues', 'waterfall', 'flow', 'insights', 'compare', 'tools'].map((p) => <Route key={p} path={`/${p}`} element={<Navigate to={`/har/${p}`} replace />} />)}
                     <Route path="*" element={<Navigate to="/" replace />} />

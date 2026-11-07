@@ -1,5 +1,5 @@
 import {
-  faArrowUpFromBracket, faBookOpen, faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCertificate, faClockRotateLeft, faGlobe, faRuler, faCompass, faCookieBite, faFileCode, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
+  faArrowUpFromBracket, faBookOpen, faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCertificate, faClockRotateLeft, faGlobe, faRuler, faCompass, faCookieBite, faFileCode, faFileLines, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 import { faWindows } from '@fortawesome/free-brands-svg-icons'
 
@@ -31,6 +31,7 @@ export const SECTIONS = [
       { to: '/har/insights', label: 'Insights', icon: faLightbulb },
       { to: '/har/compare', label: 'Compare', icon: faCodeCompare, needs: 2 },
       { to: '/har/tools', label: 'Tools', icon: faToolbox },
+      { to: '/har/report', label: 'Report', icon: faFileLines },
     ],
   },
   {
@@ -46,6 +47,7 @@ export const SECTIONS = [
       { to: '/saml', label: 'Upload', addLabel: 'Add files', icon: faArrowUpFromBracket, start: true },
       { to: '/saml/messages', label: 'Messages', icon: faKey },
       { to: '/saml/metadata', label: 'Metadata', icon: faFileCode },
+      { to: '/saml/report', label: 'Report', icon: faFileLines },
     ],
   },
   {
@@ -62,6 +64,7 @@ export const SECTIONS = [
       { to: '/oauth/flow', label: 'Flow', icon: faRoute },
       { to: '/oauth/discovery', label: 'Discovery & keys', icon: faCompass },
       { to: '/oauth/errors', label: 'Error lookup', icon: faMagnifyingGlass },
+      { to: '/oauth/report', label: 'Report', icon: faFileLines },
     ],
   },
   {
@@ -79,6 +82,7 @@ export const SECTIONS = [
       { to: '/tokens/capture', label: 'In capture', icon: faListCheck },
       { to: '/tokens/timeline', label: 'Timeline', icon: faClockRotateLeft },
       { to: '/tokens/compare', label: 'Compare', icon: faCodeCompare },
+      { to: '/tokens/report', label: 'Report', icon: faFileLines },
     ],
   },
   {
@@ -94,6 +98,7 @@ export const SECTIONS = [
     pages: [
       { to: '/certs', label: 'Start', icon: faCertificate, start: true },
       { to: '/certs/inspect', label: 'Inspect', icon: faMagnifyingGlass },
+      { to: '/certs/report', label: 'Report', icon: faFileLines },
     ],
   },
   {
@@ -109,6 +114,7 @@ export const SECTIONS = [
       { to: '/windows', label: 'Upload', addLabel: 'Add files', icon: faArrowUpFromBracket, start: true },
       { to: '/windows/exchange', label: 'Exchange', icon: faRoute },
       { to: '/windows/lookup', label: 'Token & error lookup', icon: faMagnifyingGlass },
+      { to: '/windows/report', label: 'Report', icon: faFileLines },
     ],
   },
   {
@@ -126,6 +132,7 @@ export const SECTIONS = [
       { to: '/cookies/problems', label: 'Problems', icon: faCircleExclamation },
       { to: '/cookies/browsers', label: 'Browsers', icon: faGlobe },
       { to: '/cookies/size', label: 'Size & lifetime', icon: faRuler },
+      { to: '/cookies/report', label: 'Report', icon: faFileLines },
     ],
   },
   {
@@ -146,8 +153,11 @@ export const SECTIONS = [
 ]
 
 export const PAGES = SECTIONS.flatMap((s) => s.pages.map((p) => ({ ...p, section: s.id })))
+
+// The combined report belongs to no one tool: it gathers the Report page of every tool.
+export const REPORT_PAGE = { to: '/report', label: 'All reports', icon: faFileLines, section: null }
 export const sectionOf = (pathname) => SECTIONS.find((s) => pathname === `/${s.id}` || pathname.startsWith(`/${s.id}/`)) || null
-export const pageOf = (pathname) => PAGES.find((p) => p.to === pathname) || null
+export const pageOf = (pathname) => PAGES.find((p) => p.to === pathname) || (pathname === REPORT_PAGE.to ? REPORT_PAGE : null)
 // Where a tool goes after files are opened in it
 export const landingPage = (section) => section.landing
 // Pages that number keys 1-9 reach (the upload page has no number)

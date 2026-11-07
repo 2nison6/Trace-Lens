@@ -107,3 +107,27 @@
   X-Robots-Tag: noindex
 /guide/cookies
   X-Robots-Tag: noindex
+
+/har/report
+  X-Robots-Tag: noindex
+
+/saml/report
+  X-Robots-Tag: noindex
+
+/oauth/report
+  X-Robots-Tag: noindex
+
+/tokens/report
+  X-Robots-Tag: noindex
+
+/certs/report
+  X-Robots-Tag: noindex
+
+/windows/report
+  X-Robots-Tag: noindex
+
+/cookies/report
+  X-Robots-Tag: noindex
+
+/report
+  X-Robots-Tag: noindex

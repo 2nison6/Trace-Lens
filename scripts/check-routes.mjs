@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { PAGES } from '../src/nav.js'
+import { PAGES, REPORT_PAGE } from '../src/nav.js'
 import { GUIDES } from '../src/guides/index.js'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -11,7 +11,7 @@ const redirects = readFileSync(path.join(root, 'public/_redirects'), 'utf8').spl
 const headers = readFileSync(path.join(root, 'public/_headers'), 'utf8').split('\n').filter((l) => l.startsWith('/') && !l.startsWith('/*') && !l.startsWith('/assets')).map((l) => l.trim())
 const missing = []
 // pages from the nav, and one /guide/<topic> page per topic guide
-const routes = [...PAGES.map((p) => p.to), ...GUIDES.map((g) => `/guide/${g.id}`)]
+const routes = [...PAGES.map((p) => p.to), REPORT_PAGE.to, ...GUIDES.map((g) => `/guide/${g.id}`)]
 for (const to of routes) {
   if (!redirects.includes(to)) missing.push(`public/_redirects has no rule for ${to}`)
   if (!headers.includes(to)) missing.push(`public/_headers has no noindex block for ${to}`)

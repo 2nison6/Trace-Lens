@@ -4,6 +4,7 @@ import { faCompass } from '@fortawesome/free-solid-svg-icons'
 import { analyzeOAuth } from '../auth/oauth'
 import { checkDiscovery, checkJwks, compareFlowWithDiscovery, parseDiscovery } from '../auth/discovery'
 import { decodeJwt } from '../auth/jwt'
+import { reportInputs } from '../reports/store'
 import { CheckList, KV } from './authui'
 import { Card, Notice } from './ui'
 
@@ -27,6 +28,10 @@ export default function OAuthDiscovery({ har }) {
   const flowChecks = useMemo(() => (doc && flows.length ? compareFlowWithDiscovery(doc, flows) : []), [doc, flows])
   const token = useMemo(() => (tokenText.trim() ? decodeJwt(tokenText) : null), [tokenText])
   const jwks = useMemo(() => (jwksText.trim() ? checkJwks(jwksText, token) : null), [jwksText, token])
+  useEffect(() => {
+    const all = [...docChecks, ...flowChecks, ...(jwks && jwks.checks ? jwks.checks : [])]
+    reportInputs.set('discovery', all.length ? all : null)
+  }, [docChecks, flowChecks, jwks])
   return (
     <div className="stack">
       <Card title="Discovery document" aside={<FontAwesomeIcon icon={faCompass} className="dim" />}>

@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCertificate } from '@fortawesome/free-solid-svg-icons'
 import { checkCertificate, checkChain, fingerprints, orderChain, readCertificates, shortName } from '../auth/certs'
 import { CheckList, KV } from './authui'
+import { reportInputs } from '../reports/store'
 import { Card, Notice } from './ui'
 import { toneOf, worstOf, wordOf } from './severity'
 
@@ -44,6 +45,7 @@ export default function Certificates() {
     Promise.all(read.certs.filter((c) => c.der).map(async (c) => [c.base64, await fingerprints(c.der)])).then((p) => { if (live) setFps(Object.fromEntries(p.filter(([, v]) => v))) })
     return () => { live = false }
   }, [read])
+  useEffect(() => { reportInputs.set('certs', chain.length ? { chain, chainChecks, host, fps } : null) }, [chain, chainChecks, host, fps])
   return (
     <div className="stack">
       <Card title="Paste certificates" aside={<FontAwesomeIcon icon={faCertificate} className="dim" />}>
