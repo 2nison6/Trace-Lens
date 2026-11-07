@@ -86,15 +86,15 @@ function library(state, action) {
 function Home() {
   return (
     <Page>
-      <section className="start">
+      <section className="start start-wide">
         <p className="start-eyebrow"><FontAwesomeIcon icon={faLock} /> Runs entirely in your browser</p>
         <h1 className="t-display">Find out why the sign-in broke.</h1>
         <p className="start-lede">TraceLens is a set of troubleshooting tools for network and sign-in problems. Pick one to start. Nothing you open is uploaded.</p>
-        <div className="tools-grid" role="list">
+        <div className="tools-grid home" role="list">
           {SECTIONS.map((s) => (
             <NavLink key={s.id} to={s.pages[0].to} className="tool-card" data-section={s.id} role="listitem">
               <span className="tool-ic"><FontAwesomeIcon icon={s.icon} /></span>
-              <b>{s.title}</b>
+              <b>{s.card}</b>
               <span>{s.blurb}</span>
               <small>{s.pages.filter((p) => !p.start).map((p) => p.label).join(' · ')}</small>
             </NavLink>
@@ -366,7 +366,7 @@ export default function App() {
                 <header className="topbar glass">
                   <div className="crumbs">
                     <button type="button" className="icon-btn side-toggle" onClick={toggleSide} aria-label={collapsed ? 'Show sidebar' : 'Hide sidebar'} title="Toggle sidebar (B)"><FontAwesomeIcon icon={faCircleHalfStroke} /></button>
-                    <Title className="page-title">{current ? current.label : 'Open a file'}</Title>
+                    <Title className="page-title">{current ? current.label : section ? section.label : 'TraceLens'}</Title>
                     {har && current && <span className="page-sub ellipsis" title={har.fileName}>{har.fileName}</span>}
                   </div>
                   {hars.length > 0 && <div className="top-actions"><AddFiles onFiles={onFiles} /></div>}
