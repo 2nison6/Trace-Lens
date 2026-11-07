@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "description": "TraceLens - troubleshoot network and sign-in problems entirely in your browser: HAR, SAML, OAuth/OIDC, tokens and cookies.",
   "author": "Nitish Soni <nitish.soni@2nison6.com> (https://github.com/2nison6)",
-  "homepage": "https://har-analyzer.2nison6.com",
+  "homepage": "https://tracelens.2nison6.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/2nison6/HAR-Analyzer.git"

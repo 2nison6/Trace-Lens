@@ -4,7 +4,7 @@ Troubleshoot network and sign-in problems entirely in your browser. Analyze HAR 
 
 (Formerly HAR.lens.)
 
-Live at <https://har-analyzer.2nison6.com>.
+Live at <https://tracelens.2nison6.com>.
 
 ## Tools
 
@@ -106,8 +106,8 @@ Already in place: title and description, canonical link and `og:url`, absolute O
 
 After the first deploy, in [Google Search Console](https://search.google.com/search-console):
 
-1. Add the site as a property (a Domain property covers every subdomain; a URL-prefix property for `https://har-analyzer.2nison6.com/` is quicker) and verify ownership.
-2. Submit `https://har-analyzer.2nison6.com/sitemap.xml` under Sitemaps.
+1. Add the site as a property (a Domain property covers every subdomain; a URL-prefix property for `https://tracelens.2nison6.com/` is quicker) and verify ownership.
+2. Submit `https://tracelens.2nison6.com/sitemap.xml` under Sitemaps.
 3. Open URL Inspection, enter the home page and choose Request indexing.
 4. Check the page with the Rich Results Test, and import the site into Bing Webmaster Tools.
 5. Link to it from your own site and profiles. New sites can take days to weeks to appear, and no one can guarantee a ranking.
