@@ -217,6 +217,68 @@ export function analyze(har) {
   add('info', 'Security', 'Cookies set without SameSite', 'Browsers default to Lax, but being explicit avoids CSRF and cross-site surprises.', 'Add SameSite=Lax or Strict (None; Secure for cross-site).', cookieSameSite)
   add('info', 'Security', 'Server version disclosed in headers', 'Server / X-Powered-By headers reveal software details to attackers.', 'Remove or genericise these headers.', where((e) => /\d/.test(e.resHeaders.server || '') || e.resHeaders['x-powered-by']))
 
+  // ---- Rate limiting and retries -----------------------------------------------------------------
+  const limited = where((e) => e.status === 429)
+  if (limited.length) {
+    const withRetry = limited.filter((e) => e.resHeaders['retry-after'])
+    add('critical', 'Errors', `Rate limited (HTTP 429) on ${limited.length} request${limited.length > 1 ? 's' : ''}`,
+      `The server is refusing requests because there were too many.${withRetry.length ? ` It says when to retry (Retry-After: ${withRetry[0].resHeaders['retry-after']}).` : ' It did not send a Retry-After header.'}`,
+      'Back off and respect Retry-After, batch or cache calls, and avoid polling in tight loops.', limited)
+  }
+  // The same request sent again within seconds of failing, over and over: a retry storm
+  const bySig = new Map()
+  for (const e of entries) { const k = `${e.method} ${e.origin}${e.path}`; (bySig.get(k) || bySig.set(k, []).get(k)).push(e) }
+  const storms = []
+  for (const list of bySig.values()) {
+    const fails = list.filter((e) => e.status === 0 || e.status >= 500 || e.status === 429)
+    if (fails.length >= 4) storms.push(...fails)
+  }
+  add('warning', 'Errors', 'Retry storm: the same failing request repeated', 'One endpoint failed four or more times. Retrying without a growing delay makes an overloaded server worse and can trigger rate limiting.', 'Use exponential backoff with jitter, and give up after a few tries.', storms)
+
+  // ---- Duplicate calls ----------------------------------------------------------------------------
+  const dupKey = (e) => `${e.method} ${e.origin}${e.path}?${[...(e.queryKeys || [])].sort().join('&')}`
+  const idempotent = entries.filter((e) => e.method === 'GET' && e.status >= 200 && e.status < 300 && /json|xml/.test(e.mime))
+  const groups = new Map()
+  for (const e of idempotent) { const k = dupKey(e) + (e.url.split('?')[1] || ''); (groups.get(k) || groups.set(k, []).get(k)).push(e) }
+  const dups = []
+  for (const list of groups.values()) {
+    if (list.length < 2) continue
+    list.sort((a, b) => a.startMs - b.startMs)
+    const close = list.filter((e, i) => i > 0 && e.startMs - list[i - 1].startMs < 2000)
+    if (close.length) dups.push(...list)
+  }
+  add('info', 'Performance', 'The same API call was made more than once within two seconds', 'Identical GET requests (same URL and query) sent close together. Often two components that each fetch the same data, or a retry that was not needed.', 'Share the result (a cache, a request de-duplication layer, or lifting the fetch up), and set Cache-Control on responses that can be reused.', dups)
+
+  // ---- Caching: validators ------------------------------------------------------------------------
+  const noValidator = where((e) => e.method === 'GET' && e.status === 200 && e.contentSize > 20 * 1024 && ['js', 'css', 'font', 'img'].includes(e.type) && !e.resHeaders.etag && !e.resHeaders['last-modified'] && !/immutable|max-age=\d{6,}/.test(e.resHeaders['cache-control'] || ''))
+  add('info', 'Caching', 'Large static files with no ETag or Last-Modified and no long cache lifetime', 'Without a validator the browser cannot ask "has it changed?" and re-downloads the whole file; without a long lifetime it must ask every time.', 'Add an ETag (or Last-Modified), or give fingerprinted files Cache-Control: public, max-age=31536000, immutable.', noValidator)
+  const varyBad = where((e) => /(^|,\s*)(\*|cookie)(\s*,|$)/i.test(e.resHeaders.vary || '') && /public|max-age/i.test(e.resHeaders['cache-control'] || '') && ['js', 'css', 'img', 'font'].includes(e.type))
+  add('info', 'Caching', 'Static files with Vary: Cookie or Vary: *', 'Vary: Cookie makes a shared cache keep a separate copy for every user (or none at all), and Vary: * makes the response uncacheable.', 'Remove Vary: Cookie from static assets, and serve them from a cookieless host.', varyBad)
+
+  // ---- Payload shape ------------------------------------------------------------------------------
+  const bigJson = where((e) => /json/.test(e.mime) && e.contentSize > 500 * 1024)
+  add('warning', 'Payload', 'Very large JSON responses (> 500 KB)', 'Large JSON takes time to download, parse and hold in memory, and it blocks the main thread while parsing.', 'Paginate, return only the fields the page uses, or compress and stream the data.', bigJson)
+  const bigRequests = where((e) => e.method !== 'GET' && e.postData && e.postData.text && e.postData.text.length > 500 * 1024)
+  add('info', 'Payload', 'Large request bodies (> 500 KB)', 'Uploads this large are slow on mobile connections and may hit a server or proxy limit (413).', 'Compress or chunk the upload.', bigRequests)
+
+  // ---- Auth headers ----------------------------------------------------------------------------------
+  const authTo401 = where((e) => e.status === 401 && e.reqHeaders.authorization)
+  add('warning', 'Security', 'Credentials were sent and rejected (401 with an Authorization header)', 'The request carried a token or credentials and the server still answered 401. The token may be expired, for another API, malformed, or the scheme (Bearer / Basic) is wrong.', 'Decode the token in the Tokens tool: check exp, aud and scope. Check the header is exactly "Authorization: Bearer <token>".', authTo401)
+  const noAuth401 = where((e) => e.status === 401 && !e.reqHeaders.authorization && !e.reqHeaders.cookie)
+  add('info', 'Security', '401 responses to requests that sent no credentials', 'The request carried neither an Authorization header nor cookies. Expected when a sign-in starts; a bug when it happens after sign-in.', 'If this follows a sign-in, check the token is being attached (and that a cross-origin request has credentials enabled).', noAuth401)
+  const wrongScheme = where((e) => e.reqHeaders.authorization && !/^(bearer|basic|digest|negotiate|ntlm|dpop|aws4-hmac-sha256|hawk|mac|token|apikey)\s/i.test(e.reqHeaders.authorization.trim()))
+  add('warning', 'Security', 'An Authorization header with an unrecognised scheme', 'The value does not start with a known scheme such as "Bearer ". A bare token (no scheme) is a very common mistake.', 'Send "Authorization: Bearer <token>".', wrongScheme)
+  const credsInUrl = where((e) => /\/\/[^/\s:@]+:[^/\s@]+@/.test(e.url))
+  add('critical', 'Security', 'Credentials in the URL (user:password@host)', 'Credentials in a URL end up in history, logs and Referer headers, and browsers have stopped honouring them for sub-requests.', 'Use an Authorization header.', credsInUrl)
+
+  // ---- CORS ---------------------------------------------------------------------------------------------
+  const credsWildcard = where((e) => e.resHeaders['access-control-allow-origin'] === '*' && /true/i.test(e.resHeaders['access-control-allow-credentials'] || ''))
+  add('critical', 'Security', 'CORS: Access-Control-Allow-Origin: * together with Allow-Credentials: true', 'Browsers refuse this combination for credentialed requests, and a server that reflects any origin with credentials lets any website read the user\'s data.', 'Answer with the specific allowed origin (and Vary: Origin) when credentials are allowed.', credsWildcard)
+  const corsNoVary = where((e) => e.resHeaders['access-control-allow-origin'] && e.resHeaders['access-control-allow-origin'] !== '*' && !/origin/i.test(e.resHeaders.vary || '') && /public|s-maxage|max-age=\d+/i.test(e.resHeaders['cache-control'] || '') && !/private|no-store|no-cache/i.test(e.resHeaders['cache-control'] || ''))
+  add('info', 'Caching', 'CORS responses that vary by origin but are cacheable without Vary: Origin', 'A cache can serve the response for one origin to another, which then fails the CORS check, intermittently.', 'Add Vary: Origin.', corsNoVary)
+  const preflightLong = where((e) => e.method === 'OPTIONS' && e.status >= 200 && e.status < 300 && !e.resHeaders['access-control-max-age'])
+  add('info', 'Performance', 'CORS preflight responses without Access-Control-Max-Age', 'Browsers repeat the OPTIONS request before many calls when the answer is not cached.', 'Add Access-Control-Max-Age (for example 600).', preflightLong)
+
   const order = { critical: 0, warning: 1, info: 2 }
   findings.sort((a, b) => order[a.severity] - order[b.severity] || b.ids.length - a.ids.length)
   return findings
