@@ -387,3 +387,9 @@ a.file-b { text-decoration: none; }
 .tools-grid.home .tool-card { padding: 16px; gap: 8px; } .tools-grid.home .tool-card > span:not(.tool-ic) { font-size: 12.5px; line-height: 1.5; }
 .tools-grid.home .tool-card small { margin-top: auto; padding-top: 6px; line-height: 1.4; display: block; }
 @media (max-width: 1280px) and (min-width: 1181px) { .tools-grid.home { gap: 10px; } .tools-grid.home .tool-card { padding: 13px; } }
+
+/* Explain this */
+.explain-btn { margin-top: 6px; background: none; border: 0; padding: 2px 0; color: var(--accent, #6aa5ff); font: inherit; font-size: 12.5px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.explain-btn:hover { text-decoration: underline; }
+.explain { margin-top: 8px; padding: 10px 12px; border-radius: 8px; background: var(--panel-2, rgba(127,127,127,.1)); border-left: 3px solid var(--accent, #6aa5ff); }
+.explain p { margin: 0 0 6px; font-size: 13px; line-height: 1.5; } .explain p:last-child { margin: 0; }

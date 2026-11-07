@@ -1,7 +1,7 @@
 import { NavLink, Navigate, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowRight, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
-import { CAPTURE, GUIDE_CHECKED } from '../guide'
+import { faArrowRight, faMagnifyingGlass, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
+import { CAPTURE, GUIDE_CHECKED, SYMPTOMS } from '../guide'
 import { GUIDES, guideById } from '../guides'
 import { resolveRef } from '../guideRefs'
 import { SECTIONS } from '../nav'
@@ -15,7 +15,7 @@ export function GuideTopics() {
     <div className="stack">
       <Card title="Pick what you are troubleshooting">
         <p className="lede">Each guide explains how the thing works, what to capture, a walkthrough in the matching tool, the error messages people actually see and what causes them.</p>
-        <div className="guide-index">
+        <div className="guide-index tools-grid home">
           {GUIDES.map((g) => {
             const s = toolOf(g)
             return (
@@ -27,6 +27,12 @@ export function GuideTopics() {
               </NavLink>
             )
           })}
+          <NavLink to="/guide/help" className="tool-card" data-guide="help">
+            <span className="tool-ic"><FontAwesomeIcon icon={faMagnifyingGlass} /></span>
+            <b>By symptom, privacy and limits</b>
+            <span>Start from what you are seeing, then read what the tools can and cannot do.</span>
+            <small>{SYMPTOMS.length} symptoms · what is kept private</small>
+          </NavLink>
         </div>
       </Card>
     </div>
