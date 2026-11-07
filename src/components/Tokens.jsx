@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faClipboard, faCopy, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
+import { faClipboard, faCopy, faShieldHalved, faSignature } from '@fortawesome/free-solid-svg-icons'
 import { checkJwt, decodeJwt, describeClaims, findTokens } from '../auth/jwt'
+import { describeKeys, verifyJwt } from '../auth/verify'
 import { copyText } from '../utils'
 import { CheckList, KV } from './authui'
 import { toneOf, worstOf, wordOf } from './severity'
@@ -70,6 +71,39 @@ function Expectations({ expect, setExpect }) {
   )
 }
 
+
+const VERDICT_TONE = { valid: 'good', invalid: 'crit', refused: 'crit', error: 'warn', 'no-key': 'info', unsupported: 'info' }
+
+/** Paste a key, get a verdict on a token's signature. The key never leaves the browser. */
+export function VerifyCard({ dec }) {
+  const [key, setKey] = useState('')
+  const [result, setResult] = useState(null)
+  const keys = useMemo(() => describeKeys(key), [key])
+  useEffect(() => {
+    let live = true
+    if (!key.trim() || !dec || dec.error) { Promise.resolve().then(() => { if (live) setResult(null) }); return () => { live = false } }
+    verifyJwt(dec, key).then((r) => { if (live) setResult(r) })
+    return () => { live = false }
+  }, [dec, key])
+  return (
+    <Card title="Verify the signature" aside={<FontAwesomeIcon icon={faSignature} className="dim" />}>
+      <p className="lede">Paste the issuer&rsquo;s <b>public key</b>, a <b>certificate</b>, a <b>JWK</b> or a whole <b>JWKS</b> (what <span className="mono">jwks_uri</span> returns). For HS256 tokens, paste the shared secret. Checked in your browser; nothing is sent.</p>
+      <textarea className="saml-paste" rows={4} value={key} spellCheck={false} onChange={(e) => setKey(e.target.value)} placeholder={'-----BEGIN PUBLIC KEY-----\n…\n-----END PUBLIC KEY-----\n\nor  {"keys":[{"kty":"RSA","kid":"…","n":"…","e":"AQAB"}]}'} aria-label="Key to verify with" />
+      {keys.length > 0 && (
+        <table className="tbl saml-attrs"><thead><tr><th>Key id</th><th>Type</th><th>Algorithm</th><th>Size</th></tr></thead>
+          <tbody>{keys.map((k, i) => <tr key={i} className={dec && !dec.error && dec.header.kid === k.kid ? 'row-hit' : ''}><td className="mono">{k.kid || '(none)'}{dec && !dec.error && dec.header.kid === k.kid && <small className="dim"> · this token</small>}</td><td>{k.kty}</td><td>{k.alg || '—'}</td><td>{k.size}{k.private && <span className="tone-crit"> · contains a PRIVATE part</span>}</td></tr>)}</tbody></table>
+      )}
+      {result && result.status !== 'no-key' && (
+        <div className={`verdict verdict-${VERDICT_TONE[result.status]}`} role="status">
+          <b>{result.title}</b>
+          {result.detail && <p>{result.detail}</p>}
+        </div>
+      )}
+      {result && result.status === 'no-key' && result.title !== 'Paste a key to verify' && <Notice tone="warn">{result.title}. {result.detail}</Notice>}
+    </Card>
+  )
+}
+
 const NO_EXPECT = { issuer: '', audience: '', scope: '' }
 
 /** /tokens/inspect: paste a token. */
@@ -92,9 +126,10 @@ export function TokenInspect({ toast: notify }) {
         </div>
       </Card>
       <Expectations expect={expect} setExpect={setExpect} />
+      {dec && !dec.error && <VerifyCard dec={dec} />}
       {dec && !dec.error && <Card title="Token"><TokenDetail dec={dec} now={loadedAt} expect={expect} notify={notify} basis={`Dates are checked against the time this page was opened (${new Date(loadedAt).toISOString().replace('T', ' ').replace(/\.\d+Z$/, 'Z')}).`} /></Card>}
       {dec && dec.error && <Card title="Token"><TokenDetail dec={dec} now={loadedAt} expect={expect} notify={notify} /></Card>}
-      <p className="hint">This reads the token; it cannot prove the signature is valid, because that needs the issuer&rsquo;s public key. A token that decodes is not a token that is trusted: anyone can write one.</p>
+      <p className="hint">Decoding a token proves nothing: anyone can write one. Paste the issuer&rsquo;s key above to check the signature, and check the issuer, audience and expiry too.</p>
     </div>
   )
 }
@@ -144,6 +179,7 @@ export function TokensInCapture({ har, toast: notify }) {
                       {t.uses.map((u, i) => <li key={i}><span className="mono dim">{u.method}</span> <span className="ellipsis">{u.host}{u.path}</span> <span className="dim">· {u.where}</span></li>)}
                     </ul>
                   </div>
+                  {isOpen && dec && !dec.error && <VerifyCard dec={dec} />}
                   {isOpen && dec && <TokenDetail dec={dec} now={now} expect={expect} notify={notify} basis={atCapture && first ? `Dates are checked as of when the token was first used in the capture (${new Date(first.at).toISOString().replace('T', ' ').replace(/\.\d+Z$/, 'Z')}).` : 'Dates are checked against now.'} />}
                   {t.kind === 'opaque' && <p className="hint">An opaque token is a reference only the issuer can look up. To inspect it, use the issuer&rsquo;s introspection endpoint.</p>}
                 </div>

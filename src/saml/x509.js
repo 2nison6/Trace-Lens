@@ -115,6 +115,7 @@ export function parseCertificate(base64) {
       serial,
       signatureAlgorithm: SIG_OIDS[sigOid] || sigOid,
       selfSigned: same,
+      spki: der.subarray(subject.end, spki.end), // the whole SubjectPublicKeyInfo, ready for crypto.subtle.importKey('spki', ...)
       key: keyInfo(der, spki),
     }
   } catch (e) {
