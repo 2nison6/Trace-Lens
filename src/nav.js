@@ -1,6 +1,7 @@
 import {
   faArrowUpFromBracket, faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCertificate, faCompass, faCookieBite, faFileCode, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
+import { faWindows } from '@fortawesome/free-brands-svg-icons'
 
 // TraceLens is a set of troubleshooting tools that share one place to drop captures. Each SECTION is a tool with its own menu
 // of pages. One list drives the section switcher, the sidebar menu, the tab bar and the number shortcuts.
@@ -86,6 +87,20 @@ export const SECTIONS = [
     pages: [
       { to: '/certs', label: 'Start', icon: faCertificate, start: true },
       { to: '/certs/inspect', label: 'Inspect', icon: faMagnifyingGlass },
+    ],
+  },
+  {
+    id: 'windows',
+    accepts: 'a HAR file',
+    landing: '/windows/exchange',
+    label: 'Windows sign-in',
+    title: 'Windows integrated authentication (Kerberos / NTLM)',
+    blurb: 'Follow a Negotiate or NTLM handshake in a HAR, see which stage failed, and decode tokens and Kerberos error codes.',
+    icon: faWindows,
+    pages: [
+      { to: '/windows', label: 'Upload', addLabel: 'Add files', icon: faArrowUpFromBracket, start: true },
+      { to: '/windows/exchange', label: 'Exchange', icon: faRoute },
+      { to: '/windows/lookup', label: 'Token & error lookup', icon: faMagnifyingGlass },
     ],
   },
   {

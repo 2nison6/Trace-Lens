@@ -345,3 +345,5 @@ a.file-b { text-decoration: none; }
 
 .tokreqs li { flex-wrap: wrap; }
 .tokreq-checks { flex-basis: 100%; margin: 4px 0 10px; }
+
+.saml-code { width: 120px; padding: 8px 10px; background: var(--s2); color: var(--t1); border: 1px solid var(--line-2); border-radius: var(--r-s); font-family: var(--mono); }

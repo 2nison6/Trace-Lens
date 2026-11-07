@@ -73,3 +73,9 @@
   X-Robots-Tag: noindex
 /certs/inspect
   X-Robots-Tag: noindex
+/windows
+  X-Robots-Tag: noindex
+/windows/exchange
+  X-Robots-Tag: noindex
+/windows/lookup
+  X-Robots-Tag: noindex

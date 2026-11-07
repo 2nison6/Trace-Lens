@@ -52,3 +52,8 @@
 # Certificate inspector
 /certs          /index.html   200
 /certs/inspect  /index.html   200
+
+# Windows integrated authentication
+/windows           /index.html   200
+/windows/exchange  /index.html   200
+/windows/lookup    /index.html   200
