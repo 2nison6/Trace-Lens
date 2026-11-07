@@ -45,3 +45,6 @@
 
 # SAML metadata checker
 /saml/metadata  /index.html   200
+
+# OAuth discovery and keys
+/oauth/discovery  /index.html   200

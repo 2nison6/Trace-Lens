@@ -233,3 +233,67 @@ export function flowSteps(fl) {
   for (const r of fl.others) steps.push({ n: steps.length + 1, name: 'Token refresh', detail: `${r.entry.host}${r.entry.path}`, status: r.entry.status, at: r.at, entryId: r.entry.id })
   return steps
 }
+
+// ---------------------------------------------------------------------------------------------------------------- token requests
+// Every request to a token endpoint in a capture, whatever started it, checked on its own and against the others. This is where
+// refresh-token problems show up (a token used twice, a rotated token not adopted, repeated refreshes that keep failing), and it
+// is the only place the non-browser grants appear (client credentials, device flow, password).
+
+const tokenFail = (r) => r.entry.status >= 400 || (r.body && r.body.error)
+
+/** Returns { requests: [{ ...r, grant, checks }], checks: [cross-request checks] }. */
+export function analyzeTokenRequests(har) {
+  const list = (har.raw && har.raw.log && har.raw.log.entries) || []
+  const at = (e) => { const t = Date.parse((list[e.rawIndex] || {}).startedDateTime); return Number.isFinite(t) ? t : null }
+  const reqs = har.entries
+    .filter((e) => e.method === 'POST' && (TOKEN_PATH.test(e.path) || (formOf(e).grant_type && (formOf(e).code || formOf(e).refresh_token || formOf(e).client_id || formOf(e).device_code || formOf(e).username))))
+    .map((e) => ({ entry: e, form: formOf(e), body: bodyJson(e), at: at(e), grant: formOf(e).grant_type || '(none)' }))
+  const cross = []
+  for (const r of reqs) {
+    r.checks = []
+    const g = r.grant
+    const ok = !tokenFail(r)
+    const err = (r.body && r.body.error) || ''
+    if (g === 'password') r.checks.push(f('warning', 'Uses the password grant (ROPC)', 'The app collects the user\'s password itself. The OAuth 2.0 Security Best Current Practice says this grant MUST NOT be used; it also cannot do multi-factor sign-in.', 'Use the authorization code flow with PKCE.'))
+    if (g === 'client_credentials') {
+      r.checks.push({ severity: 'info', title: 'Client credentials grant (app-only token)', detail: 'The token is for the application itself, not a user. It has no sub of a person and no refresh token, by design.' })
+      if (!r.form.scope && !r.form.resource && !(r.entry.reqHeaders.authorization || '').match(/^basic/i) && !r.form.client_secret && !r.form.client_assertion) r.checks.push(f('warning', 'No client authentication found', 'A client credentials request must authenticate the client (a secret, a certificate assertion or Basic).', ''))
+      if (ok && r.body && r.body.refresh_token) r.checks.push(f('info', 'A refresh token came back with a client credentials grant', 'Unusual: this grant does not normally issue one.', ''))
+    }
+    if (g === 'urn:ietf:params:oauth:grant-type:device_code') {
+      if (err === 'authorization_pending') r.checks.push({ severity: 'info', title: 'Device flow: waiting for the user', detail: 'Normal. The app polls until the user approves on the other device.' })
+      else if (err === 'slow_down') r.checks.push(f('warning', 'Device flow: polling too fast', 'The server asked the device to slow down.', 'Increase the polling interval by 5 seconds each time.'))
+      else if (err === 'expired_token') r.checks.push(f('critical', 'Device flow: the code expired before the user approved', '', 'Start again and approve sooner.'))
+      else if (err === 'access_denied') r.checks.push(f('critical', 'Device flow: the user denied the request', '', ''))
+    }
+    if (g === 'refresh_token') {
+      if (!ok) {
+        const known = explainError(err, (r.body && r.body.error_description) || '')
+        r.checks.push(f('critical', `The refresh failed: HTTP ${r.entry.status}${err ? ` ${err}` : ''}`, `${r.body && r.body.error_description ? `"${r.body.error_description}". ` : ''}${known ? `${known.title}: ${known.meaning}` : ''}`, known ? known.fix[0] : 'The user has to sign in again.'))
+      } else if (r.body && !r.body.refresh_token) {
+        r.checks.push({ severity: 'info', title: 'No new refresh token returned', detail: 'The old one stays valid (no rotation).' })
+      }
+    }
+    if (g !== 'refresh_token' && !ok) {
+      const known = explainError(err, (r.body && r.body.error_description) || '')
+      if (g !== 'urn:ietf:params:oauth:grant-type:device_code' || (err !== 'authorization_pending' && err !== 'slow_down')) r.checks.push(f('critical', `Token request failed: HTTP ${r.entry.status}${err ? ` ${err}` : ''}`, `${r.body && r.body.error_description ? `"${r.body.error_description}". ` : ''}${known ? `${known.title}: ${known.meaning}` : ''}`, known ? known.fix[0] : ''))
+    }
+    if (!r.entry.isHttps && !/^(localhost|127\.0\.0\.1)/.test(r.entry.host)) r.checks.push(f('critical', 'The token request is not over HTTPS', '', 'Use HTTPS.'))
+  }
+
+  // refresh tokens across requests
+  const byToken = new Map()
+  for (const r of reqs) if (r.grant === 'refresh_token' && r.form.refresh_token) { const a = byToken.get(r.form.refresh_token) || []; a.push(r); byToken.set(r.form.refresh_token, a) }
+  for (const [tok, uses] of byToken) {
+    const okUses = uses.filter((u) => !tokenFail(u))
+    const short = `${tok.slice(0, 8)}…${tok.slice(-4)}`
+    if (okUses.length > 1 && okUses.some((u) => u.body && u.body.refresh_token && u.body.refresh_token !== tok)) {
+      cross.push(f('critical', `A refresh token was used successfully ${okUses.length} times, and the server rotates them`, `The token ${short} worked more than once, but each response issued a different one. With rotation a token is valid once; reuse is what makes servers revoke the whole token family. Two tabs, a retry or a lost response are the usual causes.`, 'Make sure only one place refreshes at a time (a lock across tabs), and always store the new refresh token from the latest response.'))
+    }
+    const failedAfterOk = uses.some((u, i) => tokenFail(u) && uses.slice(0, i).some((p) => !tokenFail(p)))
+    if (failedAfterOk) cross.push(f('critical', `A refresh token stopped working after it had worked (${short})`, 'It succeeded earlier and then failed. With rotation, this is what reuse detection looks like: the second use is refused (invalid_grant) and the whole chain may be revoked.', 'Do not refresh from more than one place; keep the newest refresh token only.'))
+  }
+  const refreshFails = reqs.filter((r) => r.grant === 'refresh_token' && tokenFail(r))
+  if (refreshFails.length >= 3) cross.push(f('warning', `${refreshFails.length} refresh attempts failed`, 'Repeated failures usually mean the app keeps retrying with a dead token instead of sending the user to sign in.', 'After invalid_grant on a refresh, stop retrying and start a new sign-in.'))
+  return { requests: reqs, checks: cross }
+}

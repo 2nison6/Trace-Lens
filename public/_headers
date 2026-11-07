@@ -67,3 +67,5 @@
   X-Robots-Tag: noindex
 /saml/metadata
   X-Robots-Tag: noindex
+/oauth/discovery
+  X-Robots-Tag: noindex

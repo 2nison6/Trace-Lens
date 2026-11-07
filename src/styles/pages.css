@@ -342,3 +342,6 @@ a.file-b { text-decoration: none; }
 .verdict p { margin: 4px 0 0; color: var(--t2); font-size: 13px; max-width: 80ch; }
 .verdict-good { border-left-color: var(--good-mark); } .verdict-crit { border-left-color: var(--crit-mark); } .verdict-warn { border-left-color: var(--warn); } .verdict-info { border-left-color: var(--blue-text); }
 .row-hit td { background: var(--blue-tint); }
+
+.tokreqs li { flex-wrap: wrap; }
+.tokreq-checks { flex-basis: 100%; margin: 4px 0 10px; }

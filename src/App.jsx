@@ -32,6 +32,7 @@ import SamlPrompt from './components/SamlPrompt'
 import SamlMetadata from './components/SamlMetadata'
 import { TokenInspect, TokensInCapture } from './components/Tokens'
 import { OAuthErrors, OAuthFlow } from './components/OAuth'
+import OAuthDiscovery from './components/OAuthDiscovery'
 import { CookiesAll, CookiesProblems } from './components/Cookies'
 import Footer from './components/Footer'
 import LoadOverlay from './components/LoadOverlay'
@@ -382,6 +383,7 @@ export default function App() {
                     <Route path="/saml/messages" element={<Page><Saml har={har} traces={traces} pasted={pastedSaml} setPasted={setPastedSaml} onFiles={onFiles} toast={toast} key={active} /></Page>} />
                     <Route path="/saml/metadata" element={<Page><SamlMetadata har={har} traces={traces} pasted={pastedSaml} key={active} /></Page>} />
                     <Route path="/oauth/flow" element={need(<OAuthFlow har={har} key={active} />)} />
+                    <Route path="/oauth/discovery" element={<Page><OAuthDiscovery har={har} key={active} /></Page>} />
                     <Route path="/oauth/errors" element={<Page><OAuthErrors /></Page>} />
                     <Route path="/cookies/all" element={need(<CookiesAll har={har} key={active} />)} />
                     <Route path="/cookies/problems" element={need(<CookiesProblems har={har} key={active} />)} />

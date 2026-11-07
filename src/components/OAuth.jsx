@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight, faMagnifyingGlass, faRoute } from '@fortawesome/free-solid-svg-icons'
-import { analyzeOAuth, flowSteps } from '../auth/oauth'
+import { analyzeOAuth, analyzeTokenRequests, flowSteps } from '../auth/oauth'
 import { EXAMPLES, lookupError } from '../auth/errors'
 import { fmtMs } from '../utils'
 import { CheckList, KV } from './authui'
@@ -81,6 +81,7 @@ function FlowCard({ fl, open, setOpen }) {
 /** /oauth/flow */
 export function OAuthFlow({ har }) {
   const [result, setResult] = useState(null) // null while scanning
+  const tokenReqs = useMemo(() => (har ? analyzeTokenRequests(har) : null), [har])
   const [open, setOpen] = useState('')
   useEffect(() => {
     let live = true
@@ -97,10 +98,17 @@ export function OAuthFlow({ har }) {
         {result && !flows.length && <p className="dim">A sign-in starts with a request to an authorization endpoint with <span className="mono">response_type</span> and <span className="mono">client_id</span> in the URL. None was found. If the app signs in with SAML, use the SAML tool instead.</p>}
       </section>
       <div className="saml-list">{flows.map((fl) => <FlowCard key={fl.id} fl={fl} open={open} setOpen={setOpen} />)}</div>
-      {result && result.tokenOnly.length > 0 && (
-        <Card title="Token requests without a sign-in in this capture">
-          <p className="hint" style={{ marginTop: 0 }}>These were not part of a sign-in that starts in this capture (for example, a token refresh).</p>
-          <ul className="saml-uses">{result.tokenOnly.map((t) => <li key={t.entry.id}><span className="mono dim">{t.form.grant_type || 'token'}</span> <span className="ellipsis">{t.entry.host}{t.entry.path}</span> <span className="dim">· HTTP {t.entry.status}</span></li>)}</ul>
+      {tokenReqs && tokenReqs.requests.length > 0 && (
+        <Card title={`Token requests · ${tokenReqs.requests.length}`} aside={<span className="t-cap">every call to a token endpoint, including refreshes</span>}>
+          {tokenReqs.checks.length > 0 && <div className="saml-sec"><h4>Across requests</h4><CheckList checks={tokenReqs.checks} /></div>}
+          <ul className="saml-uses tokreqs">
+            {tokenReqs.requests.map((r) => (
+              <li key={r.entry.id}>
+                <span className="mono dim">{r.grant.replace('urn:ietf:params:oauth:grant-type:', '')}</span> <span className="ellipsis">{r.entry.host}{r.entry.path}</span> <span className="dim">· <StatusCode status={r.entry.status} /></span>
+                {r.checks.length > 0 && <div className="tokreq-checks"><CheckList checks={r.checks} /></div>}
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
       {result && flows.length > 0 && <p className="hint">The browser only shows its own side. If the app&rsquo;s server makes the token request, it is not in a browser capture, so check the server&rsquo;s logs for that step.</p>}
