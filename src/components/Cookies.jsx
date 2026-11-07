@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCookieBite } from '@fortawesome/free-solid-svg-icons'
-import { analyzeCookies } from '../auth/cookies'
+import { analyzeCookies, cookieBudget, sessionLifetimes } from '../auth/cookies'
+import { PROFILES, PROFILES_CHECKED, thirdPartyDependencies } from '../auth/browsers'
 import { CheckList } from './authui'
 import { toneOf, worstOf, wordOf } from './severity'
 import { Card, EmptyState, Notice, Segmented } from './ui'
@@ -118,6 +119,70 @@ export function CookiesProblems({ har }) {
         </Card>
       )}
       {!probs.length && result.stats.hasAny && !result.stats.suppressedMissed && <Card><p className="dim" style={{ margin: 0 }}>Every cookie that was set was accepted by the rules checked here, and every one that should have been sent was sent.</p></Card>}
+    </div>
+  )
+}
+
+const OUT_TONE = { works: 'good', partitioned: 'warn', blocked: 'crit' }
+const OUT_TEXT = { works: 'Works', partitioned: 'Partitioned', blocked: 'Blocked' }
+
+/** /cookies/browsers: how the same capture behaves in each browser's third-party cookie policy. */
+export function CookiesBrowsers({ har }) {
+  const result = useMemo(() => (har ? analyzeCookies(har) : null), [har])
+  const deps = useMemo(() => (result ? thirdPartyDependencies(result) : []), [result])
+  if (!har) return <EmptyState icon={faCookieBite} title="No capture loaded">Open a HAR file to see how its cookies behave in each browser.</EmptyState>
+  return (
+    <div className="stack">
+      <section className="saml-capture"><h2 className="t-title saml-h">{deps.length ? `${deps.length} cookie${deps.length === 1 ? '' : 's'} depend on being a third party in ${har.fileName}` : `No third-party cookies in ${har.fileName}`}</h2>
+        {!deps.length && <p className="dim">Every cookie in this capture was set by the site the user was on, so the browsers&rsquo; third-party rules do not apply. (A cookie set inside an embedded frame or by a cross-site request would show here.)</p>}
+      </section>
+      {deps.map((d) => (
+        <Card key={`${d.name}-${d.domain}`} title={d.name} aside={<span className="t-cap">{d.domain}</span>}>
+          {d.breaksIn.length > 0 && <Notice tone="crit">This cookie stops working in: {d.breaksIn.join(', ')}. Anything that relies on it (a sign-in, a session, a consent choice) fails there.</Notice>}
+          <table className="tbl saml-attrs"><thead><tr><th>Browser</th><th>Result</th><th>Why</th></tr></thead>
+            <tbody>{d.outcomes.map((o) => <tr key={o.id}><td>{o.label}</td><td><span className={`sev tone-${OUT_TONE[o.outcome]}`}>{OUT_TEXT[o.outcome]}</span></td><td>{o.detail}</td></tr>)}</tbody></table>
+        </Card>
+      ))}
+      <Card title="The rules used" aside={<span className="t-cap">checked {PROFILES_CHECKED}</span>}>
+        <ul className="bullets">{PROFILES.map((p) => <li key={p.id}><b>{p.label}.</b> {p.note}</li>)}</ul>
+        <p className="hint">Browser policy changes often, and users and companies change the defaults. Treat this as a prompt to test in the browsers that matter to you, not as a guarantee.</p>
+      </Card>
+    </div>
+  )
+}
+
+const fmtLife = (ms) => { const s = Math.round(ms / 1000); return s < 120 ? `${s} seconds` : s < 7200 ? `${Math.round(s / 60)} minutes` : s < 172800 ? `${(s / 3600).toFixed(1)} hours` : `${Math.round(s / 86400)} days` }
+
+/** /cookies/size: the Cookie header per host, which cookies fill it, and the session cookies' lifetimes. */
+export function CookiesSize({ har }) {
+  const budget = useMemo(() => (har ? cookieBudget(har) : []), [har])
+  const sessions = useMemo(() => (har ? sessionLifetimes(analyzeCookies(har)) : []), [har])
+  if (!har) return <EmptyState icon={faCookieBite} title="No capture loaded">Open a HAR file to see how much cookie data each request carries.</EmptyState>
+  return (
+    <div className="stack">
+      <section className="saml-capture"><h2 className="t-title saml-h">{budget.length ? `Cookie headers sent to ${budget.length} host${budget.length === 1 ? '' : 's'}` : `No Cookie headers in ${har.fileName}`}</h2></section>
+      {budget.map((b) => (
+        <Card key={b.host} title={b.host} aside={<span className={`sev tone-${b.status === 'ok' ? 'good' : toneOf(b.status)}`}>{(b.maxBytes / 1024).toFixed(1)} KB · {b.count} cookies</span>}>
+          {b.status === 'critical' && <Notice tone="crit">{b.rejectedWith.length ? `The server answered ${b.rejectedWith.join(' / ')} (header too large). ` : ''}The Cookie header is {(b.maxBytes / 1024).toFixed(1)} KB. Most servers refuse headers over about 8 KB, with 400, 413 or 431 or just by closing the connection. Remove cookies that are no longer needed, shrink the large ones, and scope the rest to the paths that need them.</Notice>}
+          {b.status === 'warning' && <Notice tone="warn">{(b.maxBytes / 1024).toFixed(1)} KB is getting large. Some servers and proxies limit headers to 4 KB.</Notice>}
+          <table className="tbl saml-attrs"><thead><tr><th>Cookie</th><th>Size</th><th>Share</th></tr></thead>
+            <tbody>{b.cookies.slice(0, 10).map((c) => <tr key={c.name}><td className="mono">{c.name}</td><td>{c.bytes} B</td><td><span className="bar-inline"><i style={{ width: `${Math.max(2, Math.round(c.share * 100))}%` }} /></span> {Math.round(c.share * 100)}%</td></tr>)}</tbody></table>
+        </Card>
+      ))}
+      <Card title="Session cookies and how long they last">
+        {!sessions.length && <p className="dim" style={{ margin: 0 }}>No session-looking cookie was set in this capture.</p>}
+        {sessions.map((s) => <KVRow key={`${s.name}${s.domain}`} s={s} />)}
+        <p className="hint">&ldquo;Sliding&rdquo; means the server sets the cookie again as the user works, so it expires after a period of inactivity. &ldquo;Absolute&rdquo; means it expires at a fixed time after sign-in, however active the user is.</p>
+      </Card>
+    </div>
+  )
+}
+
+function KVRow({ s }) {
+  return (
+    <div className="saml-sec">
+      <h4><span className="mono">{s.name}</span> <span className="dim">· {s.domain}</span></h4>
+      <p style={{ margin: 0 }}>{s.kind === 'session' ? 'Lasts until the browser is closed.' : `Lasts ${fmtLife(s.lifetimeMs)}.`} {s.note}</p>
     </div>
   )
 }

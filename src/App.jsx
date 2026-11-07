@@ -35,7 +35,7 @@ import { WindowsExchange, WindowsLookup } from './components/WindowsAuth'
 import { TokenCompare, TokenInspect, TokenTimeline, TokensInCapture } from './components/Tokens'
 import { OAuthErrors, OAuthFlow } from './components/OAuth'
 import OAuthDiscovery from './components/OAuthDiscovery'
-import { CookiesAll, CookiesProblems } from './components/Cookies'
+import { CookiesAll, CookiesBrowsers, CookiesProblems, CookiesSize } from './components/Cookies'
 import Footer from './components/Footer'
 import LoadOverlay from './components/LoadOverlay'
 import { Kbd, Notice, Segmented } from './components/ui'
@@ -391,6 +391,8 @@ export default function App() {
                     <Route path="/windows/exchange" element={need(<WindowsExchange har={har} key={active} />)} />
                     <Route path="/windows/lookup" element={<Page><WindowsLookup /></Page>} />
                     <Route path="/cookies/all" element={need(<CookiesAll har={har} key={active} />)} />
+                    <Route path="/cookies/browsers" element={need(<CookiesBrowsers har={har} key={active} />)} />
+                    <Route path="/cookies/size" element={need(<CookiesSize har={har} key={active} />)} />
                     <Route path="/cookies/problems" element={need(<CookiesProblems har={har} key={active} />)} />
                     <Route path="/tokens/inspect" element={<Page><TokenInspect toast={toast} /></Page>} />
                     <Route path="/tokens/compare" element={<Page><TokenCompare /></Page>} />

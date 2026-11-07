@@ -61,3 +61,7 @@
 # Token compare and timeline
 /tokens/compare   /index.html   200
 /tokens/timeline  /index.html   200
+
+# Cookie browsers and size
+/cookies/browsers  /index.html   200
+/cookies/size      /index.html   200

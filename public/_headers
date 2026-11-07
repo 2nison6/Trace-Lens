@@ -83,3 +83,7 @@
   X-Robots-Tag: noindex
 /tokens/timeline
   X-Robots-Tag: noindex
+/cookies/browsers
+  X-Robots-Tag: noindex
+/cookies/size
+  X-Robots-Tag: noindex

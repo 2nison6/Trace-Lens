@@ -219,7 +219,7 @@ export function analyzeCookies(har) {
       const path = c.path && c.path.startsWith('/') ? c.path : defaultPath(e.path)
       const r = rec(c.name, domain, hostOnly, path, c)
       r.attrs = c
-      r.sets.push({ entryId: e.id, at: now, host, accepted: j.ok, deletes: j.deletes, raw: header })
+      r.sets.push({ entryId: e.id, at: now, host, accepted: j.ok, deletes: j.deletes, raw: header, thirdParty: crossSite && !nav })
       if (!j.ok) {
         r.state = r.state === 'earlier' ? 'earlier' : 'rejected'
         for (const reason of j.reasons) report(r, { ...reason, severity: SESSIONY.test(c.name) ? 'critical' : 'warning' }, e)
@@ -263,3 +263,47 @@ export function analyzeCookies(har) {
   return { cookies, problems: grouped, stats: { ...stats, topSite, captured: entries.length, suppressedMissed: suppressMissed && anySet > 0 } }
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------- size budget
+/** For each host, the biggest Cookie header seen and which cookies make it up. Returns [{ host, maxBytes, requests, cookies: [{ name, bytes, share }], status }]. */
+export function cookieBudget(har) {
+  const byHost = new Map()
+  for (const e of har.entries) {
+    const header = e.reqHeaders.cookie
+    if (!header) continue
+    const row = byHost.get(e.host) || { host: e.host, maxBytes: 0, requests: 0, widest: null, statuses: new Set() }
+    row.requests += 1
+    if (header.length > row.maxBytes) { row.maxBytes = header.length; row.widest = e; row.header = header }
+    if (e.status === 400 || e.status === 431 || e.status === 413) row.statuses.add(e.status)
+    byHost.set(e.host, row)
+  }
+  return [...byHost.values()].map((r) => {
+    const parts = String(r.header).split(/;\s*/).filter(Boolean).map((p) => { const i = p.indexOf('='); return { name: i < 0 ? p : p.slice(0, i), bytes: p.length + 2 } })
+    const total = parts.reduce((s, x) => s + x.bytes, 0) || 1
+    const cookies = parts.sort((a, b) => b.bytes - a.bytes).map((x) => ({ ...x, share: x.bytes / total }))
+    const rejected = [...r.statuses]
+    const status = r.maxBytes > 8000 || rejected.length ? 'critical' : r.maxBytes > 4000 ? 'warning' : 'ok'
+    return { host: r.host, maxBytes: r.maxBytes, requests: r.requests, count: parts.length, cookies, status, rejectedWith: rejected }
+  }).sort((a, b) => b.maxBytes - a.maxBytes)
+}
+
+// ---------------------------------------------------------------------------------------------------------------- session lifetime
+/**
+ * What a capture says about how long the session lasts: for each session-looking cookie, session-only vs persistent, its
+ * lifetime, and whether the server renews it (sliding expiry) or sets it once (absolute expiry).
+ */
+export function sessionLifetimes(analysis) {
+  const out = []
+  for (const c of analysis.cookies) {
+    if (!c.attrs || !SESSIONY.test(c.name)) continue
+    const a = c.attrs
+    const sets = c.sets.filter((s) => s.accepted && !s.deletes)
+    if (!sets.length) continue
+    const life = a.maxAge !== null ? a.maxAge * 1000 : a.expires !== null && sets[0].at ? a.expires - sets[0].at : null
+    out.push({
+      name: c.name, domain: c.domain, kind: life === null ? 'session' : 'persistent', lifetimeMs: life, renewed: sets.length > 1,
+      note: life === null ? 'No Expires or Max-Age: the cookie lasts until the browser is closed (browsers that restore sessions may keep it longer).' : sets.length > 1 ? `Set ${sets.length} times: the server renews it, so the session slides while the user is active.` : 'Set once in this capture.',
+    })
+  }
+  return out
+}
