@@ -94,7 +94,7 @@ export function reportHtml(har) {
   const typeRows = Object.entries(s.byType).sort((a, b) => b[1].bytes - a[1].bytes).map(([t, v]) => tr([esc(t), v.count, fmtBytes(v.bytes)]))
   const phaseRows = PHASES.map((p) => tr([p, fmtMs(s.phaseTotals[p])]))
 
-  return `<!doctype html><html><head><meta charset="utf-8"><title>HAR report – ${esc(har.fileName)}</title>
+  return `<!doctype html><html><head><meta charset="utf-8"><title>HAR report: ${esc(har.fileName)}</title>
 <style>body{font:14px/1.5 system-ui,sans-serif;max-width:1000px;margin:30px auto;padding:0 16px;color:#111}h1{margin:0}h2{margin-top:30px;border-bottom:2px solid #d4ff24;padding-bottom:4px}h3{margin:16px 0 4px}
 .k{display:flex;gap:12px;flex-wrap:wrap}.k div{background:#f3f5fa;border-radius:10px;padding:10px 14px;min-width:120px}.k b{display:block;font-size:20px}
 .f{border-left:4px solid #999;background:#fafbfd;margin:8px 0;padding:8px 12px;border-radius:6px;break-inside:avoid}.f small{color:#555}.f ul{margin:6px 0 0;padding-left:18px;font-size:12px;color:#444}
