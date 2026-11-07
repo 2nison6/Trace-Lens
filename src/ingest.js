@@ -1,6 +1,8 @@
 import { flushSync } from 'react-dom'
 import { analyzeCached } from './analyzer'
 import { parseHar } from './harParser'
+import { countSaml } from './saml/extract'
+import { isTracerExport, parseTracerExport } from './saml/tracer'
 import { loadStore } from './loadStore'
 import { keepEnabled, saveFile } from './persist'
 import { afterPaint, sleep } from './paint'
@@ -19,7 +21,8 @@ let tail = Promise.resolve() // runs go strictly one after another: a second dro
 let pending = 0 // runs queued or in flight; the overlay belongs to the batch and is cleared only when the last one is done
 let startedAt = 0
 let failures = []
-let handlers = null // { commit(parsed) -> Promise, report(messages) } from the most recent caller
+let samlFound = [] // [{ name, n }]: HAR files in this batch that carry SAML messages, for the "SAML found" prompt
+let handlers = null // { commit({ hars, traces }) -> Promise, report(messages), finish({ samlFound }) } from the most recent caller
 
 async function stage(patch) {
   flushSync(() => loadStore.update(patch))
@@ -29,26 +32,37 @@ async function stage(patch) {
 
 async function run(files) {
   const parsed = []
+  const traces = []
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
     try {
       await stage({ stage: 'reading', file: file.name, i, n: files.length })
       const text = await file.text()
       await stage({ stage: 'parsing' })
-      const har = parseHar(text, file.name)
+      const json = JSON.parse(text)
+      // Two kinds of file go through the same door: a HAR, or an export from the SAML-tracer browser extension
+      if (isTracerExport(json)) {
+        traces.push(await parseTracerExport(json, file.name))
+        if (keepEnabled()) saveFile(file.name, text)
+        continue
+      }
+      if (!json || typeof json !== 'object' || !json.log) throw new Error('Not a HAR file or a SAML-tracer export (it has neither log.entries nor requests)')
+      const har = parseHar(json, file.name)
       if (keepEnabled()) saveFile(file.name, text) // opt-in, stored on this device only (see persist.js)
       await stage({ stage: 'analyzing' })
       analyzeCached(har) // warm the findings so the first page opens instantly
+      const n = countSaml(har)
+      if (n) samlFound.push({ name: file.name, n })
       parsed.push(har)
     } catch (e) {
       failures.push(`${file.name}: ${e instanceof SyntaxError ? 'this file is not valid JSON' : e.message}`)
     }
   }
-  if (!parsed.length) return
+  if (!parsed.length && !traces.length) return
   await stage({ stage: 'rendering' })
   // Keep the overlay until the page that replaces the start screen has rendered AND painted. The timeout only guards against
   // a render that never commits (for example a failed lazy chunk) leaving the overlay up forever.
-  await Promise.race([handlers.commit(parsed), sleep(3000)])
+  await Promise.race([handlers.commit({ hars: parsed, traces }), sleep(3000)])
   await afterPaint()
 }
 
@@ -56,6 +70,11 @@ async function settle() {
   await sleep(Math.max(0, MIN_VISIBLE - (performance.now() - startedAt)))
   if (pending > 0) return // another batch arrived meanwhile and now owns the overlay
   loadStore.clear()
+  if (samlFound.length) {
+    const found = samlFound
+    samlFound = []
+    handlers.finish?.({ samlFound: found })
+  }
   if (failures.length) {
     const list = failures
     failures = []

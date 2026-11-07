@@ -27,3 +27,107 @@
   X-Robots-Tag: noindex
 /tools
   X-Robots-Tag: noindex
+/saml
+  X-Robots-Tag: noindex
+/har/overview
+  X-Robots-Tag: noindex
+/har/issues
+  X-Robots-Tag: noindex
+/har/waterfall
+  X-Robots-Tag: noindex
+/har/flow
+  X-Robots-Tag: noindex
+/har/insights
+  X-Robots-Tag: noindex
+/har/compare
+  X-Robots-Tag: noindex
+/har/tools
+  X-Robots-Tag: noindex
+/saml/messages
+  X-Robots-Tag: noindex
+/tokens/inspect
+  X-Robots-Tag: noindex
+/tokens/capture
+  X-Robots-Tag: noindex
+/oauth/flow
+  X-Robots-Tag: noindex
+/oauth/errors
+  X-Robots-Tag: noindex
+/cookies/all
+  X-Robots-Tag: noindex
+/cookies/problems
+  X-Robots-Tag: noindex
+/har
+  X-Robots-Tag: noindex
+/oauth
+  X-Robots-Tag: noindex
+/tokens
+  X-Robots-Tag: noindex
+/cookies
+  X-Robots-Tag: noindex
+/saml/metadata
+  X-Robots-Tag: noindex
+/oauth/discovery
+  X-Robots-Tag: noindex
+/certs
+  X-Robots-Tag: noindex
+/certs/inspect
+  X-Robots-Tag: noindex
+/windows
+  X-Robots-Tag: noindex
+/windows/exchange
+  X-Robots-Tag: noindex
+/windows/lookup
+  X-Robots-Tag: noindex
+/tokens/compare
+  X-Robots-Tag: noindex
+/tokens/timeline
+  X-Robots-Tag: noindex
+/cookies/browsers
+  X-Robots-Tag: noindex
+/cookies/size
+  X-Robots-Tag: noindex
+/guide
+  X-Robots-Tag: noindex
+/guide/help
+  X-Robots-Tag: noindex
+/guide/topics
+  X-Robots-Tag: noindex
+/guide/har
+  X-Robots-Tag: noindex
+/guide/saml
+  X-Robots-Tag: noindex
+/guide/oauth
+  X-Robots-Tag: noindex
+/guide/tokens
+  X-Robots-Tag: noindex
+/guide/certs
+  X-Robots-Tag: noindex
+/guide/windows
+  X-Robots-Tag: noindex
+/guide/cookies
+  X-Robots-Tag: noindex
+
+/har/report
+  X-Robots-Tag: noindex
+
+/saml/report
+  X-Robots-Tag: noindex
+
+/oauth/report
+  X-Robots-Tag: noindex
+
+/tokens/report
+  X-Robots-Tag: noindex
+
+/certs/report
+  X-Robots-Tag: noindex
+
+/windows/report
+  X-Robots-Tag: noindex
+
+/cookies/report
+  X-Robots-Tag: noindex
+
+/report
+  X-Robots-Tag: noindex

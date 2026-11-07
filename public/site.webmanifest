@@ -1,7 +1,7 @@
 {
-  "name": "HAR.lens – HAR File Analyzer",
-  "short_name": "HAR.lens",
-  "description": "Analyze HAR files in your browser: replay request flow, find issues and compare captures.",
+  "name": "TraceLens – network and sign-in troubleshooting",
+  "short_name": "TraceLens",
+  "description": "Troubleshoot network and sign-in problems in your browser: HAR, SAML, OAuth and OIDC, tokens, certificates, Windows sign-in and cookies.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

@@ -59,9 +59,9 @@ export function StatusCode({ status, icon = false }) {
   )
 }
 
-export function Card({ title, aside, children, className = '', flush = false, as: Tag = 'section' }) {
+export function Card({ title, aside, children, className = '', flush = false, as: Tag = 'section', id }) {
   return (
-    <Tag className={`card ${flush ? 'flush' : ''} ${className}`}>
+    <Tag id={id} className={`card ${flush ? 'flush' : ''} ${className}`}>
       {(title || aside) && (
         <header className="card-h">
           {title && <h2>{title}</h2>}

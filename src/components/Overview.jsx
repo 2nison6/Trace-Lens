@@ -39,7 +39,7 @@ export default function Overview({ har, filters, setFilters, full, toast }) {
 
   const go = (patch) => {
     setFilters(patch ? { ...filters, ...patch } : DEFAULT_FILTERS)
-    navigate('/waterfall')
+    navigate('/har/waterfall')
   }
 
   const errors = all.filter((e) => e.error)

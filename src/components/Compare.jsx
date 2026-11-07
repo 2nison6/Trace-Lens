@@ -9,6 +9,7 @@ import Bars from './Bars'
 import { PHASE_LABEL, SERIES_VAR } from '../theme'
 import { copyText, fmtBytes, fmtDelta, fmtMs } from '../utils'
 import { download } from '../scrub'
+import Regression from './Regression'
 import { Card, EmptyState, Notice, Segmented, StatusCode, Switch } from './ui'
 
 const SLOT = ['A', 'B', 'C']
@@ -110,6 +111,7 @@ export default function Compare({ hars, toast }) {
           </div>
         </div>
       )}
+      {v && active.length >= 2 && <Regression a={first} b={last} names={names2} />}
 
       <div className="page-grid two">
         <Card title="Summary" flush>

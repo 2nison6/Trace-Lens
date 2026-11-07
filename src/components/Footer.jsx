@@ -68,7 +68,7 @@ export default function Footer() {
         })}
       </ul>
       <p className="foot-note">
-        HAR<b>.</b>lens &middot; Your files never leave this Tab &middot; &copy;{" "}
+        Trace<b>Lens</b> &middot; Your files never leave this Tab &middot; &copy;{" "}
         {new Date().getFullYear()}
       </p>
     </footer>

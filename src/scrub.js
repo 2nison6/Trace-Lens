@@ -1,6 +1,15 @@
 // Redact secrets from a raw HAR object, and build trimmed or merged copies of one. Nothing here mutates its input.
 const SENSITIVE_HEADERS = /^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|x-auth-token|x-csrf-token|x-xsrf-token)$/i
-const SENSITIVE_KEYS = /(token|password|passwd|pwd|secret|api[_-]?key|apikey|auth|session|sid|jwt|credential|signature)/i
+// SAMLResponse carries the user's identity and works as a login credential until it expires; SAMLart is a reference to one.
+// (SAMLRequest is left alone: it holds no credential, and a recipient debugging a sign-in needs it.)
+// OAuth and OpenID Connect: an authorization `code` can be redeemed for tokens, `code_verifier` completes the PKCE binding,
+// `assertion` / `client_assertion` are signed credentials, `id_token_hint` identifies a session, and `state` / `nonce` are one-time
+// values that tie a response to a request. They are matched as WHOLE names (see EXACT_KEYS) so "postcode" and "encoded" are left alone.
+const SENSITIVE_KEYS = /(token|password|passwd|pwd|secret|api[_-]?key|apikey|auth|session|sid|jwt|credential|signature|samlresponse|samlart|assertion|verifier)/i
+const EXACT_KEYS = /^(code|state|nonce|otp|pin|passcode|id_token_hint|login_hint|device_code|user_code|ticket|key)$/i
+// Fields whose names contain "token" but which hold no secret and are what you read first when debugging a sign-in
+const PUBLIC_KEYS = /^(token_type|token_endpoint|token_endpoint_auth_method|token_use|tokens?_?type|expires_in|ext_expires_in|refresh_token_expires_in|token_expiry|id_token_signing_alg_values_supported|token_endpoint_auth_methods_supported|authorization_endpoint|auth_time|authenticated|authorized|author|authority|authentication_?type|authenticationmethodsreferences)$/i
+const isSensitiveKey = (k) => !PUBLIC_KEYS.test(String(k).trim()) && (SENSITIVE_KEYS.test(k) || EXACT_KEYS.test(String(k).trim()))
 const MASK = '[REDACTED]'
 
 export const KINDS = ['headers', 'cookies', 'params', 'bodies']
@@ -60,7 +69,7 @@ export function scrubHar(raw, { apply = true, skip = new Set(), custom = [] } = 
 
   const maskParam = (p) => {
     if (!p) return
-    if (SENSITIVE_KEYS.test(p.name || '') && p.value !== MASK && hit('params', p.name)) p.value = MASK
+    if (isSensitiveKey(p.name || '') && p.value !== MASK && hit('params', p.name)) p.value = MASK
     else if (typeof p.value === 'string') { const v = runCustom(p.value); if (apply) p.value = v }
   }
 
@@ -69,7 +78,7 @@ export function scrubHar(raw, { apply = true, skip = new Set(), custom = [] } = 
       const u = new URL(url)
       let changed = false
       for (const k of [...u.searchParams.keys()]) {
-        if (SENSITIVE_KEYS.test(k) && hit('params', k)) { u.searchParams.set(k, MASK); changed = true }
+        if (isSensitiveKey(k) && hit('params', k)) { u.searchParams.set(k, MASK); changed = true }
       }
       const base = changed ? u.toString() : url
       return runCustom(base)
@@ -78,22 +87,49 @@ export function scrubHar(raw, { apply = true, skip = new Set(), custom = [] } = 
     }
   }
 
+  // application/x-www-form-urlencoded text: mask by the same key rules as parameters. Returns null when it is not form-shaped.
+  const maskFormText = (text) => {
+    if (!/^[^\s{[<]*=/.test(text) || /[\r\n]/.test(text.trim())) return null
+    let changed = false
+    const out = text.split('&').map((pair) => {
+      const i = pair.indexOf('=')
+      if (i < 0) return pair
+      let key = pair.slice(0, i)
+      try { key = decodeURIComponent(key.replace(/\+/g, ' ')) } catch { /* keep the raw key */ }
+      if (isSensitiveKey(key) && pair.slice(i + 1) !== encodeURIComponent(MASK) && pair.slice(i + 1) !== MASK && hit('bodies', key)) { changed = true; return `${pair.slice(0, i)}=${encodeURIComponent(MASK)}` }
+      return pair
+    }).join('&')
+    return changed ? out : text
+  }
+
   const maskJsonText = (text) => {
     try {
       const walk = (v) => {
         if (Array.isArray(v)) return v.map(walk)
         if (v && typeof v === 'object') {
-          return Object.fromEntries(Object.entries(v).map(([k, x]) => (SENSITIVE_KEYS.test(k) && typeof x !== 'object' ? (hit('bodies', k) ? [k, MASK] : [k, x]) : [k, walk(x)])))
+          return Object.fromEntries(Object.entries(v).map(([k, x]) => (isSensitiveKey(k) && typeof x !== 'object' ? (hit('bodies', k) ? [k, MASK] : [k, x]) : [k, walk(x)])))
         }
         return v
       }
       const out = JSON.stringify(walk(JSON.parse(text)))
       return runCustom(apply ? out : text)
     } catch {
-      const out = text.replace(/(["']?(?:token|password|secret|api[_-]?key|authorization)["']?\s*[:=]\s*["']?)[^"'&\s,}]+/gi, (m, p) => (hit('bodies', p.replace(/["'\s:=]+$/g, '').replace(/^["']/, '')) ? `${p}${MASK}` : m))
+      const formOut = maskFormText(text)
+      if (formOut !== null) return runCustom(apply ? formOut : text)
+      const out = text.replace(/(["']?(?:token|password|secret|api[_-]?key|authorization|SAMLResponse|SAMLart|client_assertion|assertion|code_verifier|code)["']?\s*[:=]\s*["']?)[^"'&\s,}]+/gi, (m, p) => (hit('bodies', p.replace(/["'\s:=]+$/g, '').replace(/^["']/, '')) ? `${p}${MASK}` : m))
       return runCustom(out)
     }
   }
+
+  // <input ... name="SAMLResponse" ... value="..."> in either attribute order, either quote style
+  const maskHtmlSaml = (html) => html.replace(/<input\b[^>]*>/gi, (tag) => {
+    const name = /\bname\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(tag)
+    const key = name && (name[1] ?? name[2])
+    if (!key || !/^(SAMLResponse|SAMLart)$/i.test(key)) return tag
+    const val = /\bvalue\s*=\s*(?:"[^"]*"|'[^']*')/i.exec(tag)
+    if (!val || /\[REDACTED\]/.test(val[0]) || !hit('bodies', key)) return tag
+    return tag.replace(val[0], `value="${MASK}"`)
+  })
 
   for (const e of (doc.log && doc.log.entries) || []) {
     const req = e.request || {}
@@ -102,7 +138,12 @@ export function scrubHar(raw, { apply = true, skip = new Set(), custom = [] } = 
     if (res.redirectURL) { const u = maskUrl(res.redirectURL); if (apply) res.redirectURL = u }
     for (const h of [...(req.headers || []), ...(res.headers || [])]) {
       if (SENSITIVE_HEADERS.test(h.name) && h.value !== MASK && hit('headers', String(h.name).toLowerCase())) h.value = MASK
-      else if (typeof h.value === 'string') { const v = runCustom(h.value); if (apply) h.value = v }
+      else if (typeof h.value === 'string') {
+        // headers that carry a URL (a redirect target, the page a request came from) can hold a code or token in its query
+        const isUrlHeader = /^(location|referer|referrer|origin|content-location|link|refresh)$/i.test(h.name) && /^https?:\/\//i.test(h.value.trim())
+        const v = runCustom(isUrlHeader ? maskUrl(h.value.trim()) : h.value)
+        if (apply) h.value = v
+      }
     }
     for (const c of [...(req.cookies || []), ...(res.cookies || [])]) {
       if (hit('cookies', c.name || '(unnamed)')) c.value = MASK
@@ -115,6 +156,10 @@ export function scrubHar(raw, { apply = true, skip = new Set(), custom = [] } = 
     }
     if (res.content && res.content.text && /json|x-www-form|text\/plain/i.test(res.content.mimeType || '')) {
       const t = maskJsonText(res.content.text)
+      if (apply) res.content.text = t
+    }
+    if (res.content && res.content.text && /html/i.test(res.content.mimeType || '') && /SAML(Response|art)/i.test(res.content.text)) {
+      const t = maskHtmlSaml(res.content.text)
       if (apply) res.content.text = t
     }
   }
@@ -140,7 +185,7 @@ export function mergeHars(hars) {
   })
   entries.sort((a, b) => (Date.parse(a.startedDateTime) || 0) - (Date.parse(b.startedDateTime) || 0))
   const first = (hars[0].raw && hars[0].raw.log) || {}
-  return { log: { version: first.version || '1.2', creator: { name: 'HAR.lens', version: 'merge' }, ...(pages.length ? { pages } : {}), entries } }
+  return { log: { version: first.version || '1.2', creator: { name: 'TraceLens', version: 'merge' }, ...(pages.length ? { pages } : {}), entries } }
 }
 
 export function download(name, text, type = 'application/json') {
