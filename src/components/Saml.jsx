@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faArrowRight, faCircleCheck, faCircleExclamation, faCircleInfo, faClipboard, faCopy, faDownload, faFileImport, faKey, faTriangleExclamation, faWandMagicSparkles,
+  faArrowRight, faCircleCheck, faCircleExclamation, faCircleInfo, faClipboard, faCopy, faSignature, faDownload, faFileImport, faKey, faTriangleExclamation, faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons'
 import { checkMessage, linkExchange } from '../saml/checks'
 import { extractSaml, fromPasted } from '../saml/extract'
 import { parseSamlXml } from '../saml/parse'
 import { fingerprints } from '../saml/x509'
+import { countSignatures, verifyXmlSignature } from '../saml/signature'
 import { copyText, fmtMs } from '../utils'
 import { download } from '../scrub'
 import usePicker from '../hooks/usePicker'
@@ -96,7 +97,40 @@ function Assertion({ a, index, total, fps }) {
   )
 }
 
-function Detail({ item, parsed, link, fps, now, expect, notify }) {
+
+const VTONE = { valid: 'good', invalid: 'crit', refused: 'crit', error: 'warn', 'no-key': 'info' }
+
+/** Check a message's signature against a certificate the user pastes (the identity provider's, from its metadata). */
+function VerifyBox({ xml, cert, setCert }) {
+  const n = useMemo(() => countSignatures(xml), [xml])
+  const [which, setWhich] = useState(0)
+  const [result, setResult] = useState(null)
+  useEffect(() => {
+    let live = true
+    if (!n) { Promise.resolve().then(() => { if (live) setResult(null) }); return () => { live = false } }
+    verifyXmlSignature(xml, cert, { which }).then((r) => { if (live) setResult(r) })
+    return () => { live = false }
+  }, [xml, cert, which, n])
+  if (!n) return <Notice tone="warn" icon={faTriangleExclamation}>This message is not signed, so there is nothing to verify. Most service providers require the response or its assertion to be signed.</Notice>
+  return (
+    <div className="saml-sec">
+      <h4>Verify the signature</h4>
+      <p className="hint" style={{ marginTop: 0 }}>Paste the identity provider&rsquo;s <b>signing certificate</b> (from its metadata, or the one it gave you). Without it, only the certificate carried inside the message is used, which shows the message is consistent but not who signed it. Checked in your browser; nothing is sent.</p>
+      {n > 1 && <Segmented size="s" label="Signature" value={String(which)} onChange={(v) => setWhich(Number(v))} options={Array.from({ length: n }, (_, i) => ({ value: String(i), label: `Signature ${i + 1} of ${n}` }))} />}
+      <textarea className="saml-paste" rows={4} value={cert} spellCheck={false} onChange={(e) => setCert(e.target.value)} placeholder={'-----BEGIN CERTIFICATE-----\n…\n-----END CERTIFICATE-----'} aria-label="Identity provider certificate" />
+      {result && (
+        <div className={`verdict verdict-${VTONE[result.status]}`} role="status">
+          <b><FontAwesomeIcon icon={faSignature} /> {result.title}</b>
+          {result.detail && <p>{result.detail}</p>}
+          {result.signed && <p className="dim">Signed: {result.signed}</p>}
+          {(result.weak || []).map((w) => <p key={w} className="tone-warn">{w}</p>)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Detail({ item, parsed, link, fps, now, expect, notify, cert, setCert }) {
   const checks = useMemo(() => checkMessage(parsed, { now, expect, fingerprints: fps }), [parsed, now, expect, fps])
   const [tab, setTab] = useState('summary')
   const p = parsed
@@ -108,7 +142,7 @@ function Detail({ item, parsed, link, fps, now, expect, notify }) {
     <div className="saml-detail">
       {item.steps && <p className="hint saml-steps">Decoded: {item.steps.join(' → ')}</p>}
       <Segmented size="s" label="View" value={tab} onChange={setTab} options={[
-        { value: 'summary', label: 'Summary' }, { value: 'checks', label: `Checks${counts.critical ? ` · ${counts.critical} critical` : counts.warning ? ` · ${counts.warning} to look at` : ''}` }, { value: 'xml', label: 'XML' },
+        { value: 'summary', label: 'Summary' }, { value: 'verify', label: 'Verify signature' }, { value: 'checks', label: `Checks${counts.critical ? ` · ${counts.critical} critical` : counts.warning ? ` · ${counts.warning} to look at` : ''}` }, { value: 'xml', label: 'XML' },
       ]}
       />
       {tab === 'summary' && (
@@ -160,6 +194,7 @@ function Detail({ item, parsed, link, fps, now, expect, notify }) {
           <ul className="saml-checks">{checks.map((f, i) => <Check key={i} f={f} />)}</ul>
         </>
       )}
+      {tab === 'verify' && <VerifyBox xml={item.xml} cert={cert} setCert={setCert} />}
       {tab === 'xml' && (
         <>
           <div className="toolrow">
@@ -217,6 +252,7 @@ export default function Saml({ har, traces = [], onFiles, toast: notify }) {
   const [loadedAt] = useState(() => Date.now()) // one fixed 'now' for the page, so the checks do not change while it is open
   const [expect, setExpect] = useState({ audience: '', acs: '', fingerprint: '' })
   const [fps, setFps] = useState({})
+  const [cert, setCert] = useState('') // the identity provider's certificate, pasted once and used to verify every message
 
   // scan the loaded capture whenever it changes
   useEffect(() => {
@@ -328,7 +364,7 @@ export default function Saml({ har, traces = [], onFiles, toast: notify }) {
               <div className="f-collapse" data-open={isOpen}>
                 <div className="f-inner">
                   {bad ? <Notice tone="crit" icon={faTriangleExclamation}>{(p && p.error) || it.error}</Notice>
-                    : isOpen && <Detail item={it} parsed={p} link={links.get(it.id)} fps={fps} now={asOf(it)} expect={expect} notify={notify} />}
+                    : isOpen && <Detail item={it} parsed={p} link={links.get(it.id)} fps={fps} now={asOf(it)} expect={expect} notify={notify} cert={cert} setCert={setCert} />}
                 </div>
               </div>
               {worst && <span className="vh">{worst}</span>}
