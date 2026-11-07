@@ -79,3 +79,7 @@
   X-Robots-Tag: noindex
 /windows/lookup
   X-Robots-Tag: noindex
+/tokens/compare
+  X-Robots-Tag: noindex
+/tokens/timeline
+  X-Robots-Tag: noindex

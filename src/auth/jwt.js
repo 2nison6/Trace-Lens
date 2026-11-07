@@ -248,3 +248,91 @@ export function findTokens(har) {
   }
   return [...map.values()].map((r) => ({ ...r, decoded: r.kind === 'jwt' ? decodeJwt(r.token) : null }))
 }
+
+// ---------------------------------------------------------------------------------------------------------------- comparing two tokens
+/**
+ * A claim-by-claim comparison of two decoded tokens ("works for user A, fails for user B").
+ * Returns { rows: [{ claim, a, b, same, kind }], header: [...], summary } where kind is 'both' | 'only-a' | 'only-b' | 'different' | 'same'.
+ * Per-token identifiers (jti, iat, exp, nbf, auth_time, nonce, at_hash, c_hash, sid, uti) always differ; they are marked noise.
+ */
+const NOISE = new Set(['jti', 'iat', 'nbf', 'exp', 'auth_time', 'nonce', 'at_hash', 'c_hash', 'sid', 'uti', 'sub', 'oid', 'unique_name', 'upn', 'email', 'preferred_username', 'name', 'given_name', 'family_name', 'ipaddr', 'aio', 'rh', 'xms_tdbr'])
+const show = (v) => (v === undefined ? undefined : typeof v === 'string' ? v : JSON.stringify(v))
+const sameVal = (x, y) => JSON.stringify(x) === JSON.stringify(y)
+
+export function compareTokens(a, b) {
+  const keys = [...new Set([...Object.keys(a.payload), ...Object.keys(b.payload)])]
+  const rows = keys.map((claim) => {
+    const x = a.payload[claim]; const y = b.payload[claim]
+    const kind = x === undefined ? 'only-b' : y === undefined ? 'only-a' : sameVal(x, y) ? 'same' : 'different'
+    let items = null
+    if (kind === 'different' && Array.isArray(x) && Array.isArray(y)) items = { onlyA: x.filter((v) => !y.some((w) => sameVal(v, w))), onlyB: y.filter((v) => !x.some((w) => sameVal(v, w))) }
+    if (kind === 'different' && (claim === 'scope' || claim === 'scp') && typeof x === 'string' && typeof y === 'string') {
+      const xs = x.split(/\s+/); const ys = y.split(/\s+/)
+      items = { onlyA: xs.filter((v) => !ys.includes(v)), onlyB: ys.filter((v) => !xs.includes(v)) }
+    }
+    return { claim, a: show(x), b: show(y), kind, noise: NOISE.has(claim), items }
+  })
+  const hk = [...new Set([...Object.keys(a.header), ...Object.keys(b.header)])]
+  const header = hk.map((claim) => ({ claim, a: show(a.header[claim]), b: show(b.header[claim]), kind: a.header[claim] === undefined ? 'only-b' : b.header[claim] === undefined ? 'only-a' : sameVal(a.header[claim], b.header[claim]) ? 'same' : 'different' })).filter((r) => r.kind !== 'same')
+  const order = { different: 0, 'only-a': 1, 'only-b': 1, same: 2 }
+  rows.sort((p, q) => (p.noise - q.noise) || (order[p.kind] - order[q.kind]) || (p.claim < q.claim ? -1 : 1))
+  const meaningful = rows.filter((r) => !r.noise && r.kind !== 'same')
+  return { rows, header, meaningful, identical: !meaningful.length && !header.length }
+}
+
+// ---------------------------------------------------------------------------------------------------------------- claim hints
+/** Findings about what a token's claims say about how it was issued (provider-specific gotchas). */
+export function claimHints(dec) {
+  const out = []
+  if (!dec || dec.error) return out
+  const p = dec.payload
+  const iss = String(p.iss || '')
+  const isEntra = /login\.microsoftonline\.com|sts\.windows\.net/i.test(iss) || p.tid !== undefined && (p.oid !== undefined || p.ver !== undefined)
+  if (isEntra) {
+    if (p.ver === '1.0' && /login\.microsoftonline\.com\/[^/]+\/v2\.0/.test(iss)) out.push(f('warning', 'An Entra v1 token with a v2 issuer', 'ver is 1.0 but the issuer is a v2.0 URL.', ''))
+    if (p.ver === '1.0' || /sts\.windows\.net/.test(iss)) out.push(f('info', 'A Microsoft Entra v1.0 token', 'The issuer is sts.windows.net/<tenant>/ and the audience is the resource URI. If your API validates v2.0 tokens (issuer login.microsoftonline.com/<tenant>/v2.0), change the app\'s accessTokenAcceptedVersion in its manifest to 2, or request tokens with the v2.0 endpoint. A version mix-up is behind most "issuer is invalid" errors.', ''))
+    if (p.ver === '2.0') out.push(f('info', 'A Microsoft Entra v2.0 token', 'The audience is the application ID (a GUID) or the "api://" URI, and the issuer ends in /v2.0.', ''))
+    if (p._claim_names || p._claim_sources || p.hasgroups) out.push(f('critical', 'Group overage: the groups are not in this token', 'The user is in too many groups for the token to list them (150 in a SAML token, 200 in a JWT). The token carries a pointer to look them up instead (_claim_names), or hasgroups.', 'Use app roles, group filtering ("groups assigned to the application"), or call Microsoft Graph for the groups.'))
+    if (p.idtyp === 'app' || (p.oid && p.sub && p.oid === p.sub && !p.upn && !p.preferred_username && !p.name)) out.push(f('info', 'An app-only token (no user)', 'There is no user in it: roles come from the application permissions granted to the app, not from the user.', ''))
+    if (p.scp === undefined && p.roles === undefined && p.idtyp !== undefined) out.push(f('warning', 'Neither scp nor roles', 'An API that authorises on scopes (delegated) or roles (application) will find nothing to check.', 'Request the scope, or grant and consent the application permission.'))
+    if (p.wids) out.push(f('info', 'Directory roles are in "wids"', 'These are Entra directory role template IDs (like Global Administrator), not application roles.', ''))
+  }
+  if (/auth0\.com/i.test(iss) && !p.aud) out.push(f('warning', 'Auth0 token without an audience', 'Without an API audience Auth0 returns an opaque or userinfo-only token. Pass the API identifier as the audience parameter.', ''))
+  if (/okta\.com/i.test(iss)) {
+    if (p.cid !== undefined && p.scp !== undefined && p.sub === undefined) out.push(f('info', 'An Okta token with no sub', 'Likely a client-credentials token for the app itself.', ''))
+    if (/\/oauth2\/default|\/oauth2\/aus/.test(iss) === false && /okta\.com$|okta\.com\/?$/.test(iss)) out.push(f('info', 'An Okta org authorization server token', 'The org authorization server issues tokens only for Okta\'s own APIs. For your own API use a custom authorization server (an issuer containing /oauth2/…).', ''))
+  }
+  if (/cognito-idp\./i.test(iss)) {
+    if (p.token_use === 'access' && p.aud !== undefined) out.push(f('info', 'This Cognito access token has an "aud"', 'Cognito access tokens normally carry client_id, not aud.', ''))
+    if (p.token_use === 'access') out.push(f('info', 'A Cognito access token', 'Validate client_id (not aud). The audience check libraries apply to aud will fail on it.', ''))
+    if (p.token_use === 'id') out.push(f('info', 'A Cognito ID token', 'ID tokens are for the client application; an API should be given the access token.', ''))
+  }
+  if (/accounts\.google\.com/i.test(iss) && p.hd === undefined && p.email) out.push(f('info', 'A Google token without "hd"', 'The hosted-domain claim is missing, so this is a consumer Google account, not a Workspace one. If you restrict sign-in to a company domain, check hd, not just the email suffix.', ''))
+  if (p.azp !== undefined && p.aud !== undefined && p.azp !== p.aud && !Array.isArray(p.aud) && p.token_use === undefined) out.push(f('info', 'The authorized party differs from the audience', `azp is ${p.azp} and aud is ${p.aud}. Normal when a client gets a token for another API; a bug if your app expected a token for itself.`, ''))
+  if (p.scope && p.scp) out.push(f('info', 'Both scope and scp are present', 'Some providers use one name and some the other; an API that reads only one will think there are no scopes.', ''))
+  if (typeof p.aud === 'string' && /\s/.test(p.aud)) out.push(f('warning', 'The audience contains whitespace', JSON.stringify(p.aud), 'A space-separated audience is a bug: audiences are a string or an array.'))
+  if (typeof p.scope === 'string' && /,/.test(p.scope) && !/\s/.test(p.scope)) out.push(f('warning', 'Scopes look comma-separated', p.scope, 'Scopes are space-separated.'))
+  return out
+}
+
+// ---------------------------------------------------------------------------------------------------------------- timeline
+/**
+ * For each token found in a capture: when it was issued, when it expired, and when it was first and last used, so a 401 after
+ * "the token was fine a minute ago" can be placed on a line. Times are ms since 1970. Returns rows sorted by first use.
+ */
+export function tokenTimeline(tokens) {
+  return tokens.filter((t) => t.decoded && !t.decoded.error).map((t) => {
+    const p = t.decoded.payload
+    const iat = numericDate(p.iat); const exp = numericDate(p.exp); const nbf = numericDate(p.nbf)
+    const used = t.uses.map((u) => u.at).filter((x) => x != null)
+    const first = used.length ? Math.min(...used) : null
+    const last = used.length ? Math.max(...used) : null
+    const rejected = t.uses.filter((u) => u.status === 401 || u.status === 403)
+    return {
+      token: t.token, label: p.sub ? String(p.sub).slice(0, 24) : (p.client_id || p.cid || t.decoded.header.alg),
+      aud: Array.isArray(p.aud) ? p.aud.join(', ') : p.aud, iat, nbf, exp, first, last, uses: t.uses.length, rejected: rejected.length,
+      usedAfterExpiry: exp != null && last != null && last > exp, usedBeforeValid: nbf != null && first != null && first < nbf,
+      lifetimeMs: iat != null && exp != null ? exp - iat : null,
+    }
+  }).sort((a, b) => (a.first ?? 0) - (b.first ?? 0))
+}

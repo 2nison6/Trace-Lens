@@ -32,7 +32,7 @@ import SamlPrompt from './components/SamlPrompt'
 import SamlMetadata from './components/SamlMetadata'
 import Certificates from './components/Certificates'
 import { WindowsExchange, WindowsLookup } from './components/WindowsAuth'
-import { TokenInspect, TokensInCapture } from './components/Tokens'
+import { TokenCompare, TokenInspect, TokenTimeline, TokensInCapture } from './components/Tokens'
 import { OAuthErrors, OAuthFlow } from './components/OAuth'
 import OAuthDiscovery from './components/OAuthDiscovery'
 import { CookiesAll, CookiesProblems } from './components/Cookies'
@@ -393,6 +393,8 @@ export default function App() {
                     <Route path="/cookies/all" element={need(<CookiesAll har={har} key={active} />)} />
                     <Route path="/cookies/problems" element={need(<CookiesProblems har={har} key={active} />)} />
                     <Route path="/tokens/inspect" element={<Page><TokenInspect toast={toast} /></Page>} />
+                    <Route path="/tokens/compare" element={<Page><TokenCompare /></Page>} />
+                    <Route path="/tokens/timeline" element={need(<TokenTimeline har={har} key={active} />)} />
                     <Route path="/tokens/capture" element={need(<TokensInCapture har={har} toast={toast} key={active} />)} />
                     {/* the old, un-prefixed addresses keep working for bookmarks */}
                     {['overview', 'issues', 'waterfall', 'flow', 'insights', 'compare', 'tools'].map((p) => <Route key={p} path={`/${p}`} element={<Navigate to={`/har/${p}`} replace />} />)}

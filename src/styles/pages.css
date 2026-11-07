@@ -347,3 +347,7 @@ a.file-b { text-decoration: none; }
 .tokreq-checks { flex-basis: 100%; margin: 4px 0 10px; }
 
 .saml-code { width: 120px; padding: 8px 10px; background: var(--s2); color: var(--t1); border: 1px solid var(--line-2); border-radius: var(--r-s); font-family: var(--mono); }
+
+.cmp-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .cmp-pair label { display: grid; gap: 4px; font-size: 12px; color: var(--t3); }
+@media (max-width: 760px) { .cmp-pair { grid-template-columns: 1fr; } }
+.cmp-tbl td { vertical-align: top; word-break: break-word; } .cmp-diff td:first-child { box-shadow: inset 3px 0 0 var(--warn); } .cmp-noise { opacity: 0.6; }

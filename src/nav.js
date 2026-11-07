@@ -1,5 +1,5 @@
 import {
-  faArrowUpFromBracket, faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCertificate, faCompass, faCookieBite, faFileCode, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
+  faArrowUpFromBracket, faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCertificate, faClockRotateLeft, faCompass, faCookieBite, faFileCode, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 import { faWindows } from '@fortawesome/free-brands-svg-icons'
 
@@ -73,6 +73,8 @@ export const SECTIONS = [
       { to: '/tokens', label: 'Upload', addLabel: 'Add files', icon: faArrowUpFromBracket, start: true },
       { to: '/tokens/inspect', label: 'Inspect', icon: faShieldHalved },
       { to: '/tokens/capture', label: 'In capture', icon: faListCheck },
+      { to: '/tokens/timeline', label: 'Timeline', icon: faClockRotateLeft },
+      { to: '/tokens/compare', label: 'Compare', icon: faCodeCompare },
     ],
   },
   {

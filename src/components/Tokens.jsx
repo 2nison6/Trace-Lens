@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faClipboard, faCopy, faShieldHalved, faSignature } from '@fortawesome/free-solid-svg-icons'
-import { checkJwt, decodeJwt, describeClaims, findTokens } from '../auth/jwt'
+import { checkJwt, claimHints, compareTokens, decodeJwt, describeClaims, findTokens, tokenTimeline } from '../auth/jwt'
 import { describeKeys, verifyJwt } from '../auth/verify'
 import { copyText } from '../utils'
 import { CheckList, KV } from './authui'
@@ -14,6 +14,7 @@ const json = (o) => JSON.stringify(o, null, 2)
 function TokenDetail({ dec, now, expect, notify, basis }) {
   const checks = useMemo(() => checkJwt(dec, { now, expect }), [dec, now, expect])
   const claims = useMemo(() => (dec.payload ? describeClaims(dec.payload) : []), [dec])
+  const hints = useMemo(() => claimHints(dec), [dec])
   if (dec.error) {
     return (
       <div className="saml-detail">
@@ -29,6 +30,7 @@ function TokenDetail({ dec, now, expect, notify, basis }) {
         <p className="hint" style={{ marginTop: 0 }}>{basis}</p>
         <CheckList checks={checks} />
       </div>
+      {hints.length > 0 && <div className="saml-sec"><h4>About how it was issued</h4><CheckList checks={hints} /></div>}
       <div className="saml-sec">
         <h4>Header</h4>
         <KV rows={[['Algorithm', dec.header.alg], ['Type', dec.header.typ], ['Key id (kid)', dec.header.kid], ['Signature', dec.signature ? `${dec.signatureBytes} bytes, not verified here` : 'none']]} />
@@ -130,6 +132,70 @@ export function TokenInspect({ toast: notify }) {
       {dec && !dec.error && <Card title="Token"><TokenDetail dec={dec} now={loadedAt} expect={expect} notify={notify} basis={`Dates are checked against the time this page was opened (${new Date(loadedAt).toISOString().replace('T', ' ').replace(/\.\d+Z$/, 'Z')}).`} /></Card>}
       {dec && dec.error && <Card title="Token"><TokenDetail dec={dec} now={loadedAt} expect={expect} notify={notify} /></Card>}
       <p className="hint">Decoding a token proves nothing: anyone can write one. Paste the issuer&rsquo;s key above to check the signature, and check the issuer, audience and expiry too.</p>
+    </div>
+  )
+}
+
+
+const fmtT = (ms) => (ms == null ? '—' : new Date(ms).toISOString().replace('T', ' ').replace(/\.\d+Z$/, 'Z'))
+const span = (ms) => { const s = Math.round(Math.abs(ms) / 1000); return s < 90 ? `${s} s` : s < 5400 ? `${Math.round(s / 60)} min` : s < 172800 ? `${(s / 3600).toFixed(1)} h` : `${Math.round(s / 86400)} days` }
+
+/** /tokens/compare: two tokens side by side. */
+export function TokenCompare() {
+  const [a, setA] = useState('')
+  const [b, setB] = useState('')
+  const da = useMemo(() => (a.trim() ? decodeJwt(a) : null), [a])
+  const db = useMemo(() => (b.trim() ? decodeJwt(b) : null), [b])
+  const both = da && db && !da.error && !db.error
+  const cmp = useMemo(() => (both ? compareTokens(da, db) : null), [both, da, db])
+  return (
+    <div className="stack">
+      <Card title="Compare two tokens" aside={<FontAwesomeIcon icon={faShieldHalved} className="dim" />}>
+        <p className="lede">Paste a token that <b>works</b> and one that <b>does not</b> (or one user&rsquo;s and another&rsquo;s). Differences that matter come first; things that are different in every token (ids, times, the user) are listed last.</p>
+        <div className="cmp-pair">
+          <label>Token A<textarea className="saml-paste" rows={4} value={a} spellCheck={false} onChange={(e) => setA(e.target.value)} aria-label="Token A" /></label>
+          <label>Token B<textarea className="saml-paste" rows={4} value={b} spellCheck={false} onChange={(e) => setB(e.target.value)} aria-label="Token B" /></label>
+        </div>
+        {da && da.error && <Notice tone="warn">Token A: {da.error}</Notice>}
+        {db && db.error && <Notice tone="warn">Token B: {db.error}</Notice>}
+      </Card>
+      {cmp && (
+        <Card title={cmp.identical ? 'No meaningful difference' : `${cmp.meaningful.length + cmp.header.length} meaningful difference${cmp.meaningful.length + cmp.header.length === 1 ? '' : 's'}`}>
+          {cmp.identical && <p className="dim">Apart from per-token values, these two carry the same claims. If one is rejected, the cause is outside the claims: the signature, the time, or the API&rsquo;s own rules for that user.</p>}
+          <table className="tbl saml-attrs cmp-tbl">
+            <thead><tr><th>Claim</th><th>A</th><th>B</th></tr></thead>
+            <tbody>
+              {cmp.header.map((r) => <tr key={`h-${r.claim}`} className="cmp-diff"><td><span className="mono">{r.claim}</span><small className="dim"> header</small></td><td className="mono">{r.a ?? <span className="dim">—</span>}</td><td className="mono">{r.b ?? <span className="dim">—</span>}</td></tr>)}
+              {cmp.rows.filter((r) => r.kind !== 'same').map((r) => (
+                <tr key={r.claim} className={r.noise ? 'cmp-noise' : 'cmp-diff'}>
+                  <td><span className="mono">{r.claim}</span>{r.noise && <small className="dim"> differs per token</small>}</td>
+                  <td className="mono">{r.a ?? <span className="dim">—</span>}{r.items && r.items.onlyA.length > 0 && <small className="tone-warn"> · only here: {r.items.onlyA.join(', ')}</small>}</td>
+                  <td className="mono">{r.b ?? <span className="dim">—</span>}{r.items && r.items.onlyB.length > 0 && <small className="tone-warn"> · only here: {r.items.onlyB.join(', ')}</small>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+/** /tokens/timeline: when each token in a capture was issued, valid, used and rejected. */
+export function TokenTimeline({ har }) {
+  const rows = useMemo(() => (har ? tokenTimeline(findTokens(har)) : []), [har])
+  if (!har) return <EmptyState icon={faShieldHalved} title="No capture loaded">Open a HAR file to see the lifetime of the tokens in it.</EmptyState>
+  return (
+    <div className="stack">
+      <section className="saml-capture"><h2 className="t-title saml-h">{rows.length ? `${rows.length} token${rows.length === 1 ? '' : 's'} in ${har.fileName}, with their lifetimes` : `No readable tokens in ${har.fileName}`}</h2></section>
+      {rows.map((r) => (
+        <Card key={r.token} title={r.label} aside={<span className="t-cap">{r.aud || 'no audience'}</span>}>
+          <KV rows={[['Issued', fmtT(r.iat)], ['Not before', r.nbf != null ? fmtT(r.nbf) : ''], ['Expires', fmtT(r.exp)], ['Lifetime', r.lifetimeMs != null ? span(r.lifetimeMs) : ''], ['First used', fmtT(r.first)], ['Last used', fmtT(r.last)], ['Used', `${r.uses} time${r.uses === 1 ? '' : 's'}`], ['Rejected (401 / 403)', r.rejected ? `${r.rejected}` : '']]} />
+          {r.usedAfterExpiry && <Notice tone="crit">Used {span(r.last - r.exp)} after it expired. The API was right to refuse it; the app should have refreshed it.</Notice>}
+          {r.usedBeforeValid && <Notice tone="crit">First used {span(r.nbf - r.first)} before its not-before time: a clock difference between the issuer and the app.</Notice>}
+          {!r.usedAfterExpiry && !r.usedBeforeValid && r.rejected > 0 && <Notice tone="warn">Rejected {r.rejected} time{r.rejected === 1 ? '' : 's'} although it was within its dates. Look at the audience, the scopes, and the signature: use Inspect to check them.</Notice>}
+        </Card>
+      ))}
     </div>
   )
 }
