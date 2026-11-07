@@ -7,10 +7,10 @@
   "homepage": "https://tracelens.2nison6.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/2nison6/HAR-Analyzer.git"
+    "url": "git+https://github.com/2nison6/Trace-Lens.git"
   },
   "bugs": {
-    "url": "https://github.com/2nison6/HAR-Analyzer/issues"
+    "url": "https://github.com/2nison6/Trace-Lens/issues"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
