@@ -1,5 +1,5 @@
 import {
-  faArrowUpFromBracket, faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCompass, faCookieBite, faFileCode, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
+  faArrowUpFromBracket, faBarsStaggered, faChartPie, faCircleExclamation, faCodeCompare, faCertificate, faCompass, faCookieBite, faFileCode, faKey, faLightbulb, faListCheck, faMagnifyingGlass, faNetworkWired, faRoute, faShieldHalved, faStamp, faToolbox, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 
 // TraceLens is a set of troubleshooting tools that share one place to drop captures. Each SECTION is a tool with its own menu
@@ -72,6 +72,20 @@ export const SECTIONS = [
       { to: '/tokens', label: 'Upload', addLabel: 'Add files', icon: faArrowUpFromBracket, start: true },
       { to: '/tokens/inspect', label: 'Inspect', icon: faShieldHalved },
       { to: '/tokens/capture', label: 'In capture', icon: faListCheck },
+    ],
+  },
+  {
+    id: 'certs',
+    accepts: 'a certificate',
+    landing: '/certs/inspect',
+    label: 'Certificate inspector',
+    title: 'Certificate inspector',
+    blurb: 'Check a certificate or a whole chain: expiry, names, key strength, usage, and whether the chain is complete and in order.',
+    icon: faCertificate,
+    pasteOnly: true,
+    pages: [
+      { to: '/certs', label: 'Start', icon: faCertificate, start: true },
+      { to: '/certs/inspect', label: 'Inspect', icon: faMagnifyingGlass },
     ],
   },
   {

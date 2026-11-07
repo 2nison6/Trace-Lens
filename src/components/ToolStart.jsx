@@ -14,8 +14,9 @@ export default function ToolStart({ section, onFiles, fileCount, toast, why }) {
       <h1 className="t-display">{section.title}</h1>
       <p className="start-lede">{section.blurb}</p>
       {why && <p className="start-why" role="status">{why}</p>}
-      <DropZone onFiles={onFiles} title={fileCount ? `Drop more ${section.accepts} here` : `Drop ${section.accepts} here`} />
-      <KeepFiles onFiles={onFiles} fileCount={fileCount} toast={toast} />
+      {!section.pasteOnly && <DropZone onFiles={onFiles} title={fileCount ? `Drop more ${section.accepts} here` : `Drop ${section.accepts} here`} />}
+      {section.pasteOnly && <p className="start-why">This tool works on pasted text, so there is nothing to upload. Open <b>Inspect</b> and paste.</p>}
+      {!section.pasteOnly && <KeepFiles onFiles={onFiles} fileCount={fileCount} toast={toast} />}
       <h2 className="tools-h">In this tool</h2>
       <ul className="tool-pages">
         {pages.map((p) => (

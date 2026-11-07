@@ -69,3 +69,7 @@
   X-Robots-Tag: noindex
 /oauth/discovery
   X-Robots-Tag: noindex
+/certs
+  X-Robots-Tag: noindex
+/certs/inspect
+  X-Robots-Tag: noindex

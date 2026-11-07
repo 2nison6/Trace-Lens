@@ -30,6 +30,7 @@ import Tools from './components/Tools'
 import Saml from './components/Saml'
 import SamlPrompt from './components/SamlPrompt'
 import SamlMetadata from './components/SamlMetadata'
+import Certificates from './components/Certificates'
 import { TokenInspect, TokensInCapture } from './components/Tokens'
 import { OAuthErrors, OAuthFlow } from './components/OAuth'
 import OAuthDiscovery from './components/OAuthDiscovery'
@@ -385,6 +386,7 @@ export default function App() {
                     <Route path="/oauth/flow" element={need(<OAuthFlow har={har} key={active} />)} />
                     <Route path="/oauth/discovery" element={<Page><OAuthDiscovery har={har} key={active} /></Page>} />
                     <Route path="/oauth/errors" element={<Page><OAuthErrors /></Page>} />
+                    <Route path="/certs/inspect" element={<Page><Certificates /></Page>} />
                     <Route path="/cookies/all" element={need(<CookiesAll har={har} key={active} />)} />
                     <Route path="/cookies/problems" element={need(<CookiesProblems har={har} key={active} />)} />
                     <Route path="/tokens/inspect" element={<Page><TokenInspect toast={toast} /></Page>} />

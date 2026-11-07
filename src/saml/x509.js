@@ -83,6 +83,64 @@ function keyInfo(b, spki) {
   return { algorithm: algOid, bits: 0 }
 }
 
+
+// ---- extensions (RFC 5280, section 4.2). Only the ones that matter when a certificate is rejected.
+const EKU = { '1.3.6.1.5.5.7.3.1': 'serverAuth', '1.3.6.1.5.5.7.3.2': 'clientAuth', '1.3.6.1.5.5.7.3.3': 'codeSigning', '1.3.6.1.5.5.7.3.4': 'emailProtection', '1.3.6.1.5.5.7.3.8': 'timeStamping', '1.3.6.1.5.5.7.3.9': 'OCSPSigning', '2.5.29.37.0': 'anyExtendedKeyUsage' }
+const KU = ['digitalSignature', 'nonRepudiation', 'keyEncipherment', 'dataEncipherment', 'keyAgreement', 'keyCertSign', 'cRLSign', 'encipherOnly', 'decipherOnly']
+
+function generalNames(b, seq) {
+  const out = []
+  for (let p = seq.start; p < seq.end;) {
+    const n = tlv(b, p)
+    const raw = b.subarray(n.start, n.end)
+    const s = () => new TextDecoder().decode(raw)
+    if (n.tag === 0x82) out.push({ type: 'DNS', value: s() })
+    else if (n.tag === 0x81) out.push({ type: 'email', value: s() })
+    else if (n.tag === 0x86) out.push({ type: 'URI', value: s() })
+    else if (n.tag === 0x87) out.push({ type: 'IP', value: raw.length === 4 ? [...raw].join('.') : [...raw].reduce((a, x, i) => a + (i % 2 ? '' : ':') + x.toString(16).padStart(2, '0'), '').slice(1) })
+    else out.push({ type: `other(${n.tag & 0x1f})`, value: '' })
+    p = n.end
+  }
+  return out
+}
+
+function readExtensions(der, tbsEnd, afterSpki) {
+  const out = { san: [], basic: null, keyUsage: [], extKeyUsage: [], ski: '', aki: '', critical: {} }
+  let p = afterSpki
+  while (p < tbsEnd) {
+    const n = tlv(der, p)
+    if (n.tag === 0xa3) { // [3] extensions
+      const list = tlv(der, n.start)
+      for (let q = list.start; q < list.end;) {
+        const ext = tlv(der, q)
+        const o = tlv(der, ext.start)
+        const id = oid(der, o)
+        let r = tlv(der, o.end)
+        let critical = false
+        if (r.tag === 0x01) { critical = der[r.start] !== 0; r = tlv(der, r.end) }
+        const val = tlv(der, r.start) // inside the OCTET STRING
+        out.critical[id] = critical
+        if (id === '2.5.29.17') out.san = generalNames(der, val)
+        else if (id === '2.5.29.19') {
+          let isCa = false
+          let pathLen = null
+          for (let x = val.start; x < val.end;) { const e = tlv(der, x); if (e.tag === 0x01) isCa = der[e.start] !== 0; else if (e.tag === 0x02) pathLen = der[e.start]; x = e.end }
+          out.basic = { ca: isCa, pathLen }
+        } else if (id === '2.5.29.15') {
+          const bits = der.subarray(val.start + 1, val.end) // skip the unused-bits byte
+          out.keyUsage = KU.filter((_, i) => bits[i >> 3] & (0x80 >> (i & 7)))
+        } else if (id === '2.5.29.37') {
+          for (let x = val.start; x < val.end;) { const e = tlv(der, x); out.extKeyUsage.push(EKU[oid(der, e)] || oid(der, e)); x = e.end }
+        } else if (id === '2.5.29.14') out.ski = hex(der.subarray(val.start, val.end))
+        else if (id === '2.5.29.35') { for (let x = val.start; x < val.end;) { const e = tlv(der, x); if (e.tag === 0x80) out.aki = hex(der.subarray(e.start, e.end)); x = e.end } }
+        q = ext.end
+      }
+    }
+    p = n.end
+  }
+  return out
+}
+
 const hex = (bytes) => [...bytes].map((x) => x.toString(16).padStart(2, '0').toUpperCase()).join(':')
 
 /** Read a certificate given as base64 (the content of <ds:X509Certificate>). Returns { error } when it cannot be read. */
@@ -117,6 +175,9 @@ export function parseCertificate(base64) {
       selfSigned: same,
       spki: der.subarray(subject.end, spki.end), // the whole SubjectPublicKeyInfo, ready for crypto.subtle.importKey('spki', ...)
       key: keyInfo(der, spki),
+      ext: (() => { try { return readExtensions(der, tbs.end, spki.end) } catch { return null } })(),
+      subjectDer: der.subarray(validity.end, subject.end),
+      issuerDer: der.subarray(sigAlg.end, issuer.end),
     }
   } catch (e) {
     return { error: `The certificate could not be read (${e.message}).` }

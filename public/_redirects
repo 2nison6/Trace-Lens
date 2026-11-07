@@ -48,3 +48,7 @@
 
 # OAuth discovery and keys
 /oauth/discovery  /index.html   200
+
+# Certificate inspector
+/certs          /index.html   200
+/certs/inspect  /index.html   200
