@@ -1,0 +1,21 @@
+/* ---------- start screen ---------- */
+.start { max-width: 760px; margin: 0 auto; padding: clamp(8px, 6vh, 56px) 0 20px; }
+.start > * + * { margin-top: 18px; }
+.start-eyebrow { display: inline-flex; align-items: center; gap: 8px; height: 26px; padding: 0 11px; border: 1px solid var(--blue-line); border-radius: 999px; background: var(--blue-tint); color: var(--t1); font-size: 12px; }
+.start-eyebrow svg { font-size: 10px; color: var(--lime); }
+:root[data-theme='light'] .start-eyebrow svg { color: var(--blue); }
+.start-lede { max-width: 56ch; font-size: 15px; line-height: 1.55; color: var(--t2); }
+.drop { margin-top: 26px !important; }
+.drop-btn { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: clamp(36px, 8vh, 64px) 20px; background: var(--s1); border: 1.5px dashed var(--line-2); border-radius: var(--r-l); color: var(--t2); transition: border-color var(--t-base) var(--ease-out), background var(--t-base) var(--ease-out), transform var(--t-press) var(--ease-out); }
+.drop-btn:active { transform: scale(0.992); }
+@media (hover: hover) and (pointer: fine) { .drop-btn:hover { border-color: var(--blue-line); background: var(--s2); } }
+.drop.over .drop-btn { border-style: solid; border-color: var(--lime); background: var(--blue-tint); }
+.drop-ic { display: grid; place-items: center; width: 46px; height: 46px; margin-bottom: 6px; border-radius: 13px; background: var(--blue); color: #fff; font-size: 18px; box-shadow: 0 8px 24px rgba(21, 88, 201, 0.4); transition: transform var(--t-base) var(--ease-out); }
+.drop.over .drop-ic { transform: translateY(-3px); background: var(--lime); color: var(--on-lime); }
+.drop-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: var(--t1); }
+.drop-sub u { text-underline-offset: 3px; color: var(--blue-text); }
+.how { list-style: none; margin: 34px 0 0 !important; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; counter-reset: s; }
+.how li { display: flex; flex-direction: column; gap: 4px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--t3); font-size: 12.5px; }
+.how b { color: var(--t1); font-size: 13px; }
+@media (max-width: 760px) { .how { grid-template-columns: 1fr; gap: 12px; } }
+

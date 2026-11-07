@@ -1,0 +1,13 @@
+/* sample captures on the start screen */
+
+/* "Pick a tool" cards on the start screen */
+.tools-h { margin: 34px 0 10px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--t3); }
+.tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.tool-card { display: flex; flex-direction: column; gap: 6px; padding: 14px; background: var(--s1); border: 1px solid var(--line); border-radius: var(--r-m); color: var(--t2); text-decoration: none; font-size: 12.5px; line-height: 1.45; transition: border-color var(--t-fast) ease, background var(--t-fast) ease, transform var(--t-press) var(--ease-out); }
+.tool-card b { color: var(--t1); font-size: 14px; }
+.tool-card small { color: var(--t3); display: flex; align-items: center; gap: 6px; }
+.tool-ic { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--blue-tint); color: var(--blue-text); }
+.tool-card.locked { opacity: 0.72; }
+@media (hover: hover) and (pointer: fine) { .tool-card:not(.locked):hover { border-color: var(--blue-line); background: var(--s2); } .tool-card.locked { cursor: not-allowed; } }
+.tool-card:not(.locked):active { transform: scale(0.99); }
+

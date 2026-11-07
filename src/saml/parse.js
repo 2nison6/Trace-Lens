@@ -2,7 +2,7 @@
 // a browser cannot verify a signature against your IdP's key. It reports what is present, so a person (or the checks in
 // checks.js) can compare it with what they expect.
 import { NS, attr, child, children, firstElement, parseXml, prettyXml, text } from './xml'
-import { parseCertificate } from './x509'
+import { parseCertificate } from '../formats/x509'
 
 const STATUS = {
   Success: 'The request succeeded',

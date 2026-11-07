@@ -79,16 +79,79 @@ npm install
 npm run dev      # start the dev server
 npm run build    # production build in dist/
 npm run lint
-npm run check:routes   # every page in src/nav.js has a hosting rule and a noindex header
+npm run check:routes   # every page in src/app/nav.js has a hosting rule and a noindex header
 ```
 
 Export a HAR from DevTools: Network tab, then "Save all as HAR with content".
 
+## Project structure
+
+```
+.
+├── index.html              Page shell: SEO tags, static splash (#boot), loads src/main.jsx
+├── public/                 Copied as-is to the site root
+│   ├── _headers, _redirects, 404.html   Netlify reads these only from the root, so they cannot move
+│   ├── favicon.ico, site.webmanifest    Stay at the root: browsers request /favicon.ico there by default
+│   ├── icons/                Favicons, app icons (192/512/maskable), apple-touch-icon, mask-icon
+│   └── images/               og-image.png (social preview), the author photo shown in the footer
+├── scripts/                Build-time checks and assets (check-routes.mjs, og-image.html), not shipped
+├── netlify.toml            Hosting config
+└── src/
+    ├── main.jsx            Entry: mounts <App>
+    ├── App.jsx             Router, layout (sidebar, main column, dock) and the open-file state
+    │
+    ├── app/                The app shell
+    │   ├── nav.js            Every tool and page (the menu and the routes). Add a page here first.
+    │   ├── boot.js           Removes the startup splash after the first painted frame
+    │   └── context.js        React contexts and defaults shared across pages (inspect a request, filters)
+    │
+    ├── pages/              Screens, one folder per tool, in the same order as nav.js
+    │   ├── har/              HAR analyzer: Overview, Issues, Waterfall, Flow, Insights, Compare, Tools
+    │   │   └── parts/          Pieces only the HAR pages use: bars, hover tip, filter bar, inspector, request list
+    │   ├── saml/             SAML analyzer: Messages, Metadata, and the "paste a message" prompt
+    │   ├── oauth/            OAuth / OIDC: Flow (+ error lookup) and Discovery & keys
+    │   ├── tokens/           Token inspector
+    │   ├── certs/            Certificate inspector
+    │   ├── windows/          Windows sign-in (Negotiate / NTLM)
+    │   ├── cookies/          Cookie analyzer
+    │   ├── guide/            The Guide: capture steps, troubleshooting by symptom, guides by topic
+    │   └── reports/          The combined "All reports" page
+    │
+    ├── components/         Pieces shared by several tools
+    │   ├── layout/           Footer, loading overlay, error boundary
+    │   ├── upload/           Drop zone, "keep my files" switch, per-tool start screen
+    │   └── shared/           ui.jsx (small primitives), authui.jsx (check lists for the auth tools), severity.js
+    │
+    ├── har/                HAR logic with no UI: parser, rule-based diagnostics, insights, summary, compare, HTML report
+    ├── saml/               SAML logic: find messages in a capture, parse, checks, signatures, metadata, SAML-tracer exports
+    ├── auth/               OAuth / token / cookie / certificate / Windows-auth logic: JWT, OIDC discovery, error lookup, verification
+    ├── formats/            Low-level readers used by more than one tool (X.509 certificates, SAML binding decode)
+    ├── reports/            Builds the downloadable reports (HTML, Markdown, JSON) for every tool, and the store the paste-in pages write to
+    ├── guides/             Help text as plain data: one file per tool, general.js (capture steps, symptoms), refs.js (links into the app)
+    │
+    ├── state/              Loading files: ingest.js (read -> parse -> analyze), progress store, "remember my files" storage, picker watcher
+    ├── hooks/              Reusable React hooks (file picker, media query)
+    ├── lib/                Small helpers with no app knowledge: formatting (utils), CSV, secret scrubbing, chart colours, "Explain this", Markdown export, paint timing
+    │
+    └── styles/             index.css imports everything IN ORDER; the order is the cascade, so do not reorder it
+        ├── tokens.css        Design tokens: colours, spacing, motion, light/dark
+        ├── components/       Reusable pieces: buttons, cards, tables, bars, filters ...
+        ├── layout/           App shell: sidebar, main column, dock, footer, overlays, loader
+        └── pages/            Per-screen styles
+```
+
+Where new code goes:
+
+- A new page or tool: add it to `src/app/nav.js`, add `public/_redirects` and `public/_headers` entries (`npm run check:routes` fails until you do), put the screen in `src/pages/<tool>/`, and its logic in a UI-free folder (`har/`, `saml/`, `auth/`).
+- Logic never imports from `pages/` or `components/`, so it can be tested without React.
+- Something used by two or more tools goes in `components/shared/` (UI) or `lib/` (no UI). Something used by one tool stays with that tool.
+- Styles: put a rule in the file whose name says what it styles. Do not reorder the imports in `styles/index.css`.
+
 ## How loading works
 
-`index.html` ships a static splash (`#boot`), so something is on screen while the JavaScript bundle downloads. The app removes it after its first painted frame (`src/boot.js`). If the bundle has not started after 10 seconds, the splash turns into a message with a Reload button.
+`index.html` ships a static splash (`#boot`), so something is on screen while the JavaScript bundle downloads. The app removes it after its first painted frame (`src/app/boot.js`). If the bundle has not started after 10 seconds, the splash turns into a message with a Reload button.
 
-Opening a file (`src/ingest.js`) is a queue: read, parse, analyze, then add the captures and open Overview in one transition. Parsing is synchronous, so the overlay is committed and painted before it runs, and it is animated by CSS so it keeps moving while the main thread is busy. It appears after 100 ms (a fast load never flashes it), stays at least 250 ms once shown, and goes away only after the new page has painted.
+Opening a file (`src/state/ingest.js`) is a queue: read, parse, analyze, then add the captures and open Overview in one transition. Parsing is synchronous, so the overlay is committed and painted before it runs, and it is animated by CSS so it keeps moving while the main thread is busy. It appears after 100 ms (a fast load never flashes it), stays at least 250 ms once shown, and goes away only after the new page has painted.
 
 ## Deploying (Netlify)
 
@@ -104,7 +167,7 @@ The site builds from this repository: build command `npm run build`, publish dir
 
 Already in place: title and description, canonical link and `og:url`, absolute Open Graph and Twitter images, structured data (`WebSite` and `WebApplication`), per-page titles, one `<h1>` per page, and `noindex` on the app pages (they are empty shells without a file). `sitemap.xml` and `robots.txt` are generated at build time for the site origin, so the domain is written in one place only.
 
-The social preview (`public/og-image.png`, 1200 × 630) is drawn from `scripts/og-image.html`. To change it, edit that file, open it in Chromium at that size and save a screenshot over the PNG. Bump the `?v=` on the image URLs in `index.html` so link previews refresh.
+The social preview (`public/images/og-image.png`, 1200 × 630) is drawn from `scripts/og-image.html`. To change it, edit that file, open it in Chromium at that size and save a screenshot over the PNG. Bump the `?v=` on the image URLs in `index.html` so link previews refresh.
 
 After the first deploy, in [Google Search Console](https://search.google.com/search-console):
 

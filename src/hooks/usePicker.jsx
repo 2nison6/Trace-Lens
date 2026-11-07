@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { watchPicker } from '../pickerWatch'
+import { watchPicker } from '../state/pickerWatch'
 
 /** Hidden file input + a function that opens it. Shared by the start screen and the toolbar. */
 export default function usePicker(onFiles, externalRef) {

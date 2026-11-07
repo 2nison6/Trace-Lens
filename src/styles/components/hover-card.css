@@ -1,0 +1,49 @@
+/* ---------- hover card (requests behind a bar) ---------- */
+.reqtip {
+  position: fixed;
+  z-index: 120;
+  pointer-events: none;
+  padding: 10px 12px;
+  background: var(--glass-solid);
+  border-radius: var(--r-m);
+  box-shadow: var(--shadow-pop);
+  font-size: 12px;
+  color: var(--t1);
+  animation: tip-in 140ms var(--ease-out);
+}
+.reqtip.instant {
+  animation: none;
+}
+@keyframes tip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+.rt-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.rt-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 2px 0;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.rt-val {
+  color: var(--t1);
+}
+.rt-more {
+  margin-top: 3px;
+  color: var(--t3);
+}
+.rt-foot {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+  color: var(--blue-text);
+}
+

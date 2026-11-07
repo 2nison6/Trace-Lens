@@ -1,0 +1,27 @@
+/* Reports */
+.rep-frame { width: 100%; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--s1); display: block; }
+.rep-opts { margin-top: 12px; }
+.rep-pick { list-style: none; margin: 14px 0; padding: 0; display: grid; gap: 2px; }
+.rep-pick li { display: grid; grid-template-columns: minmax(150px, 220px) 1fr auto; gap: 12px; align-items: center; padding: 8px 10px; border-radius: var(--r-s); }
+.rep-pick li:hover { background: var(--hover); }
+.rep-pick li.none { opacity: 0.7; }
+.rep-pick label { display: flex; gap: 10px; align-items: center; cursor: pointer; color: var(--t1); }
+.rep-pick li.none label { cursor: default; }
+.rep-pick input { accent-color: var(--blue); width: 16px; height: 16px; }
+.rep-pick .rep-go { justify-content: center; gap: 6px; white-space: nowrap; }
+.rep-combined { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--s2); }
+.rep-combined > div { display: grid; gap: 2px; min-width: 200px; flex: 1; } .rep-combined b { color: var(--t1); font-size: 13.5px; } .rep-combined span { color: var(--t2); font-size: 12.5px; }
+.rep-each { margin-top: 10px; align-items: center; }
+@media (max-width: 640px) { .rep-pick li { grid-template-columns: 1fr auto; } .rep-pick li > .dim { grid-column: 1 / -1; order: 3; } }
+
+/* Report buttons are centred, and look like buttons you can press: full-strength text and a visible edge */
+.rep-actions { justify-content: center; align-items: center; }
+.rep-each > .dim { margin-right: 4px; }
+.rep-actions .btn, .rep-pick .rep-go, .rep-combined .btn { border-color: var(--line-2); color: var(--t1); }
+.rep-actions .btn.primary { color: var(--on-lime); border-color: transparent; }
+:root[data-theme='light'] .rep-actions .btn.primary { color: #fff; }
+.rep-pick li { align-items: center; }
+.rep-pick .rep-go { justify-self: center; min-width: 84px; }
+.rep-combined { flex-direction: column; justify-content: center; text-align: center; }
+.rep-combined > div { flex: none; min-width: 0; justify-items: center; }
+.rep-combined .btn { flex: none; align-self: center; }

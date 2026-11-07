@@ -1,0 +1,68 @@
+/* ---------- segmented control ---------- */
+.seg {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+  padding: 2px;
+  background: var(--track);
+  border-radius: var(--r-s);
+  max-width: 100%;
+}
+.seg-ind {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / var(--n));
+  border-radius: calc(var(--r-s) - 2px);
+  background: var(--s3);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    inset 0 0 0 1px var(--line-2);
+  transform: translateX(calc(var(--i) * 100%));
+  transition: transform var(--t-base) var(--ease-drawer);
+}
+:root[data-theme="light"] .seg-ind {
+  background: #fff;
+}
+.seg button {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  height: calc(var(--hit) - 4px);
+  padding: 0 12px;
+  background: none;
+  border: 0;
+  border-radius: calc(var(--r-s) - 2px);
+  color: var(--t2);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    color var(--t-fast) ease,
+    transform var(--t-press) var(--ease-out);
+}
+.seg button.on {
+  color: var(--t1);
+}
+.seg button:active {
+  transform: scale(0.97);
+}
+.seg-s button {
+  padding: 0 9px;
+  font-size: 12px;
+  height: 24px;
+}
+.seg-s .seg-ind {
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+@media (max-width: 520px) {
+  .seg:not(.seg-s) {
+    display: flex;
+    overflow-x: auto;
+  }
+}
+

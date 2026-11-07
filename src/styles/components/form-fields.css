@@ -1,0 +1,52 @@
+/* ---------- form fields ---------- */
+select,
+input[type="number"],
+input[type="search"],
+input[type="text"] {
+  height: var(--hit);
+  padding: 0 10px;
+  background: var(--s2);
+  color: var(--t1);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-s);
+  max-width: 100%;
+  transition: border-color var(--t-fast) ease;
+}
+select {
+  appearance: none;
+  padding-right: 26px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--t3) 50%),
+    linear-gradient(135deg, var(--t3) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 52%,
+    calc(100% - 9px) 52%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+select option {
+  background: var(--s1);
+  color: var(--t1);
+}
+select:hover,
+input:hover {
+  border-color: var(--t3);
+}
+input[type="range"] {
+  accent-color: var(--blue-text);
+}
+kbd,
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  font: 500 11px/1 var(--mono);
+  color: var(--t3);
+  background: var(--s2);
+  border: 1px solid var(--line-2);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+}
+

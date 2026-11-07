@@ -1,8 +1,8 @@
 // Certificate inspection: read one or more pasted certificates, put them in chain order, and say what is wrong.
 // It checks structure and validity (dates, names, key strength, usage, and that each certificate was issued by the next).
 // It does NOT check revocation, and it does not know which roots your system trusts, so "is the chain trusted" is not answered.
-import { fingerprints, parseCertificate } from '../saml/x509'
-import { b64ToBytes } from '../saml/binary'
+import { fingerprints, parseCertificate } from '../formats/x509'
+import { b64ToBytes } from '../formats/binary'
 
 const f = (severity, title, detail, fix) => ({ severity, title, detail, fix })
 const DAY = 86400e3

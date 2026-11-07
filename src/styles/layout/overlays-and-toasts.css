@@ -1,0 +1,65 @@
+/* ---------- overlays ---------- */
+.modal-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--scrim);
+  backdrop-filter: blur(3px);
+}
+.modal {
+  width: min(440px, 100%);
+  padding: 18px 20px 20px;
+  background: var(--glass-solid);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-l);
+  box-shadow: var(--shadow-pop);
+}
+.modal header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.modal h2 {
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+/* Top-right of the page, just below the top bar so it never covers the Add file button. Placed with insets, not a transform:
+   Framer Motion writes its own transform onto the toast and would cancel one. */
+.toast {
+  position: fixed;
+  z-index: 95;
+  top: calc(var(--bar-h) + 12px);
+  right: 16px;
+  pointer-events: none; /* never blocks a click on the panel under it */
+  max-width: min(380px, calc(100vw - 32px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: var(--r-m);
+  background: var(--t1);
+  color: var(--bg);
+  font-weight: 600;
+  font-size: 12.5px;
+  line-height: 1.4;
+  text-wrap: balance;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.toast > svg {
+  flex: none;
+}
+.toast-error {
+  background: var(--crit);
+} /* text stays var(--bg): 7.8:1 on dark's #ff7373, 5.2:1 on light's #c42d2d */
+@media (max-width: 760px) {
+  .toast {
+    top: calc(var(--bar-h) + env(safe-area-inset-top) + 10px);
+    right: 12px;
+    max-width: calc(100vw - 24px);
+  }
+}
+

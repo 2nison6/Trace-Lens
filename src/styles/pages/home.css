@@ -1,0 +1,13 @@
+/* Home: the eight tools as 4 columns x 2 rows. Narrower screens step down (4x2 -> 2x4 -> 1 column) only when four cards cannot fit. */
+.tools-grid.home { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 14px; }
+.tools-grid.home .tool-card { min-height: 150px; }
+@media (max-width: 1180px) { .tools-grid.home { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .tools-grid.home { grid-template-columns: 1fr; } }
+
+/* The home screen is wider than a tool's start page so four cards fit in a row with room to read */
+.start.start-wide { max-width: 1180px; }
+.start-wide .start-lede { max-width: 64ch; }
+.tools-grid.home .tool-card { padding: 16px; gap: 8px; } .tools-grid.home .tool-card > span:not(.tool-ic) { font-size: 12.5px; line-height: 1.5; }
+.tools-grid.home .tool-card small { margin-top: auto; padding-top: 6px; line-height: 1.4; display: block; }
+@media (max-width: 1280px) and (min-width: 1181px) { .tools-grid.home { gap: 10px; } .tools-grid.home .tool-card { padding: 13px; } }
+

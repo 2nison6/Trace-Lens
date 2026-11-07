@@ -2,59 +2,103 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
     <!-- Primary SEO -->
-    <title>TraceLens: Troubleshoot HAR, SAML, OAuth, tokens, certificates and cookies in your browser</title>
-    <meta name="description" content="Find out why a page is slow or a sign-in broke. Eight tools for HAR files, SAML, OAuth and OpenID Connect, JWT tokens, certificates, Windows sign-in (Kerberos and NTLM) and cookies, with guides, plain-language explanations and a report for each. It all runs in your browser; nothing is uploaded." />
-    <meta name="keywords" content="HAR analyzer, HAR viewer, SAML tracer, SAML decoder, SAML metadata checker, JWT decoder, OAuth debugger, OIDC troubleshooting, SSO troubleshooting, certificate chain checker, Kerberos NTLM troubleshooting, cookie analyzer, network waterfall, compare HAR" />
+    <title>
+      TraceLens: Troubleshoot HAR, SAML, OAuth, tokens, certificates and cookies
+      in your browser
+    </title>
+    <meta
+      name="description"
+      content="Find out why a page is slow or a sign-in broke. Eight tools for HAR files, SAML, OAuth and OpenID Connect, JWT tokens, certificates, Windows sign-in (Kerberos and NTLM) and cookies, with guides, plain-language explanations and a report for each. It all runs in your browser; nothing is uploaded."
+    />
+    <meta
+      name="keywords"
+      content="HAR analyzer, HAR viewer, SAML tracer, SAML decoder, SAML metadata checker, JWT decoder, OAuth debugger, OIDC troubleshooting, SSO troubleshooting, certificate chain checker, Kerberos NTLM troubleshooting, cookie analyzer, network waterfall, compare HAR"
+    />
     <meta name="author" content="TraceLens" />
     <meta name="application-name" content="TraceLens" />
     <meta name="generator" content="Vite + React" />
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1"
+    />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
     <!-- Theme -->
     <meta name="color-scheme" content="dark light" />
-    <meta name="theme-color" content="#030407" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f3f6fc" media="(prefers-color-scheme: light)" />
+    <meta
+      name="theme-color"
+      content="#030407"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta
+      name="theme-color"
+      content="#f3f6fc"
+      media="(prefers-color-scheme: light)"
+    />
     <meta name="msapplication-TileColor" content="#1558c9" />
     <meta name="msapplication-tap-highlight" content="no" />
 
     <!-- Icons -->
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="mask-icon" href="/mask-icon.svg" color="#1558c9" />
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/icons/mask-icon.svg" color="#1558c9" />
     <link rel="manifest" href="/site.webmanifest" />
 
     <!-- Open Graph (Facebook, LinkedIn, Slack, WhatsApp, Discord) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="TraceLens" />
-    <meta property="og:title" content="TraceLens: See exactly what your network and sign-in did" />
-    <meta property="og:description" content="Eight troubleshooting tools for HAR, SAML, OAuth and OIDC, tokens, certificates, Windows sign-in and cookies. Everything runs in your browser." />
-    <meta property="og:image" content="/og-image.png?v=2" />
+    <meta
+      property="og:title"
+      content="TraceLens: See exactly what your network and sign-in did"
+    />
+    <meta
+      property="og:description"
+      content="Eight troubleshooting tools for HAR, SAML, OAuth and OIDC, tokens, certificates, Windows sign-in and cookies. Everything runs in your browser."
+    />
+    <meta property="og:image" content="/images/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="TraceLens logo above the headline &quot;See exactly what your network and sign-in did&quot;, with labels for HAR, SAML, OAuth / OIDC, Tokens, Certificates, Windows sign-in, Cookies and Guides." />
+    <meta
+      property="og:image:alt"
+      content='TraceLens logo above the headline "See exactly what your network and sign-in did", with labels for HAR, SAML, OAuth / OIDC, Tokens, Certificates, Windows sign-in, Cookies and Guides.'
+    />
     <meta property="og:locale" content="en_US" />
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="TraceLens: See exactly what your network and sign-in did" />
-    <meta name="twitter:description" content="Eight troubleshooting tools for HAR, SAML, OAuth and OIDC, tokens, certificates, Windows sign-in and cookies. Everything runs in your browser." />
-    <meta name="twitter:image" content="/og-image.png?v=2" />
-    <meta name="twitter:image:alt" content="TraceLens logo above the headline &quot;See exactly what your network and sign-in did&quot;, with labels for HAR, SAML, OAuth / OIDC, Tokens, Certificates, Windows sign-in, Cookies and Guides." />
+    <meta
+      name="twitter:title"
+      content="TraceLens: See exactly what your network and sign-in did"
+    />
+    <meta
+      name="twitter:description"
+      content="Eight troubleshooting tools for HAR, SAML, OAuth and OIDC, tokens, certificates, Windows sign-in and cookies. Everything runs in your browser."
+    />
+    <meta name="twitter:image" content="/images/og-image.png?v=2" />
+    <meta
+      name="twitter:image:alt"
+      content='TraceLens logo above the headline "See exactly what your network and sign-in did", with labels for HAR, SAML, OAuth / OIDC, Tokens, Certificates, Windows sign-in, Cookies and Guides.'
+    />
 
     <!-- iOS web app -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="TraceLens" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <meta name="format-detection" content="telephone=no" />
 
     <!-- Structured data -->
@@ -68,7 +112,12 @@
             "@id": "__SITE_URL__/#website",
             "url": "__SITE_URL__/",
             "name": "TraceLens",
-            "alternateName": ["HAR Analyzer", "HAR.lens", "SAML Tracer Analyzer", "Sign-in troubleshooting"],
+            "alternateName": [
+              "HAR Analyzer",
+              "HAR.lens",
+              "SAML Tracer Analyzer",
+              "Sign-in troubleshooting"
+            ],
             "inLanguage": "en"
           },
           {
@@ -82,7 +131,7 @@
             "browserRequirements": "Requires JavaScript",
             "isAccessibleForFree": true,
             "inLanguage": "en",
-            "image": "__SITE_URL__/og-image.png?v=2",
+            "image": "__SITE_URL__/images/og-image.png",
             "featureList": [
               "HAR analyzer: waterfall, request flow, health score, insights and comparison of captures",
               "SAML: decode messages and SAML-tracer exports, check conditions and signatures, compare with metadata",
@@ -95,13 +144,20 @@
               "A report with charts for each tool, and one report for everything, as HTML, Markdown or JSON",
               "Guides for each topic: how it works, what to capture, common errors and their causes"
             ],
-            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
             "isPartOf": { "@id": "__SITE_URL__/#website" },
             "author": {
               "@type": "Person",
               "name": "Nitish Soni",
               "url": "https://2nison6.com",
-              "sameAs": ["https://github.com/2nison6", "https://www.linkedin.com/in/-nitish-soni-/"]
+              "sameAs": [
+                "https://github.com/2nison6",
+                "https://www.linkedin.com/in/-nitish-soni-/"
+              ]
             }
           }
         ]
@@ -110,49 +166,147 @@
 
     <!-- Avoid a white flash before the stylesheet loads, and apply the saved theme early -->
     <style>
-      html { background: #030407; color-scheme: dark light; }
-      html[data-theme='light'] { background: #f3f6fc; }
+      html {
+        background: #030407;
+        color-scheme: dark light;
+      }
+      html[data-theme="light"] {
+        background: #f3f6fc;
+      }
 
       /* Boot splash: covers the page while the JavaScript bundle downloads (index.html is static, so it paints at once).
          It stays invisible for the first 200 ms so a fast load never flashes it. React never touches it (it is not inside
          #root); the app removes it after its first painted frame. */
-      #boot { --b-bg: #030407; --b-fg: #f2f4f8; --b-dim: #a9b2c3; --b-track: rgba(148, 163, 200, 0.18); --b-accent: #d4ff24;
-        position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-        padding: 24px; text-align: center; background: var(--b-bg); color: var(--b-fg); font: 14px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        animation: boot-in 300ms ease-out 200ms backwards; }
-      html[data-theme='light'] #boot { --b-bg: #f4f6fa; --b-fg: #070a12; --b-dim: #444d60; --b-track: rgba(20, 40, 90, 0.12); --b-accent: #1558c9; }
-      @media (prefers-color-scheme: light) {
-        html:not([data-theme]) #boot { --b-bg: #f4f6fa; --b-fg: #070a12; --b-dim: #444d60; --b-track: rgba(20, 40, 90, 0.12); --b-accent: #1558c9; }
+      #boot {
+        --b-bg: #030407;
+        --b-fg: #f2f4f8;
+        --b-dim: #a9b2c3;
+        --b-track: rgba(148, 163, 200, 0.18);
+        --b-accent: #d4ff24;
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 24px;
+        text-align: center;
+        background: var(--b-bg);
+        color: var(--b-fg);
+        font:
+          14px/1.5 system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        animation: boot-in 300ms ease-out 200ms backwards;
       }
-      #boot .boot-spin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--b-track); border-top-color: var(--b-accent); animation: boot-spin 0.8s linear infinite; }
-      #boot .boot-msg, #boot .boot-reload { display: none; }
-      #boot[data-state='slow'] .boot-spin { display: none; }
-      #boot[data-state='slow'] .boot-msg { display: block; max-width: 36ch; color: var(--b-dim); }
-      #boot[data-state='slow'] .boot-reload { display: inline-block; min-height: 40px; padding: 0 18px; border: 1px solid var(--b-track); border-radius: 10px; background: transparent; color: var(--b-fg); font: inherit; font-weight: 600; cursor: pointer; }
-      @keyframes boot-in { from { opacity: 0; } }
-      @keyframes boot-spin { to { transform: rotate(360deg); } }
-      @keyframes boot-pulse { 50% { opacity: 0.35; } }
+      html[data-theme="light"] #boot {
+        --b-bg: #f4f6fa;
+        --b-fg: #070a12;
+        --b-dim: #444d60;
+        --b-track: rgba(20, 40, 90, 0.12);
+        --b-accent: #1558c9;
+      }
+      @media (prefers-color-scheme: light) {
+        html:not([data-theme]) #boot {
+          --b-bg: #f4f6fa;
+          --b-fg: #070a12;
+          --b-dim: #444d60;
+          --b-track: rgba(20, 40, 90, 0.12);
+          --b-accent: #1558c9;
+        }
+      }
+      #boot .boot-spin {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 3px solid var(--b-track);
+        border-top-color: var(--b-accent);
+        animation: boot-spin 0.8s linear infinite;
+      }
+      #boot .boot-msg,
+      #boot .boot-reload {
+        display: none;
+      }
+      #boot[data-state="slow"] .boot-spin {
+        display: none;
+      }
+      #boot[data-state="slow"] .boot-msg {
+        display: block;
+        max-width: 36ch;
+        color: var(--b-dim);
+      }
+      #boot[data-state="slow"] .boot-reload {
+        display: inline-block;
+        min-height: 40px;
+        padding: 0 18px;
+        border: 1px solid var(--b-track);
+        border-radius: 10px;
+        background: transparent;
+        color: var(--b-fg);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      @keyframes boot-in {
+        from {
+          opacity: 0;
+        }
+      }
+      @keyframes boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes boot-pulse {
+        50% {
+          opacity: 0.35;
+        }
+      }
       @media (prefers-reduced-motion: reduce) {
-        #boot .boot-spin { animation: boot-pulse 1.4s ease-in-out infinite !important; animation-duration: 1.4s !important; animation-iteration-count: infinite !important; }
+        #boot .boot-spin {
+          animation: boot-pulse 1.4s ease-in-out infinite !important;
+          animation-duration: 1.4s !important;
+          animation-iteration-count: infinite !important;
+        }
       }
     </style>
-    <noscript><style>#boot { display: none !important; }</style></noscript>
+    <noscript
+      ><style>
+        #boot {
+          display: none !important;
+        }
+      </style></noscript
+    >
     <script>
       try {
-        var t = localStorage.getItem('harlens-theme');
-        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        var t = localStorage.getItem("harlens-theme");
+        if (t === "light" || t === "dark")
+          document.documentElement.setAttribute("data-theme", t);
       } catch (e) {}
       // Watchdog: if the app has not started after 10 s, or the bundle fails to load, replace the endless spinner with a message and a Reload button.
       (function () {
         function slow() {
-          var b = document.getElementById('boot');
-          if (b && !window.__harlensReady) b.setAttribute('data-state', 'slow');
+          var b = document.getElementById("boot");
+          if (b && !window.__harlensReady) b.setAttribute("data-state", "slow");
         }
         setTimeout(slow, 10000);
-        window.addEventListener('error', function (e) { if (e.target && e.target.tagName === 'SCRIPT') slow(); }, true);
-        document.addEventListener('DOMContentLoaded', function () {
-          var r = document.querySelector('#boot .boot-reload');
-          if (r) r.addEventListener('click', function () { location.reload(); });
+        window.addEventListener(
+          "error",
+          function (e) {
+            if (e.target && e.target.tagName === "SCRIPT") slow();
+          },
+          true,
+        );
+        document.addEventListener("DOMContentLoaded", function () {
+          var r = document.querySelector("#boot .boot-reload");
+          if (r)
+            r.addEventListener("click", function () {
+              location.reload();
+            });
         });
       })();
     </script>
@@ -161,13 +315,29 @@
     <div id="root"></div>
     <div id="boot" role="status" aria-label="Loading">
       <span class="boot-spin" aria-hidden="true"></span>
-      <p class="boot-msg">Still loading. This is taking longer than usual, so check your connection and reload the page.</p>
+      <p class="boot-msg">
+        Still loading. This is taking longer than usual, so check your
+        connection and reload the page.
+      </p>
       <button type="button" class="boot-reload">Reload</button>
     </div>
     <noscript>
-      <div style="font:16px/1.5 system-ui,sans-serif;color:#f5f7ff;background:#030407;padding:48px 24px;text-align:center">
-        <h1 style="margin:0 0 8px">TraceLens</h1>
-        <p>TraceLens checks HAR files, SAML, OAuth, tokens, certificates and cookies entirely in your browser, so it needs JavaScript turned on.</p>
+      <div
+        style="
+          font:
+            16px/1.5 system-ui,
+            sans-serif;
+          color: #f5f7ff;
+          background: #030407;
+          padding: 48px 24px;
+          text-align: center;
+        "
+      >
+        <h1 style="margin: 0 0 8px">TraceLens</h1>
+        <p>
+          TraceLens checks HAR files, SAML, OAuth, tokens, certificates and
+          cookies entirely in your browser, so it needs JavaScript turned on.
+        </p>
       </div>
     </noscript>
     <script type="module" src="/src/main.jsx"></script>

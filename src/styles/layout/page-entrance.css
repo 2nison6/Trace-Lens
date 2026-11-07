@@ -1,0 +1,12 @@
+/* ---------- page entrance ---------- */
+/* Enter-only on purpose: no exit animation means the next page mounts in the same commit as the route change. */
+.page {
+  animation: page-in 200ms var(--ease-out);
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+

@@ -1,0 +1,121 @@
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: var(--hit);
+  padding: 0 12px;
+  background: var(--s2);
+  color: var(--t1);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-s);
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background var(--t-fast) ease,
+    border-color var(--t-fast) ease,
+    transform var(--t-press) var(--ease-out);
+}
+.btn svg {
+  font-size: 12px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover {
+    background: var(--s3);
+  }
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn.on {
+  border-color: var(--blue-line);
+  background: var(--blue-tint);
+}
+.btn.sm {
+  height: 24px;
+  padding: 0 9px;
+  font-size: 12px;
+}
+.btn.primary {
+  background: var(--lime);
+  border-color: transparent;
+  color: var(--on-lime);
+  font-weight: 650;
+}
+.btn.primary svg {
+  color: inherit;
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn.primary:hover {
+    background: #e2ff5c;
+  }
+}
+:root[data-theme="light"] .btn.primary {
+  background: var(--blue);
+  color: #fff;
+}
+:root[data-theme="light"] .btn.primary:hover {
+  background: #1b66e0;
+}
+.btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.icon-btn {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: var(--hit);
+  height: var(--hit);
+  background: none;
+  border: 0;
+  border-radius: var(--r-s);
+  color: var(--t2);
+  transition:
+    background var(--t-fast) ease,
+    color var(--t-fast) ease,
+    transform var(--t-press) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .icon-btn:hover {
+    background: var(--hover);
+    color: var(--t1);
+  }
+}
+.icon-btn:active {
+  transform: scale(0.94);
+  background: var(--press);
+}
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--blue-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.add-files {
+  display: inline-flex;
+  border-radius: var(--r-s);
+}
+.add-files.over .btn {
+  border-color: var(--lime);
+  box-shadow: 0 0 0 3px rgba(212, 255, 36, 0.2);
+}
+@media (max-width: 760px) {
+  .btn span {
+    display: none;
+  }
+  .btn.sm span,
+  .btn.primary span {
+    display: inline;
+  }
+  .add-files .btn {
+    width: var(--hit);
+    padding: 0;
+  }
+}
+

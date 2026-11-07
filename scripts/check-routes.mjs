@@ -1,9 +1,9 @@
-// Fails when a page in src/nav.js is missing from public/_redirects or public/_headers (it would 404 on reload in production,
+// Fails when a page in src/app/nav.js is missing from public/_redirects or public/_headers (it would 404 on reload in production,
 // or be indexable by search engines). Run: npm run check:routes
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { PAGES, REPORT_PAGE } from '../src/nav.js'
+import { PAGES, REPORT_PAGE } from '../src/app/nav.js'
 import { GUIDES } from '../src/guides/index.js'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')

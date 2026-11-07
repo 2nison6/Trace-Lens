@@ -1,4 +1,54 @@
+/* Stylesheet entry. Import ORDER IS THE CASCADE: the files below used to be three long files and are split only along
+   their existing section boundaries, in the same order. Later rules deliberately override earlier ones (for example
+   .verdict is defined in pages/shared-bits.css and refined again in pages/tool-start-pages-and-guide.css), so do not
+   reorder these lines, and add new rules to the file whose name says what they style.
+
+   tokens.css       design tokens: colours, spacing, radii, motion timings, light/dark values
+   components/      reusable pieces: buttons, cards, tables, bars, filters, ...
+   layout/          the app shell: sidebar, main column, dock, footer, overlays, loader
+   pages/           per-screen styles
+*/
+
 @import './tokens.css';
-@import './components.css';
-@import './layout.css';
-@import './pages.css';
+
+/* ==========================================================================
+   Shared components. Motion rules: strong ease-out, <=300ms, press = scale(0.97),
+   hover effects only on real pointers, transitions (not keyframes) so everything is interruptible.
+   ========================================================================== */
+@import './components/buttons.css';
+@import './components/segmented-control.css';
+@import './components/switch.css';
+@import './components/form-fields.css';
+@import './components/cards.css';
+@import './components/stat-tiles.css';
+@import './components/bars.css';
+@import './components/tables.css';
+@import './components/filters.css';
+@import './components/notices-and-empty-states.css';
+@import './components/hover-card.css';
+@import './components/key-value-and-code.css';
+
+@import './layout/shell.css';
+@import './layout/sidebar.css';
+@import './layout/main-column.css';
+@import './layout/dock.css';
+@import './layout/overlays-and-toasts.css';
+@import './layout/footer.css';
+@import './layout/page-entrance.css';
+@import './layout/analyzing-loader.css';
+@import './layout/screen-reader-only.css';
+@import './layout/sidebar-tool-menu.css';
+
+/* ==========================================================================
+   Page-specific styles
+   ========================================================================== */
+@import './pages/start-screen.css';
+@import './pages/har-views.css';
+@import './pages/shared-bits.css';
+@import './pages/har-view-details.css';
+@import './pages/saml.css';
+@import './pages/tool-cards.css';
+@import './pages/tool-start-pages-and-guide.css';
+@import './pages/home.css';
+@import './pages/explain-this.css';
+@import './pages/reports.css';

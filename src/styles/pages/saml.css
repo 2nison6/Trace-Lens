@@ -1,0 +1,39 @@
+/* ---------- SAML ---------- */
+.saml-paste { width: 100%; padding: 10px 12px; background: var(--s2); color: var(--t1); border: 1px solid var(--line-2); border-radius: var(--r-s); font-family: var(--mono); font-size: 12px; resize: vertical; word-break: break-all; }
+.saml-expect { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 14px; }
+.saml-expect label { display: grid; gap: 4px; font-size: 12px; color: var(--t3); }
+.saml-expect input { width: 100%; }
+.saml-list { display: grid; gap: 8px; }
+.saml-sub { font-weight: 400; font-size: 12px; }
+.saml-steps { margin: 0 0 10px; }
+.saml-detail { display: grid; gap: 12px; padding-top: 4px; }
+.saml-sec h4 { margin: 4px 0 4px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--t3); }
+.saml-sec h5 { margin: 12px 0 6px; font-size: 12.5px; }
+.saml-kv dd { word-break: break-word; overflow-wrap: anywhere; }
+.saml-attrs td { vertical-align: top; }
+.saml-attrs td:first-child { width: 38%; }
+.saml-attrs small { font-size: 11px; }
+.saml-checks { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.saml-check { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 12px; background: var(--s2); border: 1px solid var(--line); border-left: 3px solid var(--line-2); border-radius: var(--r-s); font-size: 13px; }
+.saml-check.sev-crit { border-left-color: var(--crit-mark); } .saml-check.sev-warn { border-left-color: var(--warn); } .saml-check.sev-info { border-left-color: var(--c-ssl); } .saml-check.sev-good { border-left-color: var(--good-mark); }
+.saml-check > svg { margin-top: 3px; }
+.saml-check p { margin: 3px 0 0; color: var(--t2); font-size: 12.5px; max-width: 80ch; }
+.saml-check .sev { font-size: 12px; white-space: nowrap; }
+.saml-xml { margin: 0; max-height: 460px; overflow: auto; padding: 12px 14px; background: var(--s2); border: 1px solid var(--line); border-radius: var(--r-s); font-family: var(--mono); font-size: 12px; line-height: 1.5; white-space: pre; tab-size: 2; }
+.saml-xml:focus-visible { outline: 2px solid var(--blue-line); outline-offset: 2px; }
+
+.saml-seq-h { margin: 14px 0 6px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--t3); }
+.saml-seq { margin: 0; padding: 0; list-style: none; max-height: 340px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-s); font-size: 12.5px; }
+.saml-seq li { display: grid; grid-template-columns: 34px 46px minmax(0, 1fr) 40px auto; align-items: center; gap: 10px; min-height: 32px; padding: 0 10px; border-top: 1px solid var(--line); }
+.saml-seq li:first-child { border-top: 0; }
+.saml-seq li.has { background: var(--blue-tint); }
+.saml-seq .pill { min-height: 22px; padding: 0 9px; font-size: 11.5px; }
+.file.trace .file-b svg { color: var(--blue-text); margin-right: 2px; }
+@media (max-width: 760px) { .saml-seq li { grid-template-columns: 26px 40px minmax(0, 1fr) auto; } .saml-seq li > :nth-child(4) { display: none; } }
+
+/* a SAML-tracer export in the Files list is a link, not a button: look like the HAR entries beside it */
+a.file-b { text-decoration: none; }
+.file.trace .file-b { color: var(--t2); }
+.file.trace .file-b .ellipsis { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.file.trace .file-b .ellipsis svg { flex: none; }
+

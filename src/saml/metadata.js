@@ -3,7 +3,7 @@
 // Metadata is the "contract" between an identity provider and a service provider: entity id, endpoints, signing keys. Most failed
 // sign-ins are a mismatch between what a message says and what the other side's metadata says, so this compares them.
 import { NS, attr, child, children, parseXml, text } from './xml'
-import { parseCertificate } from './x509'
+import { parseCertificate } from '../formats/x509'
 
 const MD = 'urn:oasis:names:tc:SAML:2.0:metadata'
 const BINDING = {

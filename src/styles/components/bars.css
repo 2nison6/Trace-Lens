@@ -1,0 +1,120 @@
+/* ---------- bars (single series shares one hue; length carries the value) ---------- */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bar {
+  display: grid;
+  grid-template-columns: minmax(64px, 36%) 1fr auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 6px;
+  margin: 0 -6px;
+  border-radius: var(--r-s);
+  transition: background var(--t-fast) ease;
+}
+.bar.pick {
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  .bar.pick:hover {
+    background: var(--hover);
+  }
+  .bar.pick:hover .bar-fill {
+    filter: brightness(1.12);
+  }
+}
+.bar.pick:active {
+  background: var(--press);
+}
+.bar-label {
+  color: var(--t2);
+  font-size: 12.5px;
+}
+.bar-track {
+  display: block;
+  height: 8px;
+  background: var(--track);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  transform-origin: left;
+  transition: width var(--t-base) var(--ease-out);
+}
+.bar-val {
+  min-width: 4ch;
+  color: var(--t1);
+  font-size: 12.5px;
+}
+
+.phase-strip {
+  display: flex;
+  gap: 2px;
+  height: 20px;
+}
+.phase-seg {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 4px;
+  height: 100%;
+}
+.phase-seg i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  transition: filter var(--t-fast) ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .phase-seg:hover i {
+    filter: brightness(1.2);
+  }
+}
+.phase-seg:first-child i {
+  border-radius: 6px 3px 3px 6px;
+}
+.phase-seg:last-child i {
+  border-radius: 3px 6px 6px 3px;
+}
+.phase-key {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px 18px;
+  margin: 14px 0 0;
+}
+.phase-key div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+}
+.phase-key dt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--t2);
+}
+.phase-key dt i,
+.key-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
+  margin-right: 0;
+}
+.phase-key dd {
+  margin: 0;
+  color: var(--t1);
+}
+.phase-key small {
+  color: var(--t3);
+  margin-left: 4px;
+}
+

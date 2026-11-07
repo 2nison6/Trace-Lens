@@ -11,7 +11,7 @@
 // Two things matter for the analysis:
 //   - the extension has already decoded the message (`saml`), so there is nothing to inflate in the usual case;
 //   - the export records NO time for each request, only when the file was written. See `atIssued` below.
-import { decodePayload } from './binary'
+import { decodePayload } from '../formats/binary'
 
 const PARAMS = ['SAMLRequest', 'SAMLResponse', 'SAMLart']
 // The extension's "hash" and "obfuscate" cookie profiles replace form values with {hash:...} or {obf:N}

@@ -6,7 +6,7 @@
 //     never against a public key (using a public key as an HMAC secret is the "algorithm confusion" attack);
 //   - "alg: none" is never verified.
 import { b64urlToBytes } from './jwt'
-import { parseCertificate } from '../saml/x509'
+import { parseCertificate } from '../formats/x509'
 
 const HASH = { 256: 'SHA-256', 384: 'SHA-384', 512: 'SHA-512' }
 const CURVE = { ES256: 'P-256', ES384: 'P-384', ES512: 'P-521' }

@@ -1,6 +1,6 @@
 // Turning a report model (see build.js) into a file: a standalone HTML page, Markdown, or JSON. The HTML has no scripts and no
 // external requests, so it opens anywhere and can be printed to PDF. Charts are inline SVG that follow light and dark.
-import { explain } from '../explain'
+import { explain } from '../lib/explain'
 import { esc } from './charts'
 
 const WORD = { critical: 'Critical', warning: 'Warning', info: 'Note', ok: 'OK' }

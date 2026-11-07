@@ -6,15 +6,15 @@
 // A report is made to be sent to someone else, so it never contains the secrets a capture does: no token strings, no cookie
 // values, no SAML XML or assertions, no user names or NameIDs, and no URL query strings (those carry codes and tokens). It does
 // contain host names, paths, entity IDs, client IDs and the findings themselves.
-import { analyzeCached, healthScore } from '../analyzer'
-import { PHASES } from '../harParser'
+import { analyzeCached, healthScore } from '../har/analyzer'
+import { PHASES } from '../har/harParser'
 import { analyzeCookies, cookieBudget, sessionLifetimes } from '../auth/cookies'
 import { analyzeOAuth, analyzeTokenRequests, flowSteps } from '../auth/oauth'
 import { analyzeWindowsAuth } from '../auth/windows'
 import { checkJwt, findTokens, tokenTimeline } from '../auth/jwt'
 import { checkCertificate, shortName } from '../auth/certs'
 import { analyzeFlow, checkMessage } from '../saml/checks'
-import { fmtBytes, fmtMs, ratingOf } from '../utils'
+import { fmtBytes, fmtMs, ratingOf } from '../lib/utils'
 import { barList, rangeTimeline, stackBars } from './charts'
 
 const SEV = ['critical', 'warning', 'info']

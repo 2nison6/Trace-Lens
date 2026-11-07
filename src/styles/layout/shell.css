@@ -1,0 +1,58 @@
+/* ==========================================================================
+   App shell. Three zones: sidebar | main column | dock (inspector / request list).
+   >1100px sidebar is full; <=1100px it collapses to icons; <=760px the sidebar is replaced by a tab bar and
+   the dock becomes a bottom sheet.
+   ========================================================================== */
+.app {
+  --side-cur: var(--side-w);
+  height: 100%;
+  display: grid;
+  grid-template-columns: var(--side-cur) minmax(0, 1fr) 0px;
+  transition: grid-template-columns var(--t-base) var(--ease-drawer);
+  position: relative;
+  isolation: isolate;
+}
+.app::before {
+  /* one quiet blue wash: structure colour, not decoration */
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    70% 55% at 12% -8%,
+    rgba(21, 88, 201, 0.22),
+    transparent 70%
+  );
+}
+:root[data-theme="light"] .app::before {
+  background: radial-gradient(
+    70% 55% at 12% -8%,
+    rgba(21, 88, 201, 0.1),
+    transparent 70%
+  );
+}
+.app.side-collapsed {
+  --side-cur: 68px;
+}
+.app.has-dock {
+  grid-template-columns: var(--side-cur) minmax(0, 1fr) var(--dock-w);
+}
+@media (max-width: 1100px) {
+  .app {
+    --side-cur: 68px;
+  }
+  .app.has-dock {
+    grid-template-columns: var(--side-cur) minmax(0, 1fr) min(
+        var(--dock-w),
+        42vw
+      );
+  }
+}
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: saturate(160%) blur(22px);
+  -webkit-backdrop-filter: saturate(160%) blur(22px);
+}
+

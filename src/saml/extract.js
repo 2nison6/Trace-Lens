@@ -1,7 +1,7 @@
 // Finding SAML in a HAR. A SAML message travels as a SAMLRequest / SAMLResponse (or SAMLArt) form field or query parameter, in
 // a POST body (the HTTP-POST binding), in a redirect URL (HTTP-Redirect), in a response page that auto-submits a form to the
 // other party, or, for logout and artifact resolution, as a SOAP body. This scans every request and response for those.
-import { decodePayload } from './binary'
+import { decodePayload } from '../formats/binary'
 
 const PARAMS = ['SAMLRequest', 'SAMLResponse', 'SAMLart']
 const FIELD_RE = /(?:^|[?&;])(SAMLRequest|SAMLResponse|SAMLart)=([^&#\s]*)/g

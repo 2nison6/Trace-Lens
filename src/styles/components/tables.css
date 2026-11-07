@@ -1,0 +1,93 @@
+/* ---------- tables ---------- */
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12.5px;
+}
+.card.flush .tbl,
+.f-inner .tbl {
+  min-width: 0;
+}
+.tbl th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 11.5px;
+  color: var(--t3);
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--s1);
+}
+.tbl th.num {
+  text-align: right;
+}
+.tbl td {
+  padding: 0 12px;
+  height: 34px;
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tbl thead + tbody tr:first-child td {
+  border-top: 0;
+}
+.tbl tbody tr:first-child td {
+  border-top: 0;
+}
+.tbl tr.clickable {
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tbl tr.clickable:hover td {
+    background: var(--hover);
+  }
+}
+.tbl tr.clickable:active td {
+  background: var(--press);
+}
+.tbl tr.clickable:focus-visible {
+  outline-offset: -2px;
+}
+.card.flush {
+  overflow-x: auto;
+}
+.card.flush .tbl {
+  min-width: 560px;
+}
+.w60 {
+  width: 60px;
+}
+.w70 {
+  width: 70px;
+}
+.w90 {
+  width: 90px;
+}
+.w110 {
+  width: 110px;
+}
+.w120 {
+  width: 120px;
+}
+.tag {
+  display: inline-block;
+  padding: 1px 7px;
+  font-size: 11px;
+  color: var(--t2);
+  background: var(--s3);
+  border-radius: 999px;
+}
+.code {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0;
+}
+.code svg {
+  font-size: 11px;
+}
+

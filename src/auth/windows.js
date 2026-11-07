@@ -9,7 +9,7 @@
 //     1.2.840.48018.1.2.2). An NTLM token starts with the bytes "NTLMSSP\0", then a 32-bit message type (1, 2 or 3).
 //   - "Negotiate" with no data is the server asking the client to start. A 401 with "Negotiate <token>" is the server answering.
 //   - A browser that has no ticket falls back to NTLM wrapped in SPNEGO, or shows a prompt.
-import { b64ToBytes } from '../saml/binary'
+import { b64ToBytes } from '../formats/binary'
 
 const f = (severity, title, detail, fix) => ({ severity, title, detail, fix })
 

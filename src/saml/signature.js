@@ -16,8 +16,8 @@
 // result says which key it used so a person can compare it with the IdP's metadata.
 import { exclusiveC14n } from './c14n'
 import { NS, attr, child, children, parseXml } from './xml'
-import { b64ToBytes } from './binary'
-import { parseCertificate } from './x509'
+import { b64ToBytes } from '../formats/binary'
+import { parseCertificate } from '../formats/x509'
 
 const ALGS = {
   sig: {

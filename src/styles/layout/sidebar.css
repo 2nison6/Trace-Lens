@@ -1,0 +1,275 @@
+/* ---------- sidebar ---------- */
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 14px 10px;
+  border-right: 1px solid var(--line);
+  overflow: hidden;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  text-decoration: none;
+  color: var(--t1);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  border-radius: var(--r-s);
+}
+.brand b {
+  color: var(--lime);
+}
+:root[data-theme="light"] .brand b {
+  color: var(--blue);
+}
+.logo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--blue);
+  color: var(--lime);
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgba(21, 88, 201, 0.45);
+}
+.side nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.side nav a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: var(--hit);
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: var(--r-s);
+  color: var(--t2);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background var(--t-fast) ease,
+    color var(--t-fast) ease,
+    transform var(--t-press) var(--ease-out);
+}
+.side nav a svg {
+  flex: none;
+  width: 16px;
+  color: var(--t3);
+  transition:
+    color var(--t-fast) ease,
+    opacity var(--t-fast) ease;
+}
+.side nav a span {
+  flex: 1;
+}
+.side nav a .kbd {
+  opacity: 0;
+  transition: opacity var(--t-fast) ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .side nav a:not(.locked):hover {
+    background: var(--hover);
+    color: var(--t1);
+  }
+  .side nav a:hover .kbd {
+    opacity: 1;
+  }
+}
+.side nav a:not(.locked):active {
+  transform: scale(0.98);
+  background: var(--press);
+}
+.side nav a.active {
+  background: var(--blue-tint);
+  color: var(--t1);
+  box-shadow: inset 0 0 0 1px var(--blue-line);
+}
+.side nav a.active svg {
+  color: var(--blue-text);
+}
+.side nav a.active::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--lime);
+}
+:root[data-theme="light"] .side nav a.active::before {
+  background: var(--blue);
+}
+
+/* Locked page (needs a HAR file): still a real link, but dimmed, with no hover or press feedback. The lock sits in the
+   slot the key hint uses, so nothing shifts when it unlocks. Never styled as the current page. The cursor rule is
+   shared with the tab bar and the More sheet. */
+.side nav a.locked {
+  color: var(--t3);
+}
+.side nav a.locked > svg:first-child {
+  opacity: 0.6;
+}
+.side nav a .nav-lock {
+  width: 20px;
+  font-size: 11px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .side nav a.locked,
+  .tabbar a.locked,
+  .more-sheet a.locked {
+    cursor: not-allowed;
+  }
+}
+
+.side-h {
+  margin: 6px 8px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+.files {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.file {
+  display: flex;
+  align-items: center;
+  border-radius: var(--r-s);
+}
+.file-b {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: var(--hit);
+  padding: 0 8px;
+  background: none;
+  border: 0;
+  border-radius: var(--r-s);
+  color: var(--t2);
+  text-align: left;
+  transition:
+    background var(--t-fast) ease,
+    transform var(--t-press) var(--ease-out);
+}
+.file-b small {
+  color: var(--t3);
+}
+.file.on .file-b {
+  background: var(--hover);
+  color: var(--t1);
+  box-shadow: inset 2px 0 0 var(--blue-text);
+}
+.files .add-files {
+  margin-top: 10px;
+  align-self: flex-start;
+}
+.file-x {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  color: var(--t3);
+  opacity: 0;
+  transition:
+    opacity var(--t-fast) ease,
+    background var(--t-fast) ease;
+}
+.file:hover .file-x,
+.file-x:focus-visible {
+  opacity: 1;
+}
+.file-x:hover {
+  background: var(--hover);
+  color: var(--crit);
+}
+@media (hover: none) {
+  .file-x {
+    opacity: 1;
+  }
+}
+.side-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 4px 0;
+  border-top: 1px solid var(--line);
+}
+
+/* collapsed: icons only */
+.side-collapsed .brand-t,
+.side-collapsed .side nav a span,
+.side-collapsed .side nav a .kbd,
+.side-collapsed .files,
+.side-collapsed .side-foot .seg {
+  display: none;
+}
+.side-collapsed .side nav a {
+  justify-content: center;
+  padding: 0;
+}
+.side-collapsed .side nav a .nav-lock {
+  position: absolute;
+  left: calc(50% + 4px);
+  bottom: 5px;
+  width: auto;
+  font-size: 8px;
+} /* no room for a slot: a badge on the icon */
+.side-collapsed .side nav a.active::before {
+  left: -10px;
+}
+.side-collapsed .side-foot {
+  justify-content: center;
+  flex-direction: column;
+}
+@media (max-width: 1100px) {
+  .brand-t,
+  .side nav a span,
+  .side nav a .kbd,
+  .files,
+  .side-foot .seg {
+    display: none;
+  }
+  .side nav a {
+    justify-content: center;
+    padding: 0;
+  }
+  .side nav a .nav-lock {
+    position: absolute;
+    left: calc(50% + 4px);
+    bottom: 5px;
+    width: auto;
+    font-size: 8px;
+  }
+  .side-foot {
+    justify-content: center;
+    flex-direction: column;
+  }
+}
+
