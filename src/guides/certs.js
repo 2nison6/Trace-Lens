@@ -1,0 +1,42 @@
+export default {
+  id: 'certs', tool: 'certs', title: 'Certificates and chains',
+  lead: 'A certificate says "this public key belongs to this name", signed by an issuer. A client trusts it only if it can follow the issuers up to a root it already trusts. Most certificate errors are a missing link, a wrong name, or a date.',
+  how: [
+    ['The server sends its certificate', 'And it should send the intermediate certificates too, but not the root.'],
+    ['The client builds a chain', 'From the server\'s certificate, finding each issuer, up to a root in its trust store.'],
+    ['It checks each link', 'Signature, dates, that each issuer is allowed to issue certificates (CA:TRUE and keyCertSign), and path-length limits.'],
+    ['It checks the name', 'The host being visited must be in the certificate\'s Subject Alternative Names. The Common Name is ignored by modern clients.'],
+  ],
+  capture: ['cert'],
+  walk: [
+    ['Get what the server sends', ['Run openssl s_client -connect host:443 -showcerts and copy the BEGIN/END blocks, or open the server\'s chain file (fullchain.pem). For a SAML signing certificate, copy the X509Certificate value from the metadata.']],
+    ['Paste it all', ['Certificates → Inspect: paste everything. Order does not matter; it puts the chain in order.']],
+    ['Enter the hostname', ['Type the name the client connects to. It checks the SAN list, including how wildcards work (one level only).']],
+    ['Read the chain verdict', ['"Only the certificate itself was pasted" means the intermediate is missing: that is "unable to get local issuer certificate". "The chain stops before a root" is normal.']],
+    ['Check each certificate', ['Each card lists expiry, key strength, usage and CA constraints, with the SHA-256 fingerprint to compare with a console or a pinned value.']],
+  ],
+  errors: [
+    ['unable to get local issuer certificate / unknown authority', 'The server did not send the intermediate certificate.', 'Configure the server to send the full chain (certificate then intermediates).', 'Certificates → Inspect'],
+    ['certificate has expired / not yet valid', 'A date is outside today\'s date.', 'Renew. If "not yet valid", check the clock of the client.', 'Certificates → Inspect'],
+    ['name mismatch / hostname does not match', 'The host is not in the SAN list.', 'Reissue with the name. A wildcard covers exactly one label and not the bare domain.', 'Certificates → Inspect'],
+    ['self-signed certificate', 'The certificate is its own issuer and the client does not trust it.', 'Use a CA the client trusts, or add this certificate to the client\'s trust store.', 'Certificates → Inspect'],
+    ['certificate is not a CA / path length exceeded', 'An intermediate lacks CA:TRUE or violates the limit.', 'Reissue the CA certificate with the correct constraints.', 'Certificates → Inspect'],
+    ['weak signature / SHA-1', 'The certificate is signed with an algorithm clients reject.', 'Reissue; the CA must sign with SHA-256 or better.', 'Certificates → Inspect'],
+    ['SAML: signature does not match the certificate', 'The IdP rolled over its signing certificate.', 'Update the SP with the IdP\'s current certificate.', 'SAML → Metadata'],
+  ],
+  mistakes: [
+    'Sending the root certificate, or sending the chain in the wrong order.',
+    'Forgetting the intermediate.',
+    'Covering example.com with *.example.com (it does not).',
+    'Letting a certificate expire because nothing monitors it.',
+    'Pasting the private key anywhere. Only the certificate is ever needed.',
+  ],
+  glossary: [
+    ['Leaf', 'The server\'s own certificate.'],
+    ['Intermediate', 'A CA certificate between the leaf and the root.'],
+    ['Root', 'A self-signed CA the client trusts directly.'],
+    ['SAN', 'Subject Alternative Name: the list of names the certificate is valid for.'],
+    ['Fingerprint', 'A hash of the certificate, used to identify it.'],
+    ['CA:TRUE', 'The certificate may issue other certificates.'],
+  ],
+}

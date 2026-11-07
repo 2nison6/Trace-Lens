@@ -69,3 +69,11 @@
 # Guide
 /guide       /index.html   200
 /guide/help  /index.html   200
+/guide/har  /index.html  200
+/guide/saml  /index.html  200
+/guide/oauth  /index.html  200
+/guide/tokens  /index.html  200
+/guide/certs  /index.html  200
+/guide/windows  /index.html  200
+/guide/cookies  /index.html  200
+/guide/topics  /index.html  200

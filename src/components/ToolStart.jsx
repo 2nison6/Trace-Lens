@@ -4,6 +4,7 @@ import { faLock } from '@fortawesome/free-solid-svg-icons'
 import DropZone from './DropZone'
 import KeepFiles from './KeepFiles'
 import { CAPTURE, GUIDE_CHECKED } from '../guide'
+import { guideFor } from '../guides'
 
 // Which tool a capture guide's `for` entries belong to, by the start of the name used in src/guide.js
 const FOR = { har: ['network'], saml: ['saml'], oauth: ['oauth'], tokens: ['tokens'], cookies: ['cookies'], windows: ['windows'] }
@@ -12,6 +13,7 @@ const FOR = { har: ['network'], saml: ['saml'], oauth: ['oauth'], tokens: ['toke
 // pages. It is also what a page that needs a capture shows when none is loaded, so nothing is ever a dead end.
 export default function ToolStart({ section, onFiles, fileCount, toast, why }) {
   const pages = section.pages.filter((p) => !p.start)
+  const guide = guideFor(section.id)
   const howTo = CAPTURE.filter((c) => c.for.some((n) => FOR[section.id] && FOR[section.id].some((k) => n.toLowerCase().startsWith(k))))
   return (
     <section className="start" data-tool={section.id}>
@@ -33,10 +35,11 @@ export default function ToolStart({ section, onFiles, fileCount, toast, why }) {
                 {c.sensitive.length > 0 && <div className="guide-warn"><b>Sensitive data</b><ul>{c.sensitive.map((x) => <li key={x}>{x}</li>)}</ul></div>}
               </details>
             ))}
-            <p className="hint">Steps checked {GUIDE_CHECKED}. <NavLink to="/guide/help">The full troubleshooting guide</NavLink> has a checklist for each symptom.</p>
+            <p className="hint">Steps checked {GUIDE_CHECKED}. <NavLink to="/guide/help">The troubleshooting guide</NavLink> has a checklist for each symptom.</p>
           </div>
         </>
       )}
+      {guide && <p className="start-guide"><NavLink to={`/guide/${guide.id}`}>Read the guide: {guide.title}</NavLink> <span className="dim">how it works, a walkthrough, and the errors people hit</span></p>}
       <h2 className="tools-h">In this tool</h2>
       <ul className="tool-pages">
         {pages.map((p) => (

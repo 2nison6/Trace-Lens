@@ -91,3 +91,19 @@
   X-Robots-Tag: noindex
 /guide/help
   X-Robots-Tag: noindex
+/guide/topics
+  X-Robots-Tag: noindex
+/guide/har
+  X-Robots-Tag: noindex
+/guide/saml
+  X-Robots-Tag: noindex
+/guide/oauth
+  X-Robots-Tag: noindex
+/guide/tokens
+  X-Robots-Tag: noindex
+/guide/certs
+  X-Robots-Tag: noindex
+/guide/windows
+  X-Robots-Tag: noindex
+/guide/cookies
+  X-Robots-Tag: noindex

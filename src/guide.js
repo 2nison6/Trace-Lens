@@ -81,6 +81,18 @@ export const CAPTURE = [
     sensitive: ['A token is a credential until it expires. Paste it only into tools you trust; TraceLens does not send anything anywhere.'],
   },
   {
+    id: 'cert',
+    title: 'A certificate or a chain',
+    for: ['Certificates'],
+    steps: [
+      'From a server: run  openssl s_client -connect host:443 -showcerts  and copy each block from -----BEGIN CERTIFICATE----- to -----END CERTIFICATE-----. In a browser, click the padlock → certificate details → export.',
+      'From a file: open the .pem or .crt file in a text editor and copy its contents. A .cer or .der file is binary: convert it with  openssl x509 -inform der -in file.cer  and copy the result.',
+      'From SAML metadata or a signed message: copy the text of <X509Certificate>. It is base64 and can be pasted as it is.',
+      'Paste everything you have into Certificates → Inspect. The order does not matter.',
+    ],
+    sensitive: ['Only certificates are needed. Never paste a PRIVATE KEY block: the tool ignores it, but it should not leave the machine it belongs to.'],
+  },
+  {
     id: 'windows',
     title: 'Windows integrated authentication (Kerberos / NTLM)',
     for: ['Windows sign-in'],
@@ -156,7 +168,7 @@ export const SYMPTOMS = [
     ],
   },
   {
-    id: 'cert', title: 'A browser or client says the certificate is not trusted, or the name does not match',
+    id: 'cert-not-trusted', title: 'A browser or client says the certificate is not trusted, or the name does not match',
     check: [
       ['Certificate inspector', 'Paste what the server sends. It orders the chain, finds a missing intermediate, checks the names and dates.'],
     ],

@@ -123,7 +123,7 @@ export const SECTIONS = [
   },
   {
     id: 'guide',
-    landing: '/guide/help',
+    landing: '/guide/topics',
     label: 'Guide',
     title: 'Guide and checklists',
     blurb: 'How to capture each kind of trace, a checklist per symptom, and what these tools can and cannot tell you.',
@@ -131,7 +131,8 @@ export const SECTIONS = [
     pasteOnly: true,
     pages: [
       { to: '/guide', label: 'Start', icon: faBookOpen, start: true },
-      { to: '/guide/help', label: 'Troubleshooting guide', icon: faBookOpen },
+      { to: '/guide/topics', label: 'Guides by topic', icon: faBookOpen },
+      { to: '/guide/help', label: 'By symptom', icon: faMagnifyingGlass },
     ],
   },
 ]
