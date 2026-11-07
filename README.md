@@ -42,10 +42,6 @@ Lists every cookie a capture sets or sends, judges whether a browser would have 
 
 - Light and dark themes, keyboard shortcuts (press `?`)
 
-### Samples
-
-The start screen has "Try a sample" buttons: a working and a broken load of the same page (open both for Compare), a HAR with a working SAML sign-in, a SAML-tracer export of a failed one, an OAuth sign-in that fails with `invalid_grant`, and a login loop caused by cookies. They live in `public/demo/` and are made by `node scripts/make-demo-data.mjs`. Every host, user and token in them is invented, and the XML signatures are placeholders (the certificates' private keys were discarded), so the app can read them but nothing could verify them.
-
 ## Getting started
 
 Needs Node 20.19+ or 22.12+ (`.nvmrc` pins 22).
@@ -56,7 +52,6 @@ npm run dev      # start the dev server
 npm run build    # production build in dist/
 npm run lint
 npm run check:routes   # every page in src/nav.js has a hosting rule and a noindex header
-npm run demo:data      # regenerate the sample captures in public/demo/
 ```
 
 Export a HAR from DevTools: Network tab, then "Save all as HAR with content".

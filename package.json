@@ -21,8 +21,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "check:routes": "node scripts/check-routes.mjs",
-    "demo:data": "node scripts/make-demo-data.mjs"
+    "check:routes": "node scripts/check-routes.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",

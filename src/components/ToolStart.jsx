@@ -2,10 +2,9 @@ import { NavLink } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLock } from '@fortawesome/free-solid-svg-icons'
 import DropZone from './DropZone'
-import Demos from './Demos'
 import KeepFiles from './KeepFiles'
 
-// The first page of every tool (/har, /saml, ...): what it does, where to drop files, samples that show it off, and its other
+// The first page of every tool (/har, /saml, ...): what it does, where to drop files and its other
 // pages. It is also what a page that needs a capture shows when none is loaded, so nothing is ever a dead end.
 export default function ToolStart({ section, onFiles, fileCount, toast, why }) {
   const pages = section.pages.filter((p) => !p.start)
@@ -16,7 +15,6 @@ export default function ToolStart({ section, onFiles, fileCount, toast, why }) {
       <p className="start-lede">{section.blurb}</p>
       {why && <p className="start-why" role="status">{why}</p>}
       <DropZone onFiles={onFiles} title={fileCount ? `Drop more ${section.accepts} here` : `Drop ${section.accepts} here`} />
-      <Demos onFiles={onFiles} onError={(m) => toast(m, 'error')} ids={section.samples} />
       <KeepFiles onFiles={onFiles} fileCount={fileCount} toast={toast} />
       <h2 className="tools-h">In this tool</h2>
       <ul className="tool-pages">

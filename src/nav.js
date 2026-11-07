@@ -6,9 +6,8 @@ import {
 // of pages. One list drives the section switcher, the sidebar menu, the tab bar and the number shortcuts.
 //
 // Nothing is locked. A page that needs a capture and has none shows its tool's upload prompt instead. Each tool's first page
-// (`start: true`, at /<id>) is that upload prompt, with the tool's samples; it is what you land on when you pick the tool from
-// the home screen. `landing` is where it goes once files are opened. `accepts` is what the tool opens, in the words the upload prompt uses. `samples` are ids of the sample
-// captures (components/Demos.jsx) that show the tool off.
+// (`start: true`, at /<id>) is that upload prompt; it is what you land on when you pick the tool from
+// the home screen. `landing` is where it goes once files are opened. `accepts` is what the tool opens, in the words the upload prompt uses.
 //
 // Adding a page or a section means adding its path to public/_redirects and public/_headers too, or reloading it would 404
 // (scripts/check-routes.mjs checks this).
@@ -17,7 +16,6 @@ export const SECTIONS = [
     id: 'har',
     landing: '/har/overview',
     accepts: 'HAR files',
-    samples: ['pair', 'working', 'broken'],
     label: 'HAR analyzer',
     title: 'HAR analyzer',
     blurb: 'Waterfall, request flow, errors, slow requests and side-by-side comparison of HAR captures.',
@@ -37,7 +35,6 @@ export const SECTIONS = [
     id: 'saml',
     landing: '/saml/messages',
     accepts: 'a HAR file or a SAML-tracer export',
-    samples: ['sso', 'tracer'],
     label: 'SAML analyzer',
     title: 'SAML analyzer',
     blurb: 'Decode SAML sign-in messages and SAML-tracer exports, and check them for the usual causes of a broken sign-in.',
@@ -51,7 +48,6 @@ export const SECTIONS = [
     id: 'oauth',
     landing: '/oauth/flow',
     accepts: 'a HAR file',
-    samples: ['oauth'],
     label: 'OAuth / OIDC',
     title: 'OAuth and OpenID Connect analyzer',
     blurb: 'Follow an OAuth or OpenID Connect sign-in through a HAR, check each step, and look up what an error means.',
@@ -66,7 +62,6 @@ export const SECTIONS = [
     id: 'tokens',
     landing: '/tokens/capture',
     accepts: 'a HAR file',
-    samples: ['token'],
     label: 'Token inspector',
     title: 'Token inspector',
     blurb: 'Decode a JWT and check its expiry, audience, issuer and algorithm. Finds the tokens in a HAR too.',
@@ -81,7 +76,6 @@ export const SECTIONS = [
     id: 'cookies',
     landing: '/cookies/all',
     accepts: 'a HAR file',
-    samples: ['cookies'],
     label: 'Cookie analyzer',
     title: 'Cookie and session analyzer',
     blurb: 'Every cookie a capture sets or sends, what is wrong with it, and why a session cookie did not come back.',
