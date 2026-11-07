@@ -104,6 +104,8 @@ The site builds from this repository: build command `npm run build`, publish dir
 
 Already in place: title and description, canonical link and `og:url`, absolute Open Graph and Twitter images, structured data (`WebSite` and `WebApplication`), per-page titles, one `<h1>` per page, and `noindex` on the app pages (they are empty shells without a file). `sitemap.xml` and `robots.txt` are generated at build time for the site origin, so the domain is written in one place only.
 
+The social preview (`public/og-image.png`, 1200 × 630) is drawn from `scripts/og-image.html`. To change it, edit that file, open it in Chromium at that size and save a screenshot over the PNG. Bump the `?v=` on the image URLs in `index.html` so link previews refresh.
+
 After the first deploy, in [Google Search Console](https://search.google.com/search-console):
 
 1. Add the site as a property (a Domain property covers every subdomain; a URL-prefix property for `https://tracelens.2nison6.com/` is quicker) and verify ownership.
