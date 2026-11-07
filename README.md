@@ -8,35 +8,57 @@ Live at <https://har-analyzer.2nison6.com>.
 
 ## Tools
 
-TraceLens is a set of tools. The home screen lists them; picking one opens its own start page (where you drop files, with samples for that tool) and its menu. In the sidebar each tool is a dropdown that holds its pages, and the one you are in is open. Number keys `1` to `9` open the pages of the current tool. A page that needs a capture, opened with none loaded, shows its tool's upload prompt.
+TraceLens is a set of tools. The home screen lists them; picking one opens its own start page (where you drop files, with instructions for capturing what that tool needs) and its menu. In the sidebar each tool is a dropdown that holds its pages, and the one you are in is open. Number keys `1` to `9` open the pages of the current tool. A page that needs a capture, opened with none loaded, shows its tool's upload prompt.
 
 ### Network (HAR analyzer)
 
 - **Upload** by drag and drop or file picker, several files at once, with an overlay that shows progress
 - **Overview** with totals, phase timing, content types, hosts and status codes; click a bar to list its requests
-- **Issues** found by rule-based checks (errors, redirects, slow phases, payload size, caching, security headers, cookies) with a health score
+- **Issues** found by rule-based checks with a health score: errors, redirects, slow phases, payload size, caching and validators, security headers, cookies, rate limiting (429) and retry storms, duplicate calls, large JSON, `Authorization` header mistakes, and CORS pitfalls
 - **Waterfall** with sortable columns and filters by text, status, type, host, size and time
 - **Flow**: animated replay of requests and responses, with real-time mode and a Follow mode that isolates one request
 - **Insights**: timing estimates, critical path, third-party cost, potential savings, latency distribution, protocols, concurrency, cache lifetime and endpoint latency
-- **Compare** up to three captures
+- **Compare** up to three captures, with a **regression check**: a pass/fail against a budget you set (load time, bytes, requests, new errors, health score)
 - **Request inspector** with headers, cookies, params, response preview and copy as cURL
-- **Tools**: redact secrets from a HAR, trim and merge, export an HTML or JSON report
+- **Tools**: redact secrets from a HAR (including OAuth codes, PKCE verifiers and URLs in redirect headers), trim and merge, export an HTML or JSON report
 
 ### SAML
 
-Finds the SAML sign-in and logout messages in a capture (redirect, form post, auto-submit page and SOAP), decodes them, and shows the issuer, user, attributes, audience, validity window, status and signing certificate. It checks them for the usual causes of a broken sign-in (expired or not-yet-valid assertion, audience or ACS URL mismatch, denied status, unsigned or SHA-1 signed messages, an expired or soon-to-expire certificate) and links each response to its request. It also reads exports from the **SAML-tracer** browser extension (the JSON file from its Export button; current and pre-1.0 formats): drop one in like a HAR, or add one when the app offers to after you open a HAR that contains SAML. A SAML-tracer export records no time for each request, so the checks use the time each message says it was issued. You can also paste a `SAMLRequest` / `SAMLResponse` value, a URL, or XML with no file loaded. It reads messages; it cannot prove a signature is valid, because that needs your identity provider's key.
+- **Messages**: finds the SAML sign-in and logout messages in a capture (redirect, form post, auto-submit page and SOAP), decodes them, and shows the issuer, user, attributes, audience, validity window, status and signing certificate. Reads **SAML-tracer** exports (current and pre-1.0 formats), or a pasted value, URL or XML.
+- **Checks** for the usual causes of a broken sign-in: expired or not-yet-valid assertion, audience, ACS and Recipient mismatches, denied status, unsigned or SHA-1 signed messages, expired or soon-to-expire certificates, NameID and attribute problems (empty values, Microsoft Entra group overage), and the sign-in as a whole (SP- or IdP-initiated, request and response agreement, timing, clock skew), with hints for Entra ID, Okta, ADFS, Keycloak, Shibboleth, Google and others.
+- **Verify signature**: checks an XML signature in the browser against the identity provider's certificate you paste (exclusive canonicalization, RSA and ECDSA). It refuses duplicate IDs, signatures placed in the wrong element, and unsupported transforms, which are how signature-wrapping attacks work.
+- **Metadata**: paste IdP or SP metadata; it checks expiry, endpoints and certificates, and compares them with the messages in the trace (entity ID, ACS URL, audience, Recipient, signing certificate not in the published metadata).
 
 ### OAuth / OpenID Connect
 
-Finds each sign-in in a HAR (authorization request, the response to the app, the token request) and compares the steps with each other: `redirect_uri` that differs between requests, `state` that does not come back, a PKCE verifier that does not match its challenge, a missing or wrong `nonce`, dropped scopes, a client secret sent from the browser, and an ID token with the wrong audience or an expired time. An **Error lookup** page explains `invalid_grant`, `redirect_uri_mismatch`, `AADSTS…` codes and about sixty other errors, and works with nothing loaded. The browser only shows its own side: when the app's server makes the token request, it is not in a browser capture, and the tool says so.
+- **Flow**: finds each sign-in in a HAR (authorization request, the response to the app, the token request) and compares the steps: `redirect_uri` that differs, `state` that does not come back, a PKCE verifier that does not match its challenge, a missing or wrong `nonce`, dropped scopes, a client secret sent from the browser, an ID token with the wrong audience. Also every token request: refresh-token reuse, device flow, client credentials, the password grant.
+- **Discovery & keys**: paste `/.well-known/openid-configuration` and the JWKS; checks them, compares them with the sign-in, and tells you whether a token's `kid` is in the key set (a missing one means the keys rotated).
+- **Error lookup**: `invalid_grant`, `redirect_uri_mismatch`, `AADSTS…` and about sixty other errors, with usual causes and fixes. Works with nothing loaded.
+
+The browser only shows its own side: when the app's server makes the token request, it is not in a browser capture, and the tool says so.
 
 ### Tokens
 
-Paste a JWT, or list the tokens found in a loaded HAR (Authorization headers, URL and form parameters, JSON responses, cookies). Checks expiry, not-before, issued-at, issuer, audience, scopes, the algorithm (`none`, shared-secret tokens, embedded key sources), dates written in milliseconds instead of seconds, and a missing `exp`. It decodes; it cannot verify a signature, which needs the issuer's key.
+- **Inspect**: paste a JWT; checks expiry, not-before, issuer, audience, scopes, the algorithm, dates written in milliseconds, and provider-specific claim gotchas (Entra v1 vs v2, group overage, Cognito, Okta, Auth0, Google).
+- **Verify the signature** against a pasted public key, certificate, JWK or JWKS (RS/PS/ES/HS 256, 384, 512). A token that says HS256 is only checked against a pasted secret, never against a public key, and `alg: none` is never accepted.
+- **In capture / Timeline**: the tokens found in a HAR (headers, URLs, forms, JSON responses, cookies), and when each was issued, valid, used and rejected.
+- **Compare**: two tokens claim by claim, the differences that matter first.
+
+### Certificates
+
+Paste a certificate or a chain in any order. It orders the chain, finds a missing intermediate, and checks dates, names (SAN, wildcard rules), key strength, key usage and CA constraints. It does not check revocation or which roots your system trusts.
+
+### Windows sign-in (Kerberos / NTLM)
+
+Follows `Negotiate` and `NTLM` handshakes in a HAR: whether the browser answered the 401, Kerberos or NTLM, whether the NTLM handshake finished, oversized Kerberos tokens, and connection changes that break NTLM. A lookup page decodes tokens and Kerberos error codes.
 
 ### Cookies
 
-Lists every cookie a capture sets or sends, judges whether a browser would have stored each one (Secure over HTTP, `SameSite=None` without `Secure`, `__Host-` and `__Secure-` prefixes, wrong `Domain`, third-party context, size), and replays the capture against a model of the browser's cookie jar to find cookies that should have been sent and were not. Chrome's default "Save all as HAR" removes cookies; the tool says so when it sees none. It cannot see the browser's own privacy settings, so a missing cookie may have been blocked by one of those.
+Lists every cookie a capture sets or sends and judges whether a browser would have stored each one, then replays the capture against a model of the cookie jar to find cookies that should have been sent and were not. **Browsers** shows what happens to third-party cookies in Chrome, Edge, Firefox and Safari (the rules are dated). **Size & lifetime** shows which cookies fill the `Cookie` header and how long sessions last. Chrome's default export removes cookies; the tool says so when it sees none.
+
+### Guide
+
+How to capture each kind of trace in each browser (including the Chrome setting that keeps cookies and tokens), a checklist per symptom that links to the right pages, and what the tools cannot tell you. The same capture steps appear on each tool's start page.
 
 ### Everywhere
 
@@ -90,4 +112,12 @@ React, Vite, React Router, Framer Motion, Font Awesome Free.
 
 ## Privacy
 
-HAR files are parsed in memory in your browser and are never sent anywhere. Files are not saved, so a reload clears them. HAR files often contain live tokens and cookies; use Tools > Scrubber before sharing one.
+Captures, tokens, keys and certificates are processed in memory in your browser and are never sent anywhere; the app makes no network requests once it has loaded, which is also why it cannot fetch a metadata document, discovery document or JWKS for you (open the URL and paste it). Files are not saved unless you turn on "Keep my files on this device", and then only in this browser. Captures often contain live tokens and cookies: use Network > Tools > Scrub before sharing one.
+
+## What it cannot do
+
+- It reads what the browser saw. A call the application's server makes (for example exchanging an authorization code for tokens) is not in a browser capture.
+- It cannot see a browser's settings, extensions or policies, so a cookie that should have been sent and was not may have been blocked.
+- Signature checks say whether the key you pasted signed the message, not whether you should trust that key.
+- Findings are leads, not verdicts: confirm them in the identity provider's and the application's logs.
+- Tested with generated and spec-conformant data and with tokens, signatures and certificates made by independent tools (OpenSSL, Python `cryptography`, `signxml`, `pyspnego`, `impacket`). It has not been run against real Okta, Entra ID, Keycloak or ADFS captures.
