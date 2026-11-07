@@ -161,3 +161,138 @@ export function linkExchange(items) {
 }
 
 export const _skew = skew
+
+// ---------------------------------------------------------------------------------------------------------------- flow-level analysis
+// Looks at the messages of one sign-in together: who started it, whether the request and response agree, how long it took, and
+// which identity provider it looks like. Takes the items the SAML page builds ({ parsed, entry, at, source }).
+
+const PROVIDERS = [
+  { name: 'Microsoft Entra ID / Azure AD', test: (m) => /sts\.windows\.net|login\.microsoftonline\.com/i.test(m.issuer || '') || /schemas\.microsoft\.com\/identity\/claims/.test(JSON.stringify((m.assertions || []).flatMap((a) => a.attributes.map((x) => x.name)))),
+    tips: ['The Entity ID (audience) must match the "Identifier (Entity ID)" in the enterprise application exactly, including a trailing slash.', 'A user must be assigned to the application, unless assignment is not required (error AADSTS50105).', 'Group claims are sent as object IDs, and are replaced by a link when a user is in more than 150 groups (group overage).'] },
+  { name: 'Okta', test: (m) => /okta\.com|oktapreview\.com/i.test(m.issuer || ''),
+    tips: ['The ACS URL, audience and Name ID format in the Okta app must match the service provider\'s metadata.', 'A user must be assigned to the application, directly or through a group.', 'Okta signs the assertion by default; the response signature is optional ("Response" under Signature settings).'] },
+  { name: 'Active Directory Federation Services (ADFS)', test: (m) => /\/adfs\/services\/trust|adfs/i.test(m.issuer || ''),
+    tips: ['ADFS uses claim rules to build the assertion: a missing attribute usually means a missing or failing claim rule.', 'The Relying Party Trust identifier must match the audience, and its endpoint must match the ACS URL.', 'Token-signing certificates roll over automatically: the service provider needs the new one (check the federation metadata).'] },
+  { name: 'Google Workspace', test: (m) => /accounts\.google\.com\/o\/saml2/i.test(m.issuer || ''),
+    tips: ['Name ID defaults to the primary email address; check the format the service provider expects.', 'Changes in the Admin console can take a few minutes to apply.'] },
+  { name: 'Keycloak', test: (m) => /\/realms\//i.test(m.issuer || ''),
+    tips: ['Check "Valid redirect URIs" and the client\'s "Name ID format" in the realm.', '"Client signature required" must match whether the SP signs its requests.'] },
+  { name: 'Shibboleth IdP', test: (m) => /\/idp\/shibboleth|shibboleth/i.test(m.issuer || ''),
+    tips: ['Attributes are released by the attribute filter policy: a missing attribute is usually a missing release rule.', 'The relying-party metadata must be loaded and current for the SP.'] },
+  { name: 'PingFederate / PingOne', test: (m) => /pingone|pingidentity|pingfederate/i.test(m.issuer || ''),
+    tips: ['Check the SP connection\'s entity ID, ACS URL and attribute contract.'] },
+  { name: 'OneLogin', test: (m) => /onelogin\.com/i.test(m.issuer || ''), tips: ['Check the application\'s "Audience (EntityID)" and "ACS URL Validator" settings.'] },
+  { name: 'Auth0', test: (m) => /auth0\.com/i.test(m.issuer || '') || /^urn:[a-z0-9-]+\.auth0\.com/i.test(m.issuer || ''), tips: ['Check the SAML2 Web App add-on: Audience, Callback URL (ACS) and the mappings.'] },
+  { name: 'SimpleSAMLphp', test: (m) => /simplesaml/i.test(m.issuer || ''), tips: ['Check the SP entry in saml20-sp-remote.php: AssertionConsumerService and the certificate.'] },
+]
+
+/** Which identity provider the first response looks like, with its common gotchas. Null when nothing matches. */
+export function identifyProvider(items) {
+  for (const it of items) {
+    const m = it.parsed
+    if (!m || m.error || m.type !== 'Response') continue
+    const hit = PROVIDERS.find((p) => p.test(m))
+    if (hit) return { name: hit.name, tips: hit.tips, issuer: m.issuer }
+  }
+  return null
+}
+
+/**
+ * Findings that need several messages: initiation style, timing, request/response agreement, clock skew.
+ * `items`: [{ parsed, entry, at, source, atIssued }] in capture order. Returns { checks, flow } where flow is 'sp' | 'idp' | 'unknown'.
+ */
+export function analyzeFlow(items) {
+  const checks = []
+  const msgs = items.filter((i) => i.parsed && !i.parsed.error)
+  const requests = msgs.filter((i) => i.parsed.type === 'AuthnRequest')
+  const responses = msgs.filter((i) => i.parsed.type === 'Response')
+  if (!responses.length && !requests.length) return { checks, flow: 'unknown' }
+  let flow = 'unknown'
+  if (responses.length) {
+    const unsolicited = responses.filter((r) => !r.parsed.inResponseTo)
+    if (unsolicited.length === responses.length) {
+      flow = 'idp'
+      checks.push({ severity: 'info', title: 'IdP-initiated sign-in', detail: 'The response has no InResponseTo and no request came before it: the user started at the identity provider (a tile or bookmark), not at the application. Many service providers refuse these, or need a setting that allows unsolicited responses. They also cannot verify the response answers a request they made, so they are more open to replay.', fix: 'If the application rejects it, start the sign-in from the application instead, or enable "allow IdP-initiated SSO" on the service provider.' })
+    } else flow = 'sp'
+  } else if (requests.length) flow = 'sp'
+  if (flow === 'sp') {
+    for (const r of responses) {
+      const req = requests.find((q) => q.parsed.id === r.parsed.inResponseTo)
+      if (r.parsed.inResponseTo && !req && requests.length) checks.push({ severity: 'warning', title: 'The response answers a request that is not in this trace', detail: `InResponseTo = ${r.parsed.inResponseTo}, but the AuthnRequest in the trace has ID ${requests.map((q) => q.parsed.id).join(', ')}. Usually a second sign-in attempt, or the request happened before the capture started. If the SP stores the request ID in a session cookie that was lost, it will reject this as "InResponseTo mismatch".`, fix: '' })
+      if (req) {
+        const a = req.parsed.request
+        // the response must go to where the request asked
+        if (a && a.acsUrl && r.parsed.destination && a.acsUrl !== r.parsed.destination) checks.push({ severity: 'critical', title: 'The response went to a different address than the request asked for', detail: `The request asked for ${a.acsUrl}; the response's Destination is ${r.parsed.destination}.`, fix: 'The identity provider ignored the ACS URL in the request and used its own configured one. Make them equal.' })
+        if (a && a.nameIdPolicy && a.nameIdPolicy.format) {
+          const got = (r.parsed.assertions || []).map((x) => x.nameId && x.nameId.format).filter(Boolean)
+          if (got.length && got.every((g) => g !== a.nameIdPolicy.format)) checks.push({ severity: 'warning', title: 'The NameID format is not the one requested', detail: `Requested ${a.nameIdPolicy.formatName}; the assertion uses ${got.map((g) => g.split(':').pop()).join(', ')}.`, fix: 'Align the NameID format on both sides, or the SP may not find the user.' })
+        }
+        if (a && a.authnContext && a.authnContext.classRefs.length) {
+          const got = (r.parsed.assertions || []).map((x) => x.authn && x.authn.context).filter(Boolean)
+          if (got.length && !got.some((g) => a.authnContext.classRefs.includes(g))) checks.push({ severity: 'warning', title: 'The authentication method is not what was requested', detail: `Requested ${a.authnContext.classRefs.map((x) => x.split(':').pop()).join(' or ')} (${a.authnContext.comparison}); the assertion says ${got.map((g) => g.split(':').pop()).join(', ')}. A strict SP rejects this.`, fix: '' })
+        }
+      }
+    }
+  }
+  // timing between request and response
+  for (const r of responses) {
+    const req = requests.find((q) => q.parsed.id === r.parsed.inResponseTo)
+    if (!req) continue
+    const t1 = Date.parse(req.parsed.issueInstant), t2 = Date.parse(r.parsed.issueInstant)
+    if (Number.isFinite(t1) && Number.isFinite(t2)) {
+      const gap = t2 - t1
+      if (gap < -tolDefault) checks.push({ severity: 'critical', title: 'The response is dated before the request it answers', detail: `The request says ${req.parsed.issueInstant}; the response ${r.parsed.issueInstant}, ${fmtDur(-gap)} earlier. The two sides' clocks disagree.`, fix: 'Synchronise both servers\' clocks (NTP).' })
+      else if (gap > 10 * 60000) checks.push({ severity: 'warning', title: `The sign-in took ${fmtDur(gap)}`, detail: 'From request to response. Long gaps (a user who left the login page open, MFA, an approval) can exceed the SP\'s limit on how old a request may be.', fix: '' })
+    }
+  }
+  // clock skew: the time the browser says it happened vs the time the IdP wrote (HAR only: the Date header of the response is the web server's clock)
+  for (const r of responses) {
+    const issued = Date.parse(r.parsed.issueInstant)
+    if (r.at != null && Number.isFinite(issued) && !r.atIssued) {
+      const skewMs = issued - r.at
+      if (Math.abs(skewMs) > 2 * 60000) checks.push({ severity: Math.abs(skewMs) > 5 * 60000 ? 'warning' : 'info', title: `The IdP's clock differs from the capture's by ${fmtDur(skewMs)}`, detail: `The response says it was issued at ${r.parsed.issueInstant}; the browser recorded the request at ${new Date(r.at).toISOString()}. Most service providers allow about 5 minutes. (The capturing machine's own clock may be the one that is off.)`, fix: 'Check NTP on the identity provider and on the service provider.' })
+    }
+  }
+  const prov = identifyProvider(items)
+  return { checks, flow, provider: prov }
+}
+const tolDefault = 5 * 60000
+
+// ---------------------------------------------------------------------------------------------------------------- attributes
+const ENTRA_GROUPS = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/groups'
+const ENTRA_OVERAGE = ['http://schemas.microsoft.com/claims/groups.link', 'http://schemas.microsoft.com/claims/CommonStream']
+const EMAILISH = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/** Checks on what an assertion says about the user. `expect.attributes`: names the service provider needs. */
+export function checkAttributes(msg, { expect = {} } = {}) {
+  const out = []
+  for (const [i, a] of (msg.assertions || []).entries()) {
+    const tag = (msg.assertions || []).length > 1 ? `Assertion ${i + 1}` : 'The assertion'
+    const names = a.attributes.map((x) => x.name)
+    if (!a.attributes.length) out.push({ severity: 'info', title: `${tag} carries no attributes`, detail: 'Only the NameID identifies the user. Fine if the service provider needs nothing else; if it expects a name, email or groups, the identity provider is not releasing them.', fix: 'Add the attributes to the IdP\'s release / claim configuration for this application.' })
+    for (const x of a.attributes) {
+      if (!x.values.length || x.values.every((v) => v === '')) out.push({ severity: 'warning', title: `The attribute "${x.friendlyName || x.name.split(/[/:]/).pop()}" is empty`, detail: 'It is released, but with no value. The user probably has nothing in that field in the directory.', fix: 'Fill the field for the user, or map a different source attribute.' })
+      if (x.values.length > 50) out.push({ severity: 'info', title: `The attribute "${x.friendlyName || x.name.split(/[/:]/).pop()}" has ${x.values.length} values`, detail: 'Large attribute values make the response (and the form post) big. Some servers reject posts over 1 MB.', fix: '' })
+    }
+    // Entra group overage: more than 150 groups -> groups are NOT in the assertion, a link is
+    const overage = a.attributes.find((x) => ENTRA_OVERAGE.includes(x.name))
+    if (overage) out.push({ severity: 'critical', title: 'Group overage: the user\'s groups are NOT in the assertion', detail: 'The user belongs to too many groups for Microsoft Entra ID to list in the token (over 150 for SAML), so it sends a link to look them up instead. A service provider that expects the groups in the assertion sees none and denies access.', fix: 'In the Entra app, send only the groups assigned to the application ("Groups assigned to the application"), or use group filtering / app roles instead of all groups.' })
+    const groups = a.attributes.find((x) => x.name === ENTRA_GROUPS)
+    if (groups && groups.values.length && groups.values.every((v) => /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(v))) out.push({ severity: 'info', title: 'Groups are sent as object IDs (GUIDs)', detail: 'The service provider has to be configured with group IDs, not names. A role mapping written with group names never matches.', fix: 'Map the GUIDs, or change the claim to send group names (sAMAccountName / cloud-only names).' })
+    // NameID that is not what it claims
+    if (a.nameId && a.nameId.value) {
+      const fmt = a.nameId.format || ''
+      if (/emailAddress/.test(fmt) && !EMAILISH.test(a.nameId.value)) out.push({ severity: 'warning', title: 'The NameID is declared an email address, but is not one', detail: `Format emailAddress, value "${a.nameId.value}".`, fix: 'Send an email address, or change the NameID format to match what is sent.' })
+      if (/transient/.test(fmt)) out.push({ severity: 'info', title: 'A transient NameID', detail: 'The value changes every sign-in, so a service provider cannot recognise a returning user by it. Fine only if the application identifies users by an attribute.', fix: '' })
+      if (/persistent/.test(fmt) && EMAILISH.test(a.nameId.value)) out.push({ severity: 'info', title: 'A persistent NameID that looks like an email', detail: 'Persistent identifiers should be opaque and stable. An email address changes when a user is renamed.', fix: '' })
+      if (a.nameId.raw && /^\s|\s$/.test(a.nameId.raw)) out.push({ severity: 'warning', title: 'The NameID has leading or trailing whitespace', detail: `The raw value is ${JSON.stringify(a.nameId.raw)}.`, fix: 'Trim it at the source; a service provider that matches it exactly will not find the user.' })
+      const upper = /[A-Z]/.test(a.nameId.value) && EMAILISH.test(a.nameId.value)
+      if (upper) out.push({ severity: 'info', title: 'The NameID email contains capital letters', detail: 'Some service providers compare it case-sensitively against a lower-case user record.', fix: '' })
+    }
+    for (const want of expect.attributes || []) {
+      const hit = a.attributes.find((x) => x.name === want || x.friendlyName === want || x.name.split(/[/:]/).pop() === want)
+      if (!hit) out.push({ severity: 'critical', title: `The attribute "${want}" is missing`, detail: `The assertion carries: ${names.map((n) => n.split(/[/:]/).pop()).join(', ') || 'none'}. Names are compared as the full URI, the friendly name, or the last part.`, fix: 'Add it to the IdP\'s attribute release for this application, and check the name matches exactly (case counts).' })
+    }
+  }
+  return out
+}

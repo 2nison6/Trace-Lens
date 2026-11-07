@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faArrowRight, faCircleCheck, faCircleExclamation, faCircleInfo, faClipboard, faCopy, faSignature, faDownload, faFileImport, faKey, faTriangleExclamation, faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons'
-import { checkMessage, linkExchange } from '../saml/checks'
+import { analyzeFlow, checkAttributes, checkMessage, linkExchange } from '../saml/checks'
 import { extractSaml, fromPasted } from '../saml/extract'
 import { parseSamlXml } from '../saml/parse'
 import { fingerprints } from '../saml/x509'
@@ -11,6 +11,7 @@ import { countSignatures, verifyXmlSignature } from '../saml/signature'
 import { copyText, fmtMs } from '../utils'
 import { download } from '../scrub'
 import usePicker from '../hooks/usePicker'
+import { CheckList } from './authui'
 import { Card, EmptyState, Notice, Segmented, Switch } from './ui'
 
 const ICON = { critical: faCircleExclamation, warning: faTriangleExclamation, info: faCircleInfo, ok: faCircleCheck }
@@ -131,7 +132,7 @@ function VerifyBox({ xml, cert, setCert }) {
 }
 
 function Detail({ item, parsed, link, fps, now, expect, notify, cert, setCert }) {
-  const checks = useMemo(() => checkMessage(parsed, { now, expect, fingerprints: fps }), [parsed, now, expect, fps])
+  const checks = useMemo(() => [...checkMessage(parsed, { now, expect, fingerprints: fps }), ...checkAttributes(parsed, { expect })].sort((a, b) => ['critical', 'warning', 'info', 'ok'].indexOf(a.severity) - ['critical', 'warning', 'info', 'ok'].indexOf(b.severity)), [parsed, now, expect, fps])
   const [tab, setTab] = useState('summary')
   const p = parsed
   const linked = link && link.request
@@ -249,7 +250,8 @@ export default function Saml({ har, traces = [], pasted, setPasted, onFiles, toa
   // tomorrow would otherwise look expired). Pasted messages have no capture time and are checked against now.
   const [atCapture, setAtCapture] = useState(true)
   const [loadedAt] = useState(() => Date.now()) // one fixed 'now' for the page, so the checks do not change while it is open
-  const [expect, setExpect] = useState({ audience: '', acs: '', fingerprint: '' })
+  const [expectIn, setExpect] = useState({ audience: '', acs: '', fingerprint: '', attributesText: '' })
+  const expect = useMemo(() => ({ ...expectIn, attributes: expectIn.attributesText.split(/[\s,]+/).filter(Boolean) }), [expectIn])
   const [fps, setFps] = useState({})
   const [cert, setCert] = useState('') // the identity provider's certificate, pasted once and used to verify every message
 
@@ -267,6 +269,7 @@ export default function Saml({ har, traces = [], pasted, setPasted, onFiles, toa
     return all.map((it) => ({ ...it, parsed: it.xml ? parseSamlXml(it.xml) : null }))
   }, [found, traceItems, pasted])
   const links = useMemo(() => linkExchange(items.filter((i) => i.parsed && !i.parsed.error && i.entry)), [items])
+  const flow = useMemo(() => analyzeFlow(items), [items])
 
   // certificate fingerprints are computed once per certificate, for the details and the "expected fingerprint" check
   useEffect(() => {
@@ -346,7 +349,7 @@ export default function Saml({ har, traces = [], pasted, setPasted, onFiles, toa
           const p = it.parsed
           const bad = !p || p.error
           const isOpen = open === it.id
-          const checks = !bad && isOpen ? checkMessage(p, { now: asOf(it), expect, fingerprints: fps }) : null
+          const checks = !bad && isOpen ? [...checkMessage(p, { now: asOf(it), expect, fingerprints: fps }), ...checkAttributes(p, { expect })] : null
           const worst = checks ? (checks.find((f) => f.severity === 'critical') ? 'critical' : checks.find((f) => f.severity === 'warning') ? 'warning' : 'ok') : null
           const status = !bad && p.status ? (p.status.success ? 'Success' : p.status.subCodeName || p.status.codeName) : ''
           return (
@@ -373,6 +376,19 @@ export default function Saml({ har, traces = [], pasted, setPasted, onFiles, toa
       </div>
 
 
+
+      {(flow.flow !== 'unknown' || flow.checks.length > 0 || flow.provider) && (
+        <Card title="The sign-in as a whole" aside={<span className="t-cap">{flow.flow === 'sp' ? 'Started at the application (SP-initiated)' : flow.flow === 'idp' ? 'Started at the identity provider (IdP-initiated)' : ''}</span>}>
+          {flow.checks.length > 0 && <CheckList checks={flow.checks} />}
+          {flow.provider && (
+            <div className="saml-sec">
+              <h4>Looks like {flow.provider.name}</h4>
+              <ul className="bullets">{flow.provider.tips.map((x) => <li key={x}>{x}</li>)}</ul>
+              <p className="hint">Guessed from the issuer ({flow.provider.issuer}). These are the usual causes for this provider, not findings about your trace.</p>
+            </div>
+          )}
+        </Card>
+      )}
       {!har && !traces.length && !pasted.length && <EmptyState icon={faKey} title="No capture loaded">Open a HAR file or a SAML-tracer export, or paste a message below.</EmptyState>}
 
       <Card title="SAML-tracer export" aside={<FontAwesomeIcon icon={faFileImport} className="dim" />}>
@@ -398,9 +414,10 @@ export default function Saml({ har, traces = [], pasted, setPasted, onFiles, toa
 
       <Card title="Check against what you expect" aside={<span className="t-cap">optional</span>}>
         <div className="saml-expect">
-          <label>Your SP entity ID (the audience)<input type="text" value={expect.audience} onChange={(e) => setExpect({ ...expect, audience: e.target.value })} placeholder="https://sp.example.com/metadata" spellCheck={false} /></label>
-          <label>Your ACS URL<input type="text" value={expect.acs} onChange={(e) => setExpect({ ...expect, acs: e.target.value })} placeholder="https://sp.example.com/acs" spellCheck={false} /></label>
-          <label>IdP certificate fingerprint<input type="text" value={expect.fingerprint} onChange={(e) => setExpect({ ...expect, fingerprint: e.target.value })} placeholder="SHA-256 or SHA-1, with or without colons" spellCheck={false} /></label>
+          <label>Your SP entity ID (the audience)<input type="text" value={expectIn.audience} onChange={(e) => setExpect({ ...expectIn, audience: e.target.value })} placeholder="https://sp.example.com/metadata" spellCheck={false} /></label>
+          <label>Your ACS URL<input type="text" value={expectIn.acs} onChange={(e) => setExpect({ ...expectIn, acs: e.target.value })} placeholder="https://sp.example.com/acs" spellCheck={false} /></label>
+          <label>IdP certificate fingerprint<input type="text" value={expectIn.fingerprint} onChange={(e) => setExpect({ ...expectIn, fingerprint: e.target.value })} placeholder="SHA-256 or SHA-1, with or without colons" spellCheck={false} /></label>
+          <label>Attributes your SP needs<input type="text" value={expectIn.attributesText} onChange={(e) => setExpect({ ...expectIn, attributesText: e.target.value })} placeholder="mail, department, groups" spellCheck={false} /></label>
         </div>
         <p className="hint">The checks cannot know your configuration. Enter these to find a mismatch with it, the usual cause of "audience restriction failed" and "invalid signature" errors.</p>
       </Card>

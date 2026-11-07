@@ -67,7 +67,7 @@ function readNameId(el) {
   const n = child(el, NS.saml, 'NameID')
   if (!n) return child(el, NS.saml, 'EncryptedID') ? { encrypted: true } : null
   const fmt = attr(n, 'Format') || ''
-  return { value: text(n), format: fmt, formatName: NAMEID_FORMATS[fmt] || lastPart(fmt), spNameQualifier: attr(n, 'SPNameQualifier') || '', nameQualifier: attr(n, 'NameQualifier') || '' }
+  return { value: text(n), raw: n.textContent || '', format: fmt, formatName: NAMEID_FORMATS[fmt] || lastPart(fmt), spNameQualifier: attr(n, 'SPNameQualifier') || '', nameQualifier: attr(n, 'NameQualifier') || '' }
 }
 
 function readConditions(c) {
