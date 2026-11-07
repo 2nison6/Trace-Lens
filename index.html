@@ -9,13 +9,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
     <!-- Primary SEO -->
-    <title>
-      TraceLens: Troubleshoot HAR, SAML, OAuth, tokens, certificates and cookies
-      in your browser
-    </title>
+    <title>TraceLens: HAR, SAML, OAuth and sign-in troubleshooting</title>
     <meta
       name="description"
-      content="Find out why a page is slow or a sign-in broke. Eight tools for HAR files, SAML, OAuth and OpenID Connect, JWT tokens, certificates, Windows sign-in (Kerberos and NTLM) and cookies, with guides, plain-language explanations and a report for each. It all runs in your browser; nothing is uploaded."
+      content="Find out why a page is slow or a sign-in broke. Analyze HAR, SAML, OAuth, tokens, certificates and cookies in your browser. Nothing is uploaded."
     />
     <meta
       name="keywords"
@@ -174,6 +171,18 @@
         background: #f3f6fc;
       }
 
+      /* The crawler-readable copy of the home page inside #root (see seoShell in vite.config.js). It is only for readers that do not
+         run JavaScript, so keep it out of sight; React replaces it on mount. Clipped, not display:none, so it stays in the text. */
+      #root > main[data-seo-shell] {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
       /* Boot splash: covers the page while the JavaScript bundle downloads (index.html is static, so it paints at once).
          It stays invisible for the first 200 ms so a fast load never flashes it. React never touches it (it is not inside
          #root); the app removes it after its first painted frame. */
@@ -312,7 +321,9 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Plain HTML for crawlers and link previews that do not run JavaScript. React replaces everything inside #root when the
+         app mounts (the boot splash covers it until then). The vite plugin in vite.config.js fills this in from src/app/nav.js. -->
+    <div id="root"><!--SEO_SHELL--></div>
     <div id="boot" role="status" aria-label="Loading">
       <span class="boot-spin" aria-hidden="true"></span>
       <p class="boot-msg">
