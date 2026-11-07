@@ -4,7 +4,7 @@ Troubleshoot network and sign-in problems entirely in your browser. Analyze HAR 
 
 (Formerly HAR.lens.)
 
-Live at <https://har-analyzer.2nison6.com>.
+Live at <https://tracelens.2nison6.com>.
 
 ## Tools
 
