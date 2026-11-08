@@ -414,8 +414,9 @@ export default function App() {
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                   </ErrorBoundary>
+                  {narrow && <Footer />}
                 </main>
-                <Footer />
+                {!narrow && <Footer />}
               </div>
 
               <AnimatePresence initial={false}>
@@ -441,7 +442,7 @@ export default function App() {
 
               {narrow && (
                 <nav className="tabbar glass" aria-label="Pages">
-                  {(section ? tabItems : toolTabs.map((s) => ({ ...s.pages[0], label: s.label, icon: s.icon }))).map((n) => (
+                  {(section ? tabItems : toolTabs.map((s) => ({ ...s.pages[0], label: s.short || s.label, icon: s.icon }))).map((n) => (
                     <PageLink key={n.to} item={n}><FontAwesomeIcon icon={n.icon} /><span>{n.label}</span></PageLink>
                   ))}
                   <button type="button" className={`tab-more${more || moreItems.some((n) => n.to === location.pathname) ? ' active' : ''}`} aria-expanded={more} onClick={() => setMore((m) => !m)}>

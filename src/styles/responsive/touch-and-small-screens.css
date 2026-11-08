@@ -1,0 +1,119 @@
+/* ---------- touch devices and small screens ----------
+   Loaded LAST (see styles/index.css) so it can adjust the desktop-sized controls defined above without editing each one.
+   Two separate questions, two separate queries:
+     (pointer: coarse)    the main input is a finger: make targets big enough to hit (about 44px) and stop iOS zooming into inputs.
+     (max-width: ...)     the screen is narrow: tighten the footer and the tab bar.
+   A touch laptop reports a fine pointer, so it keeps the compact desktop sizes. */
+
+html {
+  /* no 300ms double-tap-zoom delay on taps, and no grey flash over tapped links and buttons */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --hit: 44px;
+    --bar-h: 56px;
+  }
+
+  /* iOS Safari zooms the whole page into any field whose text is under 16px, and does not zoom back out */
+  select,
+  textarea,
+  input[type="number"],
+  input[type="search"],
+  input[type="text"] {
+    font-size: 16px;
+  }
+
+  /* controls that were made small on purpose for a mouse */
+  .btn.sm {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  .seg-s button {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  .th {
+    height: 40px;
+    min-width: 44px;
+  }
+  .wf-pin {
+    width: 36px;
+    height: 36px;
+  }
+  /* a link on a line of its own; links inside a sentence keep the sentence's line height */
+  .start-guide a {
+    display: inline-block;
+    padding: 10px 0;
+  }
+
+  /* checkboxes: a bigger box, and the whole label is the target */
+  input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    flex: none;
+  }
+  .wf-colopt,
+  .trim-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 760px) {
+  /* text that was 10.5px is too small to read on a phone */
+  .tabbar a,
+  .tab-more {
+    font-size: 11px;
+    min-width: 0;
+  }
+  .tabbar a span,
+  .tab-more span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .foot-kicker,
+  .tool-card small,
+  .hint,
+  small {
+    font-size: 11px;
+  }
+
+  /* On a phone the footer scrolls with the page (App.jsx renders it inside <main> when narrow). Pinned, it took a sixth of the screen. */
+  .content > .site-foot {
+    margin-top: 28px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    flex-wrap: wrap;
+  }
+  .content > .site-foot .foot-links {
+    margin-left: auto;
+  }
+  .content > .site-foot .foot-note {
+    display: block;
+    flex-basis: 100%;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 400px) {
+  .content {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .content > .site-foot .foot-who {
+    flex-basis: 100%;
+  }
+  .content > .site-foot .foot-links {
+    margin-left: 0;
+  }
+}

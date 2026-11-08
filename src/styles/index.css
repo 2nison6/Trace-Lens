@@ -7,6 +7,7 @@
    components/      reusable pieces: buttons, cards, tables, bars, filters, ...
    layout/          the app shell: sidebar, main column, dock, footer, overlays, loader
    pages/           per-screen styles
+   responsive/      touch and small-screen adjustments. Must stay LAST: it overrides the sizes set above
 */
 
 @import './tokens.css';
@@ -52,3 +53,5 @@
 @import './pages/home.css';
 @import './pages/explain-this.css';
 @import './pages/reports.css';
+
+@import './responsive/touch-and-small-screens.css';

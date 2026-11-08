@@ -15,6 +15,7 @@ import { faWindows } from '@fortawesome/free-brands-svg-icons'
 export const SECTIONS = [
   {
     id: 'har',
+    short: 'HAR',
     card: 'HAR analyzer',
     landing: '/har/overview',
     accepts: 'HAR files',
@@ -36,6 +37,7 @@ export const SECTIONS = [
   },
   {
     id: 'saml',
+    short: 'SAML',
     card: 'SAML analyzer',
     landing: '/saml/messages',
     accepts: 'a HAR file or a SAML-tracer export',
@@ -52,6 +54,7 @@ export const SECTIONS = [
   },
   {
     id: 'oauth',
+    short: 'OAuth',
     card: 'OAuth / OIDC',
     landing: '/oauth/flow',
     accepts: 'a HAR file',
@@ -69,6 +72,7 @@ export const SECTIONS = [
   },
   {
     id: 'tokens',
+    short: 'Tokens',
     card: 'Token inspector',
     landing: '/tokens/capture',
     accepts: 'a HAR file',
@@ -87,6 +91,7 @@ export const SECTIONS = [
   },
   {
     id: 'certs',
+    short: 'Certs',
     card: 'Certificate inspector',
     accepts: 'a certificate',
     landing: '/certs/inspect',
@@ -103,6 +108,7 @@ export const SECTIONS = [
   },
   {
     id: 'windows',
+    short: 'Windows',
     card: 'Windows sign-in',
     accepts: 'a HAR file',
     landing: '/windows/exchange',
@@ -119,6 +125,7 @@ export const SECTIONS = [
   },
   {
     id: 'cookies',
+    short: 'Cookies',
     card: 'Cookie analyzer',
     landing: '/cookies/all',
     accepts: 'a HAR file',
@@ -137,6 +144,7 @@ export const SECTIONS = [
   },
   {
     id: 'guide',
+    short: 'Guide',
     card: 'Guides',
     landing: '/guide/topics',
     label: 'Guide',
